@@ -121,11 +121,10 @@ public class StopDetailFragment extends Fragment implements AdapterView.OnItemCl
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
-        try {
+        if (activity instanceof OnStopDetailListener) {
             mListener = (OnStopDetailListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnStopDetailListener");
+        } else {
+            mListener = null;
         }
     }
 

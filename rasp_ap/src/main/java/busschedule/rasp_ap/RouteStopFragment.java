@@ -141,8 +141,9 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
             } else {
                 int stopId = mStopList.get(position).getKey();
                 String stopName = mStopList.get(position).getStopName();
-                if (mListener != null)
+                if (mListener != null) {
                     mListener.OnStopSelected(stopId, stopName);
+                }
             }
         }
     }
@@ -151,11 +152,10 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
-        try {
+        if (activity instanceof OnRouteStopSelectedListener) {
             mListener = (OnRouteStopSelectedListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnRouteStopSelectedListener");
+        } else {
+            mListener = null;
         }
     }
 

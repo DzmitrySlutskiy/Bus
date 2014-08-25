@@ -84,12 +84,19 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        try {
+
+        if (activity instanceof OnRouteSelectedListener) {
+            mListener = (OnRouteSelectedListener) activity;
+        } else {
+            mListener = null;
+        }
+
+        /*try {
             mListener = (OnRouteSelectedListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement OnRouteSelectedListener");
-        }
+        }*/
     }
 
     @Override
