@@ -11,7 +11,7 @@ package busschedule.rasp_ap;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-class Constants {
+public class Constants {
 
     /*  preferences params  */
     public static final String DEFAULT_SHARED_PREFS = "BusSchedule.pref";

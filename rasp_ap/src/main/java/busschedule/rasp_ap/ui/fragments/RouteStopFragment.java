@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package busschedule.rasp_ap;
+package busschedule.rasp_ap.ui.fragments;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,6 +22,11 @@ import android.widget.TextView;
 import java.util.Collections;
 import java.util.List;
 
+import busschedule.rasp_ap.R;
+import busschedule.rasp_ap.Stop;
+import busschedule.rasp_ap.loaders.StopLoader;
+import busschedule.rasp_ap.interfaces.OnRouteStopSelectedListener;
+
 /*
  * RouteStopFragment
  * Version 1.0
@@ -32,9 +36,11 @@ import java.util.List;
  */
 
 public class RouteStopFragment extends Fragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Object> {
-    private static final String ARG_ROUTE_ID = "routeId";
-    private static final int LOADER_ID_STOP_DETAIL = 1;
+
+    public static final int LOADER_ID_STOP_DETAIL = 1;
     private static final int LOADER_ID_STOP_LIST = LOADER_ID_STOP_DETAIL + 1;
+
+    private static final String ARG_ROUTE_ID = "routeId";
 
     private static final String PREF_NAME = "RouteStopFragment";
     private static final String SAVE_SCROLL_POS = "scrollPos";
@@ -204,12 +210,6 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
     public void onLoaderReset(Loader<Object> loader) {
     }
 
-    public interface OnRouteStopSelectedListener {
-        public void OnRouteStopSelected(int _id, int routeId, String stopName, String stopDetail);
-
-        public void OnStopSelected(int stopId, String stopName);
-    }
-
     /*  private methods */
 
     /**
@@ -259,37 +259,6 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
         mStopListView.setOnItemClickListener(this);
         if (mRouteId < 0) {
             mStopListView.setSelection(restoreListPosition());
-        }
-    }
-    /*  inner class */
-
-    /**
-     * background download task
-     */
-    static class StopLoader extends AsyncTaskLoader<Object> {
-        public static final String ATT_ROUT_ID = "routeId";
-
-        private int routeId;
-
-        /**
-         * Stores away the application context associated with context. Since Loaders can be used
-         * across multiple activities it's dangerous to store the context directly.
-         *
-         * @param context used to retrieve the application context.
-         */
-        public StopLoader(Context context, Bundle args) {
-            super(context);
-            if (args != null) {
-                routeId = args.getInt(ATT_ROUT_ID);
-            }
-        }
-
-        @Override
-        public Object loadInBackground() {
-            DBHelper dbHelper = DBHelper.getInstance(getContext());
-            return (getId() == LOADER_ID_STOP_DETAIL)
-                    ? dbHelper.getRouteDetail(routeId)
-                    : dbHelper.getRouteStopsList(routeId);
         }
     }
 }

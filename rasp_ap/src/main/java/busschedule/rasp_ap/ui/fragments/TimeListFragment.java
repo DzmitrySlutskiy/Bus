@@ -2,13 +2,13 @@
  * Bus schedule for Grodno
  */
 
-package busschedule.rasp_ap;
+package busschedule.rasp_ap.ui.fragments;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -20,10 +20,14 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import busschedule.rasp_ap.R;
+import busschedule.rasp_ap.TimeList;
+import busschedule.rasp_ap.loaders.TimeListLoader;
+import busschedule.rasp_ap.viewbinders.TimeListBinder;
 
 /*
  * TimeListFragment - show bus schedule for selected route and stop
@@ -34,20 +38,18 @@ import java.util.Map;
  * e-mail: dsslutskiy@gmail.com
  */
 public class TimeListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Object> {
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+
+    public static final int LOADER_TYPE_ID = 1;
+    private static final int LOADER_TIME_ID = LOADER_TYPE_ID + 1;
+
     private static final String ARG_ROUTE_LIST_ID = "routeListId";
     private static final String ARG_ROUTE_ID = "routeId";
     private static final String ARG_STOP_NAME = "stopName";
     private static final String ARG_ROUTE_DETAIL = "routeDetail";
 
-    private static final int LOADER_TYPE_ID = 1;
-    private static final int LOADER_TIME_ID = LOADER_TYPE_ID + 1;
-
     private int mRouteListId;
     private String mStopName = "";
     private String mRouteDetail = "";
-
-    private int mHour;
 
     private ListView mTimeListView;
     private View mHeaderView;
@@ -86,8 +88,6 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
             mStopName = getArguments().getString(ARG_STOP_NAME);
             mRouteDetail = getArguments().getString(ARG_ROUTE_DETAIL);
         }
-        Calendar rightNow = Calendar.getInstance();
-        mHour = rightNow.get(Calendar.HOUR_OF_DAY);
     }
 
     @Override
@@ -161,6 +161,22 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
     public void onLoaderReset(Loader<Object> loader) {
     }
 
+    public static TextView getTextView(Context context, String text) {
+        TextView tvTemp = new TextView(context);
+        LinearLayout.LayoutParams linLayoutParam = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1);
+
+        Resources resources = context.getApplicationContext().getResources();
+
+        int dimPadding = Math.round(resources.getDimension(R.dimen.d5dp));
+
+        tvTemp.setPadding(dimPadding, dimPadding, dimPadding, dimPadding);
+        tvTemp.setGravity(Gravity.CENTER_HORIZONTAL);
+        tvTemp.setLayoutParams(linLayoutParam);
+        tvTemp.setText(text);
+
+        return tvTemp;
+    }
+
     /*  private methods */
     private void initListHeader(List<String> listHeader) {
         if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
@@ -171,19 +187,6 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
             }
             mTimeListView.addHeaderView(mHeaderView);
         }
-    }
-
-    private TextView getTextView(Context context, String text) {
-        TextView tvTemp = new TextView(context);
-        LinearLayout.LayoutParams linLayoutParam = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1);
-        int dimPadding = Math.round(getResources().getDimension(R.dimen.d5dp));
-
-        tvTemp.setPadding(dimPadding, dimPadding, dimPadding, dimPadding);
-        tvTemp.setGravity(Gravity.CENTER_HORIZONTAL);
-        tvTemp.setLayoutParams(linLayoutParam);
-        tvTemp.setText(text);
-
-        return tvTemp;
     }
 
     private void updateData(List<TimeList> timeList) {
@@ -214,94 +217,5 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
         sAdapter.setViewBinder(new TimeListBinder());
 
         mTimeListView.setAdapter(sAdapter);
-    }
-
-    /**
-     *
-     */
-    public interface OnTimeListSelectedListener {
-        //public void onTimeListSelected(Uri uri);
-    }
-
-    /*  inner class */
-
-    /**
-     * fill list items
-     */
-    private class TimeListBinder implements SimpleAdapter.ViewBinder {
-
-        private boolean useBoldFont = false;
-
-        @Override
-        public boolean setViewValue(View view, Object data,
-                                    String textRepresentation) {
-            int id = view.getId();
-            if (id == R.id.tvHour) {
-                TextView tvTemp = (TextView) view;
-                int hourItem = (Integer) data;
-                useBoldFont = (hourItem == mHour);
-                tvTemp.setText(Integer.toString(hourItem));
-            } else if (id == R.id.layoutMinutes) {
-                String[] minArray = (String[]) data;
-                LinearLayout minPanel = ((LinearLayout) view);
-
-                //если в Layout уже существуют view - значит пользователь прокручивает
-                // список в обратном направлении и система подставила уже использованный view
-                // (который вышел за пределы видимости экрана при прокрутке) проверяем достаточно
-                // ли элементов для вывода минут и добавляем в случае необходимости
-                if (minPanel.getChildCount() < minArray.length) {
-                    int childNeeded = minArray.length - minPanel.getChildCount();
-                    for (int i = 0; i < childNeeded; i++) {
-                        minPanel.addView(getTextView(view.getContext(), ""));
-                    }
-                }
-                for (int i = 0; i < minArray.length; i++) {
-                    TextView tView = ((TextView) minPanel.getChildAt(i));
-                    if (tView != null) {
-                        tView.setText(minArray[i]);
-                    }
-                }
-            }
-            view.setBackgroundColor(useBoldFont ? getResources().getColor(R.color.currenthour) :
-                    getResources().getColor(R.color.not_currenthour));
-
-            return true;
-        }
-    }
-
-    /**
-     * background loader
-     * if Id set as LOADER_TYPE_ID task load TypeList
-     * if Id set as LOADER_TIME_ID task load TimeList
-     * data will return as reference to Object class
-     * in onLoadFinished data will cast to self type
-     * this method help create universal loader for 2 different task
-     */
-    static class TimeListLoader extends AsyncTaskLoader<Object> {
-        public static final String ATT_ROUT_LIST_ID = "routeListIdLoader";
-        private int mRouteListIdLoader;
-
-        /**
-         * Stores away the application context associated with context. Since Loaders can be used
-         * across multiple activities it's dangerous to store the context directly.
-         *
-         * @param context used to retrieve the application context.
-         */
-        public TimeListLoader(Context context, Bundle args) {
-            super(context);
-
-            if (args != null) {
-                mRouteListIdLoader = args.getInt(ATT_ROUT_LIST_ID);
-            }
-        }
-
-        @Override
-        public Object loadInBackground() {
-            DBHelper dbHelper = DBHelper.getInstance(getContext());
-
-            return (getId() == LOADER_TYPE_ID)
-                    ? dbHelper.getTypeListByRouteListId(mRouteListIdLoader)
-                    : dbHelper.getTimeListByRouteListId(mRouteListIdLoader);
-        }
     }
 }

@@ -2,14 +2,12 @@
  * Bus schedule for Grodno
  */
 
-package busschedule.rasp_ap;
+package busschedule.rasp_ap.ui.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,12 +16,17 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import busschedule.rasp_ap.BusRoute;
+import busschedule.rasp_ap.R;
+import busschedule.rasp_ap.interfaces.OnRouteSelectedListener;
+import busschedule.rasp_ap.loaders.BusRouteLoader;
+import busschedule.rasp_ap.viewbinders.BusRouteBinder;
 
 
 /*
@@ -90,13 +93,6 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
         } else {
             mListener = null;
         }
-
-        /*try {
-            mListener = (OnRouteSelectedListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnRouteSelectedListener");
-        }*/
     }
 
     @Override
@@ -117,12 +113,7 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
         }
     }
 
-    /**
-     * interface for interaction with activity
-     */
-    public interface OnRouteSelectedListener {
-        public void OnRouteSelected(int _id);
-    }
+
 
     /*  implementation LoaderManager.LoaderCallbacks<List<String>>*/
     @Override
@@ -189,50 +180,6 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
         if (mBusList != null) {
             mBusList.setAdapter(sAdapter);
             mBusList.setOnItemClickListener(this);
-        }
-    }
-
-    /*   inner classes   */
-
-    /**
-     * this class fill data in list item
-     */
-    private class BusRouteBinder implements SimpleAdapter.ViewBinder {
-        @Override
-        public boolean setViewValue(View view, Object data,
-                                    String textRepresentation) {
-            int id = view.getId();
-            if (id == R.id.tvBusNumber ||
-                    id == R.id.tvBeginStop ||
-                    id == R.id.tvEndStop) {
-                TextView tvTemp = (TextView) view;
-                tvTemp.setText((String) data);
-                return true;
-            }
-            /*save item _id in layout tags*/
-            if (id == R.id.itemlayout) {
-                view.setTag(data);
-                return true;
-            }
-            return false;
-        }
-    }
-
-    /**
-     * background data loader
-     */
-    static class BusRouteLoader extends AsyncTaskLoader<List<BusRoute>> {
-        /**
-         * @param context used to retrieve the application context.
-         */
-        public BusRouteLoader(Context context) {
-            super(context);
-        }
-
-        @Override
-        public List<BusRoute> loadInBackground() {
-            DBHelper dbHelper = DBHelper.getInstance(getContext());
-            return dbHelper.getRoutesList();
         }
     }
 }

@@ -2,14 +2,13 @@
  * Bus schedule for Grodno
  */
 
-package busschedule.rasp_ap;
+package busschedule.rasp_ap.ui.fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +18,10 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import busschedule.rasp_ap.Constants;
+import busschedule.rasp_ap.R;
+import busschedule.rasp_ap.loaders.NewsLoader;
 
 /*
  * NewsFragment - show news in list style
@@ -112,27 +115,5 @@ public class NewsFragment extends ListFragment implements
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, newsArray);
         setListAdapter(adapter);
-    }
-
-    /*  inner classes    */
-
-    /**
-     * background data loader
-     */
-    static class NewsLoader extends AsyncTaskLoader<List<String>> {
-        /**
-         * @param context used to retrieve the application context.
-         */
-        public NewsLoader(Context context) {
-            super(context);
-
-        }
-
-        @Override
-        public List<String> loadInBackground() {
-
-            DBHelper dbHelper = DBHelper.getInstance(getContext());
-            return dbHelper.getNews();
-        }
     }
 }

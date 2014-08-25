@@ -14,7 +14,7 @@ package busschedule.rasp_ap;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-class TimeList {
+public class TimeList {
 
     /*  private fields  */
     private int mHour;

@@ -2,14 +2,12 @@
  * Bus schedule for Grodno
  */
 
-package busschedule.rasp_ap;
+package busschedule.rasp_ap.ui.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +22,12 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import busschedule.rasp_ap.R;
+import busschedule.rasp_ap.StopDetail;
+import busschedule.rasp_ap.interfaces.OnStopDetailListener;
+import busschedule.rasp_ap.loaders.StopDetailLoader;
+import busschedule.rasp_ap.viewbinders.StopDetailBinder;
 
 
 /*
@@ -163,11 +167,6 @@ public class StopDetailFragment extends Fragment implements AdapterView.OnItemCl
     public void onLoaderReset(Loader<List<StopDetail>> loader) {
     }
 
-
-    public interface OnStopDetailListener {
-        public void onStopDetailSelected(int routeListId, int routeId, String stopName, String stopDetail);
-    }
-
     /**
      * update list in fragment
      *
@@ -210,57 +209,5 @@ public class StopDetailFragment extends Fragment implements AdapterView.OnItemCl
         sAdapter.setViewBinder(new StopDetailBinder());
 
         mDetailList.setAdapter(sAdapter);
-    }
-
-    /**
-     * this class fill list item
-     */
-    private class StopDetailBinder implements SimpleAdapter.ViewBinder {
-
-        @Override
-        public boolean setViewValue(View view, Object data,
-                                    String textRepresentation) {
-            int id = view.getId();
-            if (id == R.id.tvRouteName ||
-                    id == R.id.tvNextTime) {
-                TextView tvTemp = (TextView) view;
-                String strData = (String) data;
-                tvTemp.setText(strData);
-
-                return true;
-            }
-            return false;
-        }
-    }
-
-    /**
-     * background task loader
-     */
-    static class StopDetailLoader extends AsyncTaskLoader<List<StopDetail>> {
-
-        public static final String ATT_STOP_ID = "stopId";
-        public static final String ATT_HOUR = "currentHour";
-        private final int mStopIdLoader;
-        private final int mCurrentHourLoader;
-
-        /**
-         * Stores away the application context associated with context. Since Loaders can be used
-         * across multiple activities it's dangerous to store the context directly.
-         *
-         * @param context used to retrieve the application context.
-         */
-        public StopDetailLoader(Context context, Bundle args) {
-            super(context);
-
-            mStopIdLoader = args.getInt(ATT_STOP_ID);
-            mCurrentHourLoader = args.getInt(ATT_HOUR);
-        }
-
-        @Override
-        public List<StopDetail> loadInBackground() {
-            DBHelper dbHelper1 = DBHelper.getInstance(getContext());
-
-            return dbHelper1.getStopDetail(mStopIdLoader, mCurrentHourLoader);
-        }
     }
 }

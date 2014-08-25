@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import busschedule.rasp_ap.db.DBHelper;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
@@ -39,7 +40,7 @@ import jxl.read.biff.BiffException;
  * e-mail: dsslutskiy@gmail.com
  */
 
-class MyAsyncTask extends AsyncTask<Object, Void, Void> {
+public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
 
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB

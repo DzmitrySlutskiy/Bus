@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package busschedule.rasp_ap;
+package busschedule.rasp_ap.db;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -24,6 +24,13 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipInputStream;
+
+import busschedule.rasp_ap.BusRoute;
+import busschedule.rasp_ap.Constants;
+import busschedule.rasp_ap.R;
+import busschedule.rasp_ap.Stop;
+import busschedule.rasp_ap.StopDetail;
+import busschedule.rasp_ap.TimeList;
 
 /*
  * DBHelper - work with DB. Implemented as singleton. Use getInstance method for create object

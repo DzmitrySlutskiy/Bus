@@ -12,7 +12,7 @@ package busschedule.rasp_ap;
  * e-mail: dsslutskiy@gmail.com
  */
 
-class BusRoute {
+public class BusRoute {
 
     /**
      * id route in database

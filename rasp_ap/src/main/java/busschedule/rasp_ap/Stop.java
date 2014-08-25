@@ -12,7 +12,7 @@ package busschedule.rasp_ap;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-class Stop implements Comparable {
+public class Stop implements Comparable {
 
     /*  private fields  */
     private int mKey;

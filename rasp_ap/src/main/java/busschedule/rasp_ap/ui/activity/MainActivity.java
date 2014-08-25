@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package busschedule.rasp_ap;
+package busschedule.rasp_ap.ui.activity;
 
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -17,6 +17,19 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import busschedule.rasp_ap.Constants;
+import busschedule.rasp_ap.MyAsyncTask;
+import busschedule.rasp_ap.interfaces.OnRouteSelectedListener;
+import busschedule.rasp_ap.interfaces.OnRouteStopSelectedListener;
+import busschedule.rasp_ap.interfaces.OnStopDetailListener;
+import busschedule.rasp_ap.ui.fragments.NewsFragment;
+import busschedule.rasp_ap.R;
+import busschedule.rasp_ap.ui.fragments.RouteFragment;
+import busschedule.rasp_ap.ui.fragments.RouteStopFragment;
+import busschedule.rasp_ap.ui.fragments.StopDetailFragment;
+import busschedule.rasp_ap.ui.fragments.TimeListFragment;
+import busschedule.rasp_ap.db.DBHelper;
+
 /*
  * main application activity
  * Version 1.0
@@ -25,8 +38,8 @@ import android.widget.Toast;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class MainActivity extends ActionBarActivity implements RouteFragment.OnRouteSelectedListener, Handler.Callback, ProgressDialog.OnCancelListener,
-        View.OnClickListener, RouteStopFragment.OnRouteStopSelectedListener, TimeListFragment.OnTimeListSelectedListener, StopDetailFragment.OnStopDetailListener {
+public class MainActivity extends ActionBarActivity implements OnRouteSelectedListener, Handler.Callback, ProgressDialog.OnCancelListener,
+        View.OnClickListener, OnRouteStopSelectedListener, OnStopDetailListener {
 
     private ProgressDialog mProgressDialog;
     private MyAsyncTask mAsyncTask;

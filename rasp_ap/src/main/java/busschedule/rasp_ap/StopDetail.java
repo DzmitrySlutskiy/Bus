@@ -14,7 +14,7 @@ import java.util.List;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-class StopDetail {
+public class StopDetail {
 
     /*  private fields  */
     private int mRouteListId;
