@@ -690,7 +690,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
     }
 
     private void writeLogDebug(String msg) {
-        if (Constants.DEBUG) {
+        if (BuildConfig.DEBUG) {
             Log.d(Constants.LOG_TAG_UPD, msg);
         }
     }

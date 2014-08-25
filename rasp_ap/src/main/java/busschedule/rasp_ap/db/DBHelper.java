@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipInputStream;
 
+import busschedule.rasp_ap.BuildConfig;
 import busschedule.rasp_ap.BusRoute;
 import busschedule.rasp_ap.Constants;
 import busschedule.rasp_ap.R;
@@ -282,7 +283,7 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     void openDB() {
         mDb = getDB();
-        if (Constants.DEBUG) {
+        if (BuildConfig.DEBUG) {
             Log.i(Constants.LOG_TAG, "openDB " + (mDb != null ? "successful" : "unsuccessful"));
         }
     }
@@ -295,7 +296,7 @@ public class DBHelper extends SQLiteOpenHelper {
             mDb.close();
         }
         mDb = null;
-        if (Constants.DEBUG) {
+        if (BuildConfig.DEBUG) {
             Log.i(Constants.LOG_TAG, "DBHelper.closeDB");
         }
     }

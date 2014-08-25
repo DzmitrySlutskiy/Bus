@@ -17,8 +17,6 @@ public class Constants {
     public static final String DEFAULT_SHARED_PREFS = "BusSchedule.pref";
     public static final String PREF_LAST_UPDATE = "lastUpdate";
 
-    public static final boolean DEBUG = false;
-
     /*   Log tags   */
     public static final String LOG_TAG = "BusSchedule";
     public static final String LOG_TAG_UPD = "BusScheduleUpd";
