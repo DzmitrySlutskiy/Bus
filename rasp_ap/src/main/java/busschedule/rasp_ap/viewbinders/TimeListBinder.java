@@ -37,8 +37,7 @@ public class TimeListBinder implements SimpleAdapter.ViewBinder {
             String[] minArray = (String[]) data;
             LinearLayout minPanel = ((LinearLayout) view);
 
-            //если в Layout уже существуют view - значит пользователь прокручивает
-            // список в обратном направлении и система подставила уже использованный view
+            //если юзается уже использованный view
             // (который вышел за пределы видимости экрана при прокрутке) проверяем достаточно
             // ли элементов для вывода минут и добавляем в случае необходимости
             if (minPanel.getChildCount() < minArray.length) {

@@ -82,6 +82,7 @@ public class XLSHelper {
      */
     public void closeWorkbook() {
         mWorkbook.close();
+        mWorkbook = null;
     }
 
     /**
@@ -480,7 +481,7 @@ public class XLSHelper {
          *                            comparable to {@code this} instance.
          */
         @Override
-        public int compareTo(@SuppressWarnings("NullableProblems")Object another) {
+        public int compareTo(@SuppressWarnings("NullableProblems") Object another) {
             //compare was added at api level 19
             //return Integer.compare(this.topRow, ((RangeIndex) another).topRow);
             return (this.topRow < ((RangeIndex) another).topRow)

@@ -42,12 +42,7 @@ import jxl.read.biff.BiffException;
 
 public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
 
-    /*   constants for update    */
-    public static final String BUS_PARK_URL = "http://www.ap1.by/download/";
-    public static final String FILE_NAME = "raspisanie_gorod.xls";
-
     public static final String LOG_TAG_UPD = "BusScheduleUpd";
-    public static final int MAX_PERCENT = 100;
 
     /* Message type definition for Handler
      * using for send message to main thread */
@@ -63,10 +58,16 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
     public static final int MSG_UPDATE_DB_WORK_ERROR = 21;
     public static final int MSG_UPDATE_BIFF_ERROR = 22;
     public static final int MSG_APP_ERROR = 23;
+
     /*  preferences params  */
     public static final String PREF_LAST_UPDATE = "lastUpdate";
     public static final String EMPTY_STRING = "";
 
+    /*   constants for update    */
+    private static final String BUS_PARK_URL = "http://www.ap1.by/download/";
+    private static final String FILE_NAME = "raspisanie_gorod.xls";
+
+    private static final int MAX_PERCENT = 100;
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
@@ -201,7 +202,6 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                 deleteFile(filePath);                       //delete temporary xls file
             }
         }
-        sendMessage(MSG_END_PROGRESS);            //close update dialog
 
         return null;
     }
@@ -209,6 +209,8 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
+
+        sendMessage(MSG_END_PROGRESS);            //close update dialog
     }
 
     @Override

@@ -4,12 +4,13 @@
 
 package busschedule.rasp_ap.ui.activity;
 
-import android.support.v4.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -44,18 +45,15 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
     private ProgressDialog mProgressDialog;
     private MyAsyncTask mAsyncTask;
 
-    private android.support.v4.app.FragmentTransaction mFragTrans;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.mainactivity);
 
         if (savedInstanceState == null) {
-            mFragTrans = getSupportFragmentManager().beginTransaction();
-            mFragTrans.replace(R.id.frmMain, NewsFragment.newInstance());
-            mFragTrans.commit();
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.frmMain, NewsFragment.newInstance());
+            fragmentTransaction.commit();
         }
 
         ImageButton iBtnRoute = (ImageButton) findViewById(R.id.iBtnRoute);
@@ -79,7 +77,10 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
      * ProgressDialog.OnCancelListener - interface implementation
      */
     public void onCancel(DialogInterface dialog) {
-        mAsyncTask.cancel(false);
+        if (mAsyncTask != null) {
+            mAsyncTask.cancel(false);
+            mAsyncTask = null;
+        }
     }
 
     /**
@@ -103,65 +104,71 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
                 break;
 
             case MyAsyncTask.MSG_UPDATE_PROGRESS:
-                mProgressDialog.incrementProgressBy(msg.arg1);
+                if (mProgressDialog != null) {
+                    mProgressDialog.incrementProgressBy(msg.arg1);
+                }
                 break;
 
             case MyAsyncTask.MSG_END_PROGRESS:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 break;
 
             case MyAsyncTask.MSG_UPDATE_CANCELED:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 break;
 
             case MyAsyncTask.MSG_UPDATE_TEXT:
                 messageStr = (String) msg.obj;
-                mProgressDialog.setMessage(messageStr);
+                if (mProgressDialog != null) {
+                    mProgressDialog.setMessage(messageStr);
+                }
                 break;
 
             case MyAsyncTask.MSG_NO_INTERNET:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 Toast.makeText(getApplicationContext(),
                         R.string.update_no_internet, Toast.LENGTH_LONG).show();
                 break;
 
             case MyAsyncTask.MSG_UPDATE_FILE_SIZE:
-                mProgressDialog.setMax(msg.arg1);
-                mProgressDialog.setProgress(0);
+                if (mProgressDialog != null) {
+                    mProgressDialog.setMax(msg.arg1);
+                    mProgressDialog.setProgress(0);
+                }
                 break;
 
             case MyAsyncTask.MSG_UPDATE_FILE_STRUCTURE_ERROR:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 Toast.makeText(getApplicationContext(),
                         R.string.update_file_struct_error, Toast.LENGTH_LONG).show();
                 break;
 
             case MyAsyncTask.MSG_UPDATE_DB_WORK_ERROR:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 Toast.makeText(getApplicationContext(),
                         R.string.update_db_update_error, Toast.LENGTH_LONG).show();
                 break;
 
             case MyAsyncTask.MSG_IO_ERROR:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 messageStr = getResources().getString(R.string.update_io_error) + " " + msg.obj;
                 Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
                 break;
 
             case MyAsyncTask.MSG_UPDATE_BIFF_ERROR:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 messageStr = getResources().getString(R.string.update_biff_error) + " " + msg.obj;
                 Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
                 break;
 
             case MyAsyncTask.MSG_APP_ERROR:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 messageStr = getResources().getString(R.string.app_error) + " " + msg.obj;
                 Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
                 break;
 
             default:
-                mProgressDialog.dismiss();
+                dismissDialog();
                 break;
         }
         return true;
@@ -234,6 +241,19 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
         replaceFragment(StopDetailFragment.newInstance(stopId, stopName));
     }
 
+    /**
+     * dismiss dialog and set private variable mProgressDialog to null
+     */
+    private void dismissDialog() {
+        if (mProgressDialog != null) {
+            mProgressDialog.dismiss();
+            mProgressDialog = null;
+
+            //dismiss dialog when MyAsyncTask finish or crash
+            mAsyncTask = null;
+        }
+    }
+
     private void clearBackStack() {
         FragmentManager fManager = getSupportFragmentManager();
 
@@ -242,13 +262,13 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
     }
 
     private void replaceFragment(Fragment fragment) {
-        mFragTrans = getSupportFragmentManager().beginTransaction();
-        mFragTrans.replace(R.id.frmMain, fragment);
-        //mFragTrans.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-        if (mFragTrans.isAddToBackStackAllowed()) {
-            mFragTrans.addToBackStack(null);
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.frmMain, fragment);
+        //fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+        if (fragmentTransaction.isAddToBackStackAllowed()) {
+            fragmentTransaction.addToBackStack(null);
         }
-        mFragTrans.commit();
+        fragmentTransaction.commit();
     }
 
     @Override

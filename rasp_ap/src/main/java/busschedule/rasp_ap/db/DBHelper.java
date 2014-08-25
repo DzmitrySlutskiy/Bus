@@ -43,7 +43,7 @@ import busschedule.rasp_ap.TimeList;
 public class DBHelper extends SQLiteOpenHelper {
 
     /*   Log tags   */
-    public static final String LOG_TAG = "BusSchedule";
+    private static final String LOG_TAG = "BusSchedule";
 
     private static final String DB_TRY_CREATE = "try to create DB";
     private static final String DB_MUST_UPDATE = "database must be updated to new version ";
