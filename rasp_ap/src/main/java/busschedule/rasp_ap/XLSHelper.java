@@ -164,13 +164,13 @@ public class XLSHelper {
             Sheet sheet = mWorkbook.getSheet(UPD_DATE_SHEET);
             Cell cell = sheet.getCell(UPD_DATE_COLUMN, UPD_DATE_ROW);
             String dateUpdate = cell.getContents().trim();
-            if ((! dateUpdate.equals(Constants.EMPTY_STRING)) &&
+            if ((! dateUpdate.equals(MyAsyncTask.EMPTY_STRING)) &&
                     (dateUpdate.length() > MAX_DATE_LENGTH)) {
                 dateUpdate = dateUpdate.substring(dateUpdate.length() - MAX_DATE_LENGTH);
             }
             return dateUpdate;
         }
-        return Constants.EMPTY_STRING;
+        return MyAsyncTask.EMPTY_STRING;
     }
 
     /**
@@ -192,8 +192,8 @@ public class XLSHelper {
             for (int i = NEWS_SEARCH_ROW; i < sheet.getRows(); i++) {
                 Cell cell = sheet.getCell(NEWS_SEARCH_COLUMN, i);
                 String cellContent = cell.getContents().trim();
-                String news = Constants.EMPTY_STRING;
-                if (! cellContent.equals(Constants.EMPTY_STRING)) {     //if string not empty
+                String news = MyAsyncTask.EMPTY_STRING;
+                if (! cellContent.equals(MyAsyncTask.EMPTY_STRING)) {     //if string not empty
                     firstNewsFound = true;                              //we found news
                     news = cellContent;
                 }
@@ -203,11 +203,11 @@ public class XLSHelper {
                     * check right cell to text data */
                     Cell rCell = sheet.getCell(NEWS_SEARCH_COLUMN + 1, i);
                     String rCellContent = rCell.getContents().trim();
-                    if (! rCellContent.equals(Constants.EMPTY_STRING)) {
+                    if (! rCellContent.equals(MyAsyncTask.EMPTY_STRING)) {
                         news += rCellContent;
                     }
                 }
-                if (! news.equals(Constants.EMPTY_STRING)) {
+                if (! news.equals(MyAsyncTask.EMPTY_STRING)) {
                     newsList.add(news);
                 }
             }
@@ -284,7 +284,7 @@ public class XLSHelper {
 
             /* if cell merged, we can't get data from this cells if using not top/left coordinate
             * check cell content, if has empty string - we need check Range array for this cell*/
-            if (cell.getContents().trim().equals(Constants.EMPTY_STRING)) {
+            if (cell.getContents().trim().equals(MyAsyncTask.EMPTY_STRING)) {
                 RangeIndex rangeIndex = checkRange(cell, deleteRangeItem);
                 if (rangeIndex != null) {
                     return sheet.getCell(rangeIndex.topColumn,
@@ -293,7 +293,7 @@ public class XLSHelper {
             }
             return cell.getContents().trim();
         } else {
-            Log.e(Constants.LOG_TAG_UPD, "sheet.rows: " + sSheetRows + " row:"
+            Log.e(MyAsyncTask.LOG_TAG_UPD, "sheet.rows: " + sSheetRows + " row:"
                     + row + " sheet.columns: " + sSheetColumns + " column: " + column);
             return "";
         }
@@ -336,7 +336,7 @@ public class XLSHelper {
     public static boolean isBadScheduleType(String typeStr) {
         typeStr = typeStr.trim();
         return (typeStr.equals(SCHEDULE_TYPE[0]) ||
-                typeStr.equals(Constants.EMPTY_STRING) ||
+                typeStr.equals(MyAsyncTask.EMPTY_STRING) ||
                 (Integer.getInteger(typeStr, Integer.MAX_VALUE) != Integer.MAX_VALUE));
     }
 
@@ -480,7 +480,7 @@ public class XLSHelper {
          *                            comparable to {@code this} instance.
          */
         @Override
-        public int compareTo(Object another) {          //@SuppressWarnings("NullableProblems")
+        public int compareTo(@SuppressWarnings("NullableProblems")Object another) {
             //compare was added at api level 19
             //return Integer.compare(this.topRow, ((RangeIndex) another).topRow);
             return (this.topRow < ((RangeIndex) another).topRow)

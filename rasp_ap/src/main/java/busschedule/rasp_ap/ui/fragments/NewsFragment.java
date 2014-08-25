@@ -19,7 +19,8 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import busschedule.rasp_ap.Constants;
+import busschedule.rasp_ap.BuildConfig;
+import busschedule.rasp_ap.MyAsyncTask;
 import busschedule.rasp_ap.R;
 import busschedule.rasp_ap.loaders.NewsLoader;
 
@@ -64,9 +65,9 @@ public class NewsFragment extends ListFragment implements
         updateData(updateText);
 
         SharedPreferences preferences = getActivity().getSharedPreferences(
-                Constants.DEFAULT_SHARED_PREFS, Context.MODE_PRIVATE);
+                BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
         String lastUpdateStr = getResources().getString(R.string.newsFrgUpdateStr);
-        lastUpdateStr += preferences.getString(Constants.PREF_LAST_UPDATE, Constants.EMPTY_STRING);
+        lastUpdateStr += preferences.getString(MyAsyncTask.PREF_LAST_UPDATE, MyAsyncTask.EMPTY_STRING);
 
         TextView tvUpdateDate = (TextView) fragmentView.findViewById(R.id.tvUpdateDate);
         tvUpdateDate.setText(lastUpdateStr);

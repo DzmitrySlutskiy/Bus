@@ -17,7 +17,6 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import busschedule.rasp_ap.Constants;
 import busschedule.rasp_ap.MyAsyncTask;
 import busschedule.rasp_ap.interfaces.OnRouteSelectedListener;
 import busschedule.rasp_ap.interfaces.OnRouteStopSelectedListener;
@@ -89,7 +88,7 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
     public boolean handleMessage(Message msg) {
         String messageStr;
         switch (msg.what) {
-            case Constants.MSG_START_PROGRESS:
+            case MyAsyncTask.MSG_START_PROGRESS:
                 mProgressDialog = new ProgressDialog(this);
                 mProgressDialog.setTitle(getResources().getString(R.string.update_dialog_title));
                 mProgressDialog.setMessage(getResources().getString(R.string.update_dialog_message));
@@ -102,59 +101,59 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
                 mProgressDialog.setIndeterminate(false);
                 break;
 
-            case Constants.MSG_UPDATE_PROGRESS:
+            case MyAsyncTask.MSG_UPDATE_PROGRESS:
                 mProgressDialog.incrementProgressBy(msg.arg1);
                 break;
 
-            case Constants.MSG_END_PROGRESS:
+            case MyAsyncTask.MSG_END_PROGRESS:
                 mProgressDialog.dismiss();
                 break;
 
-            case Constants.MSG_UPDATE_CANCELED:
+            case MyAsyncTask.MSG_UPDATE_CANCELED:
                 mProgressDialog.dismiss();
                 break;
 
-            case Constants.MSG_UPDATE_TEXT:
+            case MyAsyncTask.MSG_UPDATE_TEXT:
                 messageStr = (String) msg.obj;
                 mProgressDialog.setMessage(messageStr);
                 break;
 
-            case Constants.MSG_NO_INTERNET:
+            case MyAsyncTask.MSG_NO_INTERNET:
                 mProgressDialog.dismiss();
                 Toast.makeText(getApplicationContext(),
                         R.string.update_no_internet, Toast.LENGTH_LONG).show();
                 break;
 
-            case Constants.MSG_UPDATE_FILE_SIZE:
+            case MyAsyncTask.MSG_UPDATE_FILE_SIZE:
                 mProgressDialog.setMax(msg.arg1);
                 mProgressDialog.setProgress(0);
                 break;
 
-            case Constants.MSG_UPDATE_FILE_STRUCTURE_ERROR:
+            case MyAsyncTask.MSG_UPDATE_FILE_STRUCTURE_ERROR:
                 mProgressDialog.dismiss();
                 Toast.makeText(getApplicationContext(),
                         R.string.update_file_struct_error, Toast.LENGTH_LONG).show();
                 break;
 
-            case Constants.MSG_UPDATE_DB_WORK_ERROR:
+            case MyAsyncTask.MSG_UPDATE_DB_WORK_ERROR:
                 mProgressDialog.dismiss();
                 Toast.makeText(getApplicationContext(),
                         R.string.update_db_update_error, Toast.LENGTH_LONG).show();
                 break;
 
-            case Constants.MSG_IO_ERROR:
+            case MyAsyncTask.MSG_IO_ERROR:
                 mProgressDialog.dismiss();
                 messageStr = getResources().getString(R.string.update_io_error) + " " + msg.obj;
                 Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
                 break;
 
-            case Constants.MSG_UPDATE_BIFF_ERROR:
+            case MyAsyncTask.MSG_UPDATE_BIFF_ERROR:
                 mProgressDialog.dismiss();
                 messageStr = getResources().getString(R.string.update_biff_error) + " " + msg.obj;
                 Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
                 break;
 
-            case Constants.MSG_APP_ERROR:
+            case MyAsyncTask.MSG_APP_ERROR:
                 mProgressDialog.dismiss();
                 messageStr = getResources().getString(R.string.app_error) + " " + msg.obj;
                 Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();

@@ -42,6 +42,31 @@ import jxl.read.biff.BiffException;
 
 public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
 
+    /*   constants for update    */
+    public static final String BUS_PARK_URL = "http://www.ap1.by/download/";
+    public static final String FILE_NAME = "raspisanie_gorod.xls";
+
+    public static final String LOG_TAG_UPD = "BusScheduleUpd";
+    public static final int MAX_PERCENT = 100;
+
+    /* Message type definition for Handler
+     * using for send message to main thread */
+    public static final int MSG_START_PROGRESS = 0;
+    public static final int MSG_UPDATE_PROGRESS = 1;
+    public static final int MSG_UPDATE_CANCELED = 2;
+    public static final int MSG_UPDATE_FILE_SIZE = 3;
+    public static final int MSG_END_PROGRESS = 10;
+    public static final int MSG_NO_INTERNET = 11;
+    public static final int MSG_UPDATE_TEXT = 12;
+    public static final int MSG_IO_ERROR = 13;
+    public static final int MSG_UPDATE_FILE_STRUCTURE_ERROR = 20;
+    public static final int MSG_UPDATE_DB_WORK_ERROR = 21;
+    public static final int MSG_UPDATE_BIFF_ERROR = 22;
+    public static final int MSG_APP_ERROR = 23;
+    /*  preferences params  */
+    public static final String PREF_LAST_UPDATE = "lastUpdate";
+    public static final String EMPTY_STRING = "";
+
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
@@ -105,20 +130,20 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
             return null;
         }
         mDbHelper = DBHelper.getInstance(mContext);
-        String filePath = mContext.getFilesDir().getPath() + "/" + Constants.FILE_NAME;
+        String filePath = mContext.getFilesDir().getPath() + "/" + FILE_NAME;
 
         /* send message to main thread with MSG_START_PROGRESS flag - will show update dialog*/
-        sendMessage(Constants.MSG_START_PROGRESS);
-        URL fURL = getUrl(Constants.BUS_PARK_URL + Constants.FILE_NAME);
+        sendMessage(MSG_START_PROGRESS);
+        URL fURL = getUrl(BUS_PARK_URL + FILE_NAME);
         if (fURL != null) {
             if (downloadFile(fURL, filePath)) {         //download xls file from web
 
                 /*  send text to dialog update     */
-                sendMessage(Constants.MSG_UPDATE_TEXT, 0,
+                sendMessage(MSG_UPDATE_TEXT, 0,
                         mResources.getString(R.string.update_dialog_fparse));
 
                 /*  send text "100" (for indicate download status info in percent) */
-                sendMessage(Constants.MSG_UPDATE_FILE_SIZE, Constants.MAX_PERCENT);
+                sendMessage(MSG_UPDATE_FILE_SIZE, MAX_PERCENT);
                 try {
                     writeLogDebug("Begin transaction");
                     mDbHelper.beginTran();                              //begin transaction
@@ -141,11 +166,11 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                         parseSheet(sheet);
 
                         if (isCancelled()) {                //check if user press "back"
-                            sendMessage(Constants.MSG_UPDATE_CANCELED);
+                            sendMessage(MSG_UPDATE_CANCELED);
                             return null;
                         }
 
-                        sendMessage(Constants.MSG_UPDATE_PROGRESS, percent);    //show progress
+                        sendMessage(MSG_UPDATE_PROGRESS, percent);    //show progress
                     }
 
                     extractUpdateDate(mXlsHelper);
@@ -153,19 +178,19 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                     mDbHelper.setTranSuccessful();          //commit transaction
                 } catch (IOException e) {
                     writeLogDebug("IOException:" + e.getMessage());
-                    sendMessage(Constants.MSG_IO_ERROR, e.getMessage());
+                    sendMessage(MSG_IO_ERROR, e.getMessage());
                     return null;
                 } catch (BiffException e) {
                     writeLogDebug("BiffException:" + e.getMessage());
-                    sendMessage(Constants.MSG_UPDATE_BIFF_ERROR, e.getMessage());
+                    sendMessage(MSG_UPDATE_BIFF_ERROR, e.getMessage());
                     return null;
                 } catch (FileStructureErrorException e) {
                     writeLogDebug("FileStructureErrorException:" + e.getMessage());
-                    sendMessage(Constants.MSG_UPDATE_FILE_STRUCTURE_ERROR);
+                    sendMessage(MSG_UPDATE_FILE_STRUCTURE_ERROR);
                     return null;
                 } catch (DBUpdateWorkException e) {
                     writeLogDebug("DBUpdateWorkException:" + e.getMessage());
-                    sendMessage(Constants.MSG_UPDATE_DB_WORK_ERROR);
+                    sendMessage(MSG_UPDATE_DB_WORK_ERROR);
                     return null;
                 } finally {
                     mDbHelper.endTran();                    //end transaction
@@ -176,7 +201,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                 deleteFile(filePath);                       //delete temporary xls file
             }
         }
-        sendMessage(Constants.MSG_END_PROGRESS);            //close update dialog
+        sendMessage(MSG_END_PROGRESS);            //close update dialog
 
         return null;
     }
@@ -210,7 +235,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
             writeLogDebug("Get new bus:" + mBusNumber);
 
             mCurrentBusId = checkBus(mBusNumber);
-            sendMessage(Constants.MSG_UPDATE_TEXT, 0,
+            sendMessage(MSG_UPDATE_TEXT, 0,
                     mResources.getString(R.string.update_dialog_bus_added) + mBusNumber);
             int rowIndex = 0;
             mStopIndex = 0;
@@ -345,7 +370,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                     typeIndex, XLSHelper.MergeSearchType.Row);
 
             if (XLSHelper.isBadScheduleType(cellContent)) {
-                if (cellContent.equals(Constants.EMPTY_STRING)) {
+                if (cellContent.equals(EMPTY_STRING)) {
                     cellContent = XLSHelper.DEFAULT_SCHEDULE_TYPE;
                 } else {
 
@@ -436,8 +461,8 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
             mContext = (Context) objArr[1];
             mResources = mContext.getResources();
         } catch (ClassCastException e) {
-            Log.e(Constants.LOG_TAG, "Bad argument. " + e.getMessage());
-            sendMessage(Constants.MSG_APP_ERROR, "Parse args error: " + e.getMessage());
+            Log.e(LOG_TAG_UPD, "Bad argument. " + e.getMessage());
+            sendMessage(MSG_APP_ERROR, "Parse args error: " + e.getMessage());
             return false;
         }
         return true;
@@ -453,8 +478,8 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
         try {
             return new URL(fileURL);
         } catch (MalformedURLException e) {
-            Log.e(Constants.LOG_TAG_UPD, "Bad URL string: " + fileURL);
-            sendMessage(Constants.MSG_APP_ERROR, "MalformedURLException: " + e.getMessage());
+            Log.e(LOG_TAG_UPD, "Bad URL string: " + fileURL);
+            sendMessage(MSG_APP_ERROR, "MalformedURLException: " + e.getMessage());
         }
         return null;
     }
@@ -480,10 +505,10 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
      * @param xlsHelper XLSHelper instance
      */
     private void extractUpdateDate(XLSHelper xlsHelper) {
-        SharedPreferences preferences = mContext.getSharedPreferences(Constants.DEFAULT_SHARED_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences preferences = mContext.getSharedPreferences(BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         String lastUpdateStr = xlsHelper.getUpdateString();
-        editor.putString(Constants.PREF_LAST_UPDATE, lastUpdateStr);
+        editor.putString(PREF_LAST_UPDATE, lastUpdateStr);
         editor.commit();
     }
 
@@ -570,7 +595,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
         writeLogDebug("Try to download file <" + fURL + ">");
 
         String msgText = mResources.getString(R.string.update_dialog_fload);
-        sendMessage(Constants.MSG_UPDATE_TEXT, 0, msgText);
+        sendMessage(MSG_UPDATE_TEXT, 0, msgText);
 
         /*   try open internet connection to remote host  */
         try {
@@ -578,7 +603,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
             inputStream = uCon.getInputStream();
         } catch (IOException e) {
             writeLogDebug("IOException in downloadFile:" + e);
-            sendMessage(Constants.MSG_NO_INTERNET);
+            sendMessage(MSG_NO_INTERNET);
             return false;
         }
 
@@ -587,7 +612,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
             /*  get file size and send to update dialog  */
             fileSize = uCon.getContentLength();
             if (fileSize > 0) {
-                sendMessage(Constants.MSG_UPDATE_FILE_SIZE, fileSize);
+                sendMessage(MSG_UPDATE_FILE_SIZE, fileSize);
             }
             File file = new File(filePath);
             inputStream = new BufferedInputStream(inputStream);
@@ -600,18 +625,18 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
 
                 /*   send read bytes count to update dialog   */
                 if (fileSize > 0) {
-                    sendMessage(Constants.MSG_UPDATE_PROGRESS, readBytes);
+                    sendMessage(MSG_UPDATE_PROGRESS, readBytes);
                 }
 
                 /*   check if user press back button, update thread will be canceled   */
                 if (isCancelled()) {
-                    sendMessage(Constants.MSG_UPDATE_CANCELED);
+                    sendMessage(MSG_UPDATE_CANCELED);
                     break;
                 }
             }
         } catch (IOException e) {
             writeLogDebug("IOException in downloadFile:" + e);
-            sendMessage(Constants.MSG_IO_ERROR, e.getLocalizedMessage());
+            sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
             return false;
         } finally {
             try {
@@ -620,7 +645,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                 }
             } catch (IOException e) {
                 writeLogDebug("IOException in downloadFile while close out stream:" + e);
-                sendMessage(Constants.MSG_IO_ERROR, e.getLocalizedMessage());
+                sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
             }
             try {
                 if (inputStream != null) {
@@ -628,7 +653,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                 }
             } catch (IOException e) {
                 writeLogDebug("IOException in downloadFile while close input stream:" + e);
-                sendMessage(Constants.MSG_IO_ERROR, e.getLocalizedMessage());
+                sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
             }
         }
         writeLogDebug("Download complete <" + fURL + "> file size: " + fileSize);
@@ -664,7 +689,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
     /**
      * Send message to main thread using mHandler (show update process information)
      *
-     * @param type message type, this type define in {@link Constants}
+     * @param type message type, this type define in {@link busschedule.rasp_ap.MyAsyncTask}
      * @param arg1 argument message, file size or percent
      * @param obj  used for send String value
      */
@@ -691,7 +716,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
 
     private void writeLogDebug(String msg) {
         if (BuildConfig.DEBUG) {
-            Log.d(Constants.LOG_TAG_UPD, msg);
+            Log.d(LOG_TAG_UPD, msg);
         }
     }
 
@@ -720,9 +745,9 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
      */
     private static void deleteFile(String filePath) {
         File fl = new File(filePath);
-        Log.i(Constants.LOG_TAG, "Try delete file:" + filePath);
+        Log.i(LOG_TAG_UPD, "Try delete file:" + filePath);
         if (fl.exists()) {
-            Log.i(Constants.LOG_TAG, (fl.delete() ? "File deleted:" : "Can't delete file:") +
+            Log.i(LOG_TAG_UPD, (fl.delete() ? "File deleted:" : "Can't delete file:") +
                     filePath);
         }
     }

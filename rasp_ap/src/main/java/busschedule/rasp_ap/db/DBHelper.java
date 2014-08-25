@@ -27,7 +27,6 @@ import java.util.zip.ZipInputStream;
 
 import busschedule.rasp_ap.BuildConfig;
 import busschedule.rasp_ap.BusRoute;
-import busschedule.rasp_ap.Constants;
 import busschedule.rasp_ap.R;
 import busschedule.rasp_ap.Stop;
 import busschedule.rasp_ap.StopDetail;
@@ -42,6 +41,9 @@ import busschedule.rasp_ap.TimeList;
  */
 
 public class DBHelper extends SQLiteOpenHelper {
+
+    /*   Log tags   */
+    public static final String LOG_TAG = "BusSchedule";
 
     private static final String DB_TRY_CREATE = "try to create DB";
     private static final String DB_MUST_UPDATE = "database must be updated to new version ";
@@ -284,7 +286,7 @@ public class DBHelper extends SQLiteOpenHelper {
     void openDB() {
         mDb = getDB();
         if (BuildConfig.DEBUG) {
-            Log.i(Constants.LOG_TAG, "openDB " + (mDb != null ? "successful" : "unsuccessful"));
+            Log.i(LOG_TAG, "openDB " + (mDb != null ? "successful" : "unsuccessful"));
         }
     }
 
@@ -297,7 +299,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
         mDb = null;
         if (BuildConfig.DEBUG) {
-            Log.i(Constants.LOG_TAG, "DBHelper.closeDB");
+            Log.i(LOG_TAG, "DBHelper.closeDB");
         }
     }
 
@@ -310,7 +312,7 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onCreate(SQLiteDatabase db) {
-        Log.w(Constants.LOG_TAG, DB_TRY_CREATE);
+        Log.w(LOG_TAG, DB_TRY_CREATE);
         this.mDb = db;
         createDB();
     }
@@ -325,7 +327,7 @@ public class DBHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        Log.w(Constants.LOG_TAG, DB_MUST_UPDATE + newVersion);
+        Log.w(LOG_TAG, DB_MUST_UPDATE + newVersion);
         this.mDb = db;
         dropDB();
         onCreate(db);
@@ -814,7 +816,7 @@ public class DBHelper extends SQLiteOpenHelper {
      * @param sqlStatement SQL query
      */
     private void execSQL(String sqlStatement) {
-        Log.w(Constants.LOG_TAG, DB_EXEC_SQL + sqlStatement);
+        Log.w(LOG_TAG, DB_EXEC_SQL + sqlStatement);
         if (mDb != null) {
             mDb.execSQL(sqlStatement);
         }
@@ -857,11 +859,11 @@ public class DBHelper extends SQLiteOpenHelper {
      * Extract database from zip file stored as raw resource
      */
     private void extractDB() {
-        Log.i(Constants.LOG_TAG, "try extract db from zip file");
+        Log.i(LOG_TAG, "try extract db from zip file");
 
         File dirCreator = new File(mDbPath);
         if (! dirCreator.mkdirs()) {
-            Log.i(Constants.LOG_TAG, "make dir return false! path:" + dirCreator.getPath());
+            Log.i(LOG_TAG, "make dir return false! path:" + dirCreator.getPath());
         }
         File fileDst = new File(mDbPath + "/" + DB_NAME);
 
@@ -882,9 +884,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 }
             }
 
-            Log.i(Constants.LOG_TAG, "extract db from zip file complete");
+            Log.i(LOG_TAG, "extract db from zip file complete");
         } catch (IOException ioe) {
-            Log.e(Constants.LOG_TAG, "unzip error: " + ioe.getMessage() + ". Run createDB()");
+            Log.e(LOG_TAG, "unzip error: " + ioe.getMessage() + ". Run createDB()");
             Toast.makeText(mContext.getApplicationContext(),
                     R.string.extract_error, Toast.LENGTH_LONG).show();
             createDB();                                     //create clear DB
@@ -914,7 +916,7 @@ public class DBHelper extends SQLiteOpenHelper {
         try {
             needClose.close();
         } catch (IOException ioError) {
-            Log.e(Constants.LOG_TAG, "closeStream: " + ioError.getMessage());
+            Log.e(LOG_TAG, "closeStream: " + ioError.getMessage());
             Toast.makeText(mContext.getApplicationContext(),
                     R.string.extract_error, Toast.LENGTH_LONG).show();
         }
