@@ -4,6 +4,7 @@
 
 package busschedule.rasp_ap.ui.activity;
 
+import android.support.v4.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Handler;
@@ -197,14 +198,19 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
         switch (v.getId()) {
 
             case R.id.iBtnRoute:
+                clearBackStack();
                 replaceFragment(RouteFragment.newInstance());
                 break;
 
             case R.id.iBtnNews:
-                replaceFragment(NewsFragment.newInstance());
+                clearBackStack();
+
+                //in the top of backstack saved NewsFragment (method onCreate in this Activity)
+                //replaceFragment(NewsFragment.newInstance());
                 break;
 
             case R.id.iBtnStops:
+                clearBackStack();
                 replaceFragment(RouteStopFragment.newInstance(- 1));
                 break;
 
@@ -228,11 +234,20 @@ public class MainActivity extends ActionBarActivity implements OnRouteSelectedLi
         replaceFragment(StopDetailFragment.newInstance(stopId, stopName));
     }
 
+    private void clearBackStack() {
+        FragmentManager fManager = getSupportFragmentManager();
+
+        //null - only the top state is popped
+        fManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
     private void replaceFragment(Fragment fragment) {
         mFragTrans = getSupportFragmentManager().beginTransaction();
         mFragTrans.replace(R.id.frmMain, fragment);
         //mFragTrans.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-        mFragTrans.addToBackStack(null);
+        if (mFragTrans.isAddToBackStackAllowed()) {
+            mFragTrans.addToBackStack(null);
+        }
         mFragTrans.commit();
     }
 
