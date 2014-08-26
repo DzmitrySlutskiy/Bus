@@ -263,7 +263,7 @@ public class MainActivity extends ActionBarActivity implements RouteFragment.OnR
         fragmentTransaction.replace(R.id.frmMain, fragment);
         //fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         if (fragmentTransaction.isAddToBackStackAllowed()) {
-            fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.addToBackStack(((Object) fragment).getClass().getSimpleName());
         }
         fragmentTransaction.commit();
     }
