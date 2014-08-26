@@ -2,9 +2,8 @@
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
-             tools:context="busschedule.rasp_ap.ui.fragments.TimeListFragment">
+             tools:context="by.slutskiy.busschedule.ui.fragments.TimeListFragment">
 
-    <!-- TODO: Update blank fragment layout -->
 
     <LinearLayout
         android:orientation="vertical"
