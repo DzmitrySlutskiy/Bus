@@ -26,8 +26,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import by.slutskiy.busschedule.db.DBHelper;
+import by.slutskiy.busschedule.data.DBHelper;
 
+import by.slutskiy.busschedule.data.XLSHelper;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;

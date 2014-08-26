@@ -20,16 +20,13 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import by.slutskiy.busschedule.MyAsyncTask;
-import by.slutskiy.busschedule.interfaces.OnRouteSelectedListener;
-import by.slutskiy.busschedule.interfaces.OnRouteStopSelectedListener;
-import by.slutskiy.busschedule.interfaces.OnStopDetailListener;
 import by.slutskiy.busschedule.ui.fragments.NewsFragment;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.ui.fragments.RouteFragment;
 import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 import by.slutskiy.busschedule.ui.fragments.StopDetailFragment;
 import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
-import by.slutskiy.busschedule.db.DBHelper;
+import by.slutskiy.busschedule.data.DBHelper;
 
 /*
  * main application activity
@@ -39,8 +36,8 @@ import by.slutskiy.busschedule.db.DBHelper;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class MainActivity extends ActionBarActivity implements OnRouteSelectedListener, Handler.Callback, ProgressDialog.OnCancelListener,
-        View.OnClickListener, OnRouteStopSelectedListener, OnStopDetailListener {
+public class MainActivity extends ActionBarActivity implements RouteFragment.OnRouteSelectedListener, Handler.Callback, ProgressDialog.OnCancelListener,
+        View.OnClickListener, RouteStopFragment.OnRouteStopSelectedListener, StopDetailFragment.OnStopDetailListener {
 
     private ProgressDialog mProgressDialog;
     private MyAsyncTask mAsyncTask;

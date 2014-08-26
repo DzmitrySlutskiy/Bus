@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package by.slutskiy.busschedule;
+package by.slutskiy.busschedule.data.entities;
 
 import java.util.ArrayList;
 import java.util.List;

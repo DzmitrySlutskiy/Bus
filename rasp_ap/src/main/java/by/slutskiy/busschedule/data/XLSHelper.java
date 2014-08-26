@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package by.slutskiy.busschedule;
+package by.slutskiy.busschedule.data;
 
 import android.util.Log;
 
@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import by.slutskiy.busschedule.MyAsyncTask;
 import jxl.Range;
 import jxl.Workbook;
 import jxl.Sheet;

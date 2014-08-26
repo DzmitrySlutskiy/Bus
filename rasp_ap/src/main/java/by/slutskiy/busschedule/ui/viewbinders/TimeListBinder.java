@@ -1,4 +1,4 @@
-package by.slutskiy.busschedule.viewbinders;
+package by.slutskiy.busschedule.ui.viewbinders;
 
 import android.content.res.Resources;
 import android.view.View;

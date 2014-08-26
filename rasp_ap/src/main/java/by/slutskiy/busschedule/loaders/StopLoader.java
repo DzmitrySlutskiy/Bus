@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
-import by.slutskiy.busschedule.db.DBHelper;
+import by.slutskiy.busschedule.data.DBHelper;
 import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 
 /**

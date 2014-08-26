@@ -23,9 +23,8 @@ import java.util.Collections;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.Stop;
+import by.slutskiy.busschedule.data.entities.Stop;
 import by.slutskiy.busschedule.loaders.StopLoader;
-import by.slutskiy.busschedule.interfaces.OnRouteStopSelectedListener;
 
 /*
  * RouteStopFragment
@@ -260,5 +259,14 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
         if (mRouteId < 0) {
             mStopListView.setSelection(restoreListPosition());
         }
+    }
+
+    /**
+     * OnRouteStopSelectedListener
+     */
+    public interface OnRouteStopSelectedListener {
+        void OnRouteStopSelected(int _id, int routeId, String stopName, String stopDetail);
+
+        void OnStopSelected(int stopId, String stopName);
     }
 }

@@ -6,8 +6,8 @@ import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.List;
 
-import by.slutskiy.busschedule.StopDetail;
-import by.slutskiy.busschedule.db.DBHelper;
+import by.slutskiy.busschedule.data.entities.StopDetail;
+import by.slutskiy.busschedule.data.DBHelper;
 
 /**
  * background task loader

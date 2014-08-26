@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package by.slutskiy.busschedule.db;
+package by.slutskiy.busschedule.data;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -26,11 +26,11 @@ import java.util.List;
 import java.util.zip.ZipInputStream;
 
 import by.slutskiy.busschedule.BuildConfig;
-import by.slutskiy.busschedule.BusRoute;
+import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.Stop;
-import by.slutskiy.busschedule.StopDetail;
-import by.slutskiy.busschedule.TimeList;
+import by.slutskiy.busschedule.data.entities.Stop;
+import by.slutskiy.busschedule.data.entities.StopDetail;
+import by.slutskiy.busschedule.data.entities.TimeList;
 
 /*
  * DBHelper - work with DB. Implemented as singleton. Use getInstance method for create object

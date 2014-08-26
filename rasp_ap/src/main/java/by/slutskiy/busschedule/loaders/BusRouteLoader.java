@@ -5,8 +5,8 @@ import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.List;
 
-import by.slutskiy.busschedule.BusRoute;
-import by.slutskiy.busschedule.db.DBHelper;
+import by.slutskiy.busschedule.data.entities.BusRoute;
+import by.slutskiy.busschedule.data.DBHelper;
 
 /**
  * background data loader

@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package by.slutskiy.busschedule;
+package by.slutskiy.busschedule.data.entities;
 
 /*
  * BusRoute - define info about bus route: route begin and end stop name, bus number.

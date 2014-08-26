@@ -22,11 +22,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import by.slutskiy.busschedule.BusRoute;
+import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.interfaces.OnRouteSelectedListener;
 import by.slutskiy.busschedule.loaders.BusRouteLoader;
-import by.slutskiy.busschedule.viewbinders.BusRouteBinder;
+import by.slutskiy.busschedule.ui.viewbinders.BusRouteBinder;
 
 
 /*
@@ -181,5 +180,13 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
             mBusList.setAdapter(sAdapter);
             mBusList.setOnItemClickListener(this);
         }
+    }
+
+    /**
+     * interface for interaction with activity
+     */
+
+    public interface OnRouteSelectedListener {
+        public void OnRouteSelected(int _id);
     }
 }

@@ -24,10 +24,9 @@ import java.util.List;
 import java.util.Map;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.StopDetail;
-import by.slutskiy.busschedule.interfaces.OnStopDetailListener;
+import by.slutskiy.busschedule.data.entities.StopDetail;
 import by.slutskiy.busschedule.loaders.StopDetailLoader;
-import by.slutskiy.busschedule.viewbinders.StopDetailBinder;
+import by.slutskiy.busschedule.ui.viewbinders.StopDetailBinder;
 
 
 /*
@@ -210,4 +209,13 @@ public class StopDetailFragment extends Fragment implements AdapterView.OnItemCl
 
         mDetailList.setAdapter(sAdapter);
     }
+
+
+    /**
+     * OnStopDetailListener
+     */
+    public interface OnStopDetailListener {
+        public void onStopDetailSelected(int routeListId, int routeId, String stopName, String stopDetail);
+    }
+
 }

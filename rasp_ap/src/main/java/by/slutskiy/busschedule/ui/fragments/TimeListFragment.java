@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.TimeList;
+import by.slutskiy.busschedule.data.entities.TimeList;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
-import by.slutskiy.busschedule.viewbinders.TimeListBinder;
+import by.slutskiy.busschedule.ui.viewbinders.TimeListBinder;
 
 /*
  * TimeListFragment - show bus schedule for selected route and stop

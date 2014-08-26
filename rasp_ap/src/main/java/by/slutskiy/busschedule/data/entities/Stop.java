@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package by.slutskiy.busschedule;
+package by.slutskiy.busschedule.data.entities;
 
 import android.support.annotation.NonNull;
 
@@ -45,7 +45,7 @@ public class Stop implements Comparable {
     /*   implements Comparable for sorting   */
     @Override
     public int compareTo(@NonNull Object another) {
-        return ((another != null) && (another instanceof Stop))
+        return ((another instanceof Stop))              //(another != null) &&
                 ? mStopName.compareTo(((Stop) another).getStopName())
                 : 0;
     }
