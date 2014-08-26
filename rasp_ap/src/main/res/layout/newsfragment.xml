@@ -21,7 +21,6 @@
             android:textSize="@dimen/d15sp"
             android:textIsSelectable="false"
             android:textStyle="bold"
-            android:editable="false"
             android:layout_gravity="center"/>
 
         <ListView
