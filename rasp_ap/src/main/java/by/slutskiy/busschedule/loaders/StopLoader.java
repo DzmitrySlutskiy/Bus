@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
-import by.slutskiy.busschedule.data.DBHelper;
+import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 
 /**
@@ -33,9 +33,9 @@ public class StopLoader extends AsyncTaskLoader<Object> {
 
     @Override
     public Object loadInBackground() {
-        DBHelper dbHelper = DBHelper.getInstance(getContext());
+        DBReader dbReader = DBReader.getInstance(getContext());
         return (getId() == RouteStopFragment.LOADER_ID_STOP_DETAIL)
-                ? dbHelper.getRouteDetail(routeId)
-                : dbHelper.getRouteStopsList(routeId);
+                ? dbReader.getRouteDetail(routeId)
+                : dbReader.getRouteStopsList(routeId);
     }
 }

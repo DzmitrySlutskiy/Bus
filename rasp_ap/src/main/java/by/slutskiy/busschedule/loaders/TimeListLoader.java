@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
-import by.slutskiy.busschedule.data.DBHelper;
+import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
 
 /**
@@ -43,10 +43,10 @@ public class TimeListLoader extends AsyncTaskLoader<Object> {
 
     @Override
     public Object loadInBackground() {
-        DBHelper dbHelper = DBHelper.getInstance(getContext());
+        DBReader dbReader = DBReader.getInstance(getContext());
 
         return (getId() == TimeListFragment.LOADER_TYPE_ID)
-                ? dbHelper.getTypeListByRouteListId(mRouteListIdLoader)
-                : dbHelper.getTimeListByRouteListId(mRouteListIdLoader);
+                ? dbReader.getTypeListByRouteListId(mRouteListIdLoader)
+                : dbReader.getTimeListByRouteListId(mRouteListIdLoader);
     }
 }

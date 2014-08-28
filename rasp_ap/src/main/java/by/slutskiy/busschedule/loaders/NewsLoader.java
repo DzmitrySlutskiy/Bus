@@ -5,7 +5,7 @@ import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.List;
 
-import by.slutskiy.busschedule.data.DBHelper;
+import by.slutskiy.busschedule.data.DBReader;
 
 /**
  * background data loader
@@ -26,8 +26,8 @@ public class NewsLoader extends AsyncTaskLoader<List<String>> {
     @Override
     public List<String> loadInBackground() {
 
-        DBHelper dbHelper = DBHelper.getInstance(getContext());
-        return dbHelper.getNews();
+        DBReader dbReader = DBReader.getInstance(getContext());
+        return dbReader.getNews();
     }
 
 }

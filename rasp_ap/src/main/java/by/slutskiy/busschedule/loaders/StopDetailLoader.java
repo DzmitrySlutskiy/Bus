@@ -7,7 +7,7 @@ import android.support.v4.content.AsyncTaskLoader;
 import java.util.List;
 
 import by.slutskiy.busschedule.data.entities.StopDetail;
-import by.slutskiy.busschedule.data.DBHelper;
+import by.slutskiy.busschedule.data.DBReader;
 
 /**
  * background task loader
@@ -37,8 +37,8 @@ public class StopDetailLoader extends AsyncTaskLoader<List<StopDetail>> {
 
     @Override
     public List<StopDetail> loadInBackground() {
-        DBHelper dbHelper1 = DBHelper.getInstance(getContext());
+        DBReader dbReader1 = DBReader.getInstance(getContext());
 
-        return dbHelper1.getStopDetail(mStopIdLoader, mCurrentHourLoader);
+        return dbReader1.getStopDetail(mStopIdLoader, mCurrentHourLoader);
     }
 }

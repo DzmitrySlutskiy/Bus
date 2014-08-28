@@ -1,16 +1,17 @@
-/*
- * Bus schedule for Grodno
- */
+package by.slutskiy.busschedule.services;
 
-package by.slutskiy.busschedule;
-
+import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
-import android.os.AsyncTask;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
-import android.os.Handler;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -22,71 +23,71 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import by.slutskiy.busschedule.data.DBHelper;
-
+import by.slutskiy.busschedule.BuildConfig;
+import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.data.DBUpdater;
 import by.slutskiy.busschedule.data.XLSHelper;
+import by.slutskiy.busschedule.ui.activity.MainActivity;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
 
-
-/*
- * parse file from website and save data to database
+/**
+ * UpdateService
  * Version 1.0
- * 2014
- * Created by Dzmitry Slutskiy
- * e-mail: dsslutskiy@gmail.com
+ * 27.08.2014
+ * Created by Dzmitry Slutskiy.
  */
+public class UpdateService extends IntentService {
 
-public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
+    public static final String CHECK_UPDATE = "CHECK_UPDATE";
+    public static final String MESSENGER = "MESSENGER";
 
-    public static final String LOG_TAG_UPD = "BusScheduleUpd";
+    public static final String USED_DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
 
-    /* Message type definition for Handler
-     * using for send message to main thread */
-    public static final int MSG_START_PROGRESS = 0;
-    public static final int MSG_UPDATE_PROGRESS = 1;
-    public static final int MSG_UPDATE_CANCELED = 2;
-    public static final int MSG_UPDATE_FILE_SIZE = 3;
-    public static final int MSG_END_PROGRESS = 10;
+    public static final int MSG_UPDATE_NOT_NEED = 0;
+    public static final int MSG_LAST_UPDATE = 3;
+    public static final int MSG_UPDATE_FINISH = 10;
     public static final int MSG_NO_INTERNET = 11;
-    public static final int MSG_UPDATE_TEXT = 12;
     public static final int MSG_IO_ERROR = 13;
     public static final int MSG_UPDATE_FILE_STRUCTURE_ERROR = 20;
     public static final int MSG_UPDATE_DB_WORK_ERROR = 21;
     public static final int MSG_UPDATE_BIFF_ERROR = 22;
     public static final int MSG_APP_ERROR = 23;
 
-    /*  preferences params  */
-    public static final String PREF_LAST_UPDATE = "lastUpdate";
-    public static final String EMPTY_STRING = "";
+    /*  private fields  */
+    private static final String LOG_TAG = UpdateService.class.getSimpleName();
 
     /*   constants for update    */
     private static final String BUS_PARK_URL = "http://www.ap1.by/download/";
     private static final String FILE_NAME = "raspisanie_gorod.xls";
-
-    private static final int MAX_PERCENT = 100;
+    /*  preferences params  */
+    public static final String PREF_LAST_UPDATE = "lastUpdate";
+    public static final String EMPTY_STRING = "";
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
-    private final HashMap<String, Integer> mBusList = new HashMap<String, Integer>();
+    private HashMap<String, Integer> mBusList;
     /**
      * full stop list, String Key - stop name, Integer Value - ID record in DB
      */
-    private final HashMap<String, Integer> mStopList = new HashMap<String, Integer>();
+    private HashMap<String, Integer> mStopList;
     /**
      * type list for all bus ("вых", "раб", "суб", "воскр" и т.д.)
      * , String Key - type string, Integer Value - ID record in DB
      */
-    private final HashMap<String, Integer> mTypeList = new HashMap<String, Integer>();
+    private HashMap<String, Integer> mTypeList;
     /**
      * full route list, String Key - route name, Integer Value - ID record in DB
      */
-    private final HashMap<String, Integer> mRouteList = new HashMap<String, Integer>();
+    private HashMap<String, Integer> mRouteList;
 
     /**
      * type list only for current stop in bus route
@@ -116,108 +117,172 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
      */
     private int mTagAColumnIndex;
 
-    private Handler mHandler;           //for sending message to main thread (update status)
-    private Context mContext;
-    private Resources mResources;
     private static final int MAX_BUFFER = 1024;
     private static final int EOF = - 1;
-    private DBHelper mDbHelper;
+
+    private DBUpdater mDbUpdater;
+
+    private NotificationManager mNotificationManager;
+    private final int mNotificationId = 1;
+    private NotificationCompat.Builder mBuilder;
+    private Messenger mMessenger;
 
     /*  public constructors */
 
-    public MyAsyncTask() {/*   code    */}
+    public UpdateService() {
+        super("UpdateService");
+    }
 
+    /**
+     * This method is invoked on the worker thread with a request to process.
+     * Only one Intent is processed at a time, but the processing happens on a
+     * worker thread that runs independently from other application logic.
+     * So, if this code takes a long time, it will hold up other requests to
+     * the same IntentService, but it will not hold up anything else.
+     * When all requests have been handled, the IntentService stops itself,
+     * so you should not call {@link #stopSelf}.
+     *
+     * @param intent The value passed to {@link
+     *               android.content.Context#startService(android.content.Intent)}.
+     */
     @Override
-    protected Void doInBackground(Object... objArr) {
-        if (! parseArgs(objArr)) {      //parsing args
-            return null;
-        }
-        mDbHelper = DBHelper.getInstance(mContext);
-        String filePath = mContext.getFilesDir().getPath() + "/" + FILE_NAME;
+    protected void onHandleIntent(Intent intent) {
+        initLists();
 
-        /* send message to main thread with MSG_START_PROGRESS flag - will show update dialog*/
-        sendMessage(MSG_START_PROGRESS);
+        mMessenger = (Messenger) intent.getExtras().get(MESSENGER);
+
         URL fURL = getUrl(BUS_PARK_URL + FILE_NAME);
-        if (fURL != null) {
-            if (downloadFile(fURL, filePath)) {         //download xls file from web
 
-                /*  send text to dialog update     */
-                sendMessage(MSG_UPDATE_TEXT, 0,
-                        mResources.getString(R.string.update_dialog_fparse));
+        URLConnection uCon = null;
+        InputStream stream = null;
 
-                /*  send text "100" (for indicate download status info in percent) */
-                sendMessage(MSG_UPDATE_FILE_SIZE, MAX_PERCENT);
-                try {
-                    writeLogDebug("Begin transaction");
-                    mDbHelper.beginTran();                              //begin transaction
-                    mDbHelper.clearDB();
+        int what = MSG_LAST_UPDATE;
 
-                    mXlsHelper = new XLSHelper(filePath);               //open xls file
+        Date lastUpdate;
 
-                    extractNews(mXlsHelper);                            //get news from first sheet
+        /*   try open internet connection to remote host  */
+        try {
+            uCon = fURL.openConnection();
+            stream = uCon.getInputStream();               //check internet IOException throws
+            lastUpdate = new Date(uCon.getLastModified());
+            Log.i(LOG_TAG, "last mod: " + lastUpdate);
+        } catch (IOException e) {
+            what = MSG_NO_INTERNET;
+            lastUpdate = null;
+        }
 
-                    int sheetCount = mXlsHelper.getSheetCount();
+        Date dbUpdateDate = MainActivity.getLastUpdateDate(getApplicationContext());
 
-                    int percent = 0;
-                    if (sheetCount > 0) {
-                        percent = (int) Math.round(100.0 / sheetCount);
-                    }
-
-                    for (int i = 0; i < sheetCount; i++) {
-                        Sheet sheet = mXlsHelper.getSheet(i);
-
-                        parseSheet(sheet);
-
-                        if (isCancelled()) {                //check if user press "back"
-                            sendMessage(MSG_UPDATE_CANCELED);
-                            return null;
-                        }
-
-                        sendMessage(MSG_UPDATE_PROGRESS, percent);    //show progress
-                    }
-
-                    extractUpdateDate(mXlsHelper);
-
-                    mDbHelper.setTranSuccessful();          //commit transaction
-                } catch (IOException e) {
-                    writeLogDebug("IOException:" + e.getMessage());
-                    sendMessage(MSG_IO_ERROR, e.getMessage());
-                    return null;
-                } catch (BiffException e) {
-                    writeLogDebug("BiffException:" + e.getMessage());
-                    sendMessage(MSG_UPDATE_BIFF_ERROR, e.getMessage());
-                    return null;
-                } catch (FileStructureErrorException e) {
-                    writeLogDebug("FileStructureErrorException:" + e.getMessage());
-                    sendMessage(MSG_UPDATE_FILE_STRUCTURE_ERROR);
-                    return null;
-                } catch (DBUpdateWorkException e) {
-                    writeLogDebug("DBUpdateWorkException:" + e.getMessage());
-                    sendMessage(MSG_UPDATE_DB_WORK_ERROR);
-                    return null;
-                } finally {
-                    mDbHelper.endTran();                    //end transaction
-                    if (mXlsHelper != null) {
-                        mXlsHelper.closeWorkbook();         //close workbook
-                    }
+        //  if need only check file modification date
+        if (intent.getBooleanExtra(CHECK_UPDATE, false)) {
+            if (what != MSG_NO_INTERNET) {
+                if ((dbUpdateDate != null) && ! dbUpdateDate.before(lastUpdate)) {
+                    sendMessage(MSG_UPDATE_NOT_NEED);
+                } else {
+                    sendMessage(what, lastUpdate);
                 }
-                deleteFile(filePath);                       //delete temporary xls file
+            } else {
+                sendMessage(what);
+            }
+            return;
+        }
+
+        if (what == MSG_NO_INTERNET) {
+            sendMessage(MSG_NO_INTERNET);
+            return;
+        }
+
+        if ((dbUpdateDate != null) && ! dbUpdateDate.before(lastUpdate)) {
+            sendMessage(MSG_UPDATE_NOT_NEED);
+            return;
+        }
+
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mBuilder = new NotificationCompat.Builder(this);
+
+        mDbUpdater = DBUpdater.getInstance(getApplicationContext());
+        String filePath = getApplicationContext().getFilesDir().getPath() + "/" + FILE_NAME;
+
+
+        if (saveStreamToFile(stream, filePath, uCon.getContentLength())) {
+            try {
+                writeLogDebug("Begin transaction");
+                mDbUpdater.beginTran();                              //begin transaction
+                mDbUpdater.clearDB();
+
+                writeLogDebug("Open xls file");
+                mXlsHelper = new XLSHelper(filePath);               //open xls file
+                writeLogDebug("Xls file opened");
+
+                extractNews(mXlsHelper);                            //get news from first sheet
+
+                int sheetCount = (BuildConfig.DEBUG) ? mXlsHelper.getSheetCount() : mXlsHelper.getSheetCount();
+
+                double percent = 0.0;
+                if (sheetCount > 0) {
+                    percent = 100.0 / sheetCount;
+                }
+
+                updateNotification(getString(R.string.update_dialog_title),
+                        getString(R.string.update_dialog_fparse));
+
+                for (int i = 0; i < sheetCount; i++) {
+                    parseSheet(mXlsHelper.getSheet(i));
+
+                    showProgressNotification(100, (int) (percent * i));//show progress
+                }
+
+                saveUpdateDate(lastUpdate);
+
+                mDbUpdater.setTranSuccessful();          //commit transaction
+            } catch (IOException e) {
+                writeLogDebug("IOException:" + e.getMessage());
+                sendMessage(MSG_IO_ERROR, e.getMessage());
+            } catch (BiffException e) {
+                writeLogDebug("BiffException:" + e.getMessage());
+                sendMessage(MSG_UPDATE_BIFF_ERROR, e.getMessage());
+            } catch (FileStructureErrorException e) {
+                writeLogDebug("FileStructureErrorException:" + e.getMessage());
+                sendMessage(MSG_UPDATE_FILE_STRUCTURE_ERROR);
+            } catch (DBUpdateWorkException e) {
+                writeLogDebug("DBUpdateWorkException:" + e.getMessage());
+                sendMessage(MSG_UPDATE_DB_WORK_ERROR);
+            } finally {
+                mDbUpdater.endTran();                    //end transaction
+                mDbUpdater.close();                      //close updated db connection
+                mDbUpdater = null;
+
+                Log.d(LOG_TAG, "Close main DB connection");
+                DBReader dbReader = DBReader.getInstance(getApplicationContext());
+                dbReader.setUpdateState(true);        //disallow open DB
+                dbReader.close();                     //close main database connection
+
+                Log.d(LOG_TAG, "Delete main DB file");
+                delFile(getApplicationContext().getDatabasePath(DBReader.DEFAULT_DB_NAME).getPath());
+
+                File sourceFile = new File(
+                        getApplicationContext().getDatabasePath(DBUpdater.DB_NAME).getPath());
+
+                File destinationFile = new File(
+                        getApplicationContext().getDatabasePath(DBReader.DEFAULT_DB_NAME).getPath());
+
+                Log.d(LOG_TAG, "Rename file DB result: " + sourceFile.renameTo(destinationFile));
+
+                dbReader.setUpdateState(false);             //allow open DB
+
+                if (mXlsHelper != null) {
+                    mXlsHelper.closeWorkbook();         //close workbook
+                    mXlsHelper = null;
+                }
+                mNotificationManager.cancel(mNotificationId);
+
+                delFile(filePath);                       //delete temporary xls file
+
+                sendMessage(MSG_UPDATE_FINISH);
+
+                clearReference();
             }
         }
-
-        return null;
-    }
-
-    @Override
-    protected void onPostExecute(Void aVoid) {
-        super.onPostExecute(aVoid);
-
-        sendMessage(MSG_END_PROGRESS);            //close update dialog
-    }
-
-    @Override
-    protected void onProgressUpdate(Void... values) {
-        super.onProgressUpdate(values);
     }
 
     /**
@@ -239,8 +304,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
             writeLogDebug("Get new bus:" + mBusNumber);
 
             mCurrentBusId = checkBus(mBusNumber);
-            sendMessage(MSG_UPDATE_TEXT, 0,
-                    mResources.getString(R.string.update_dialog_bus_added) + mBusNumber);
+
             int rowIndex = 0;
             mStopIndex = 0;
             mLastRouteId = - 1;
@@ -264,7 +328,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
 
             /* проход по строкам в поисках тегов "А" - блок расписания на текущую
             * остановку маршрута и запус разбора остановки - parseStop    */
-            while (rowIndex < mSheetRows && ! isCancelled()) {
+            while (rowIndex < mSheetRows) {
                 String cellContent = XLSHelper.getCellContent(sheet, mTagAColumnIndex, rowIndex);
                 if (cellContent.compareTo(XLSHelper.TAG_A) == 0) {   //if A char in that cell
                     rowIndex += parseStop(sheet, rowIndex);
@@ -309,7 +373,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
             mStopIndex = 0;
             mLastRouteId = mCurrentRouteId;
         }
-        int mRouteListId = mDbHelper.addRouteList(mCurrentRouteId, stopId, mStopIndex);
+        int mRouteListId = mDbUpdater.addRouteList(mCurrentRouteId, stopId, mStopIndex);
         if (mRouteListId < 0) {
             throw new DBUpdateWorkException("Error add RouteList stop: " +
                     stopName + " route: " + routeName);
@@ -335,7 +399,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                     minStr += XLSHelper.processingMinutes(
                             getCell(sheet, hourIndex, rIndex).getContents()) + " ";
                 }
-                if (mDbHelper.addTime(mRouteListId, hour, minStr.trim(), type.typeID) < 0) {
+                if (mDbUpdater.addTime(mRouteListId, hour, minStr.trim(), type.typeID) < 0) {
                     throw new DBUpdateWorkException("Error add time for stop: " +
                             stopName + " for route " + routeName);
                 }
@@ -396,7 +460,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
 
             /*  сохраняем в БД и в mTypeList значение типа (если его там еще нет)*/
             if (! mTypeList.containsKey(cellContent)) {
-                int typeId = mDbHelper.addType(cellContent);
+                int typeId = mDbUpdater.addType(cellContent);
                 if (typeId == - 1) {
                     throw new DBUpdateWorkException("Error add type: " + cellContent);
                 }
@@ -439,7 +503,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
         if (! mRouteList.containsKey(fullRouteName)) {
 
             /*   if this route not exists in route list add this route to database   */
-            routeId = mDbHelper.addRoutes(mCurrentBusId, firstStopId, lastStopId);
+            routeId = mDbUpdater.addRoutes(mCurrentBusId, firstStopId, lastStopId);
             if (routeId >= 0) {
 
                 /*  save this route in route list with routeId info*/
@@ -453,23 +517,24 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
         return routeId;
     }
 
+    private void initLists() {
+        mBusList = new HashMap<String, Integer>();
+        mStopList = new HashMap<String, Integer>();
+        mTypeList = new HashMap<String, Integer>();
+        mRouteList = new HashMap<String, Integer>();
+    }
+
     /**
-     * parsing arguments
-     *
-     * @param objArr arguments array
-     * @return if parse successful return true, else otherwise
+     * clear private reference
      */
-    private boolean parseArgs(Object[] objArr) {
-        try {
-            mHandler = (Handler) objArr[0];
-            mContext = (Context) objArr[1];
-            mResources = mContext.getResources();
-        } catch (ClassCastException e) {
-            Log.e(LOG_TAG_UPD, "Bad argument. " + e.getMessage());
-            sendMessage(MSG_APP_ERROR, "Parse args error: " + e.getMessage());
-            return false;
-        }
-        return true;
+    private void clearReference() {
+        mBusList = null;
+        mStopList = null;
+        mTypeList = null;
+        mRouteList = null;
+        mNotificationManager = null;
+        mBuilder = null;
+        mMessenger = null;
     }
 
     /**
@@ -482,8 +547,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
         try {
             return new URL(fileURL);
         } catch (MalformedURLException e) {
-            Log.e(LOG_TAG_UPD, "Bad URL string: " + fileURL);
-            sendMessage(MSG_APP_ERROR, "MalformedURLException: " + e.getMessage());
+            Log.e(LOG_TAG, "Bad URL string: " + fileURL);
         }
         return null;
     }
@@ -497,25 +561,27 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
     private void extractNews(XLSHelper xlsHelper) throws DBUpdateWorkException {
         List<String> newsList = xlsHelper.getNewsList();
         for (String news : newsList) {
-            if (mDbHelper.addNews(news) < 0) {
+            if (mDbUpdater.addNews(news) < 0) {
                 throw new DBUpdateWorkException("Error add news: " + news);
             }
         }
     }
 
     /**
-     * get update date from first sheet and save in shared prefs
+     * Save update date
      *
-     * @param xlsHelper XLSHelper instance
+     * @param updateDate update date
      */
-    private void extractUpdateDate(XLSHelper xlsHelper) {
-        SharedPreferences preferences = mContext.getSharedPreferences(BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        String lastUpdateStr = xlsHelper.getUpdateString();
-        editor.putString(PREF_LAST_UPDATE, lastUpdateStr);
-        editor.commit();
+    private void saveUpdateDate(Date updateDate) {
+        if (updateDate != null) {
+            SharedPreferences preferences = getApplicationContext().
+                    getSharedPreferences(BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putString(PREF_LAST_UPDATE,
+                    new SimpleDateFormat(USED_DATE_FORMAT).format(updateDate));
+            editor.commit();
+        }
     }
-
 
     /**
      * Check stop name in HashMap mStopList
@@ -528,7 +594,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
     private int checkStop(String stopName) throws DBUpdateWorkException {
         int stopId;
         if (! mStopList.containsKey(stopName)) {
-            stopId = mDbHelper.addStop(stopName);
+            stopId = mDbUpdater.addStop(stopName);
             if (stopId >= 0) {
                 mStopList.put(stopName, stopId);
             } else {
@@ -550,7 +616,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
     private int checkBus(String busNumber) throws DBUpdateWorkException {
         int busId;
         if (! mBusList.containsKey(busNumber)) {
-            busId = mDbHelper.addBus(busNumber);
+            busId = mDbUpdater.addBus(busNumber);
             if (busId >= 0) {
                 mBusList.put(busNumber, busId);
             } else {
@@ -584,62 +650,41 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
     }
 
     /**
-     * Download file by URL and save to filePath
+     * saveStreamToFile
      *
-     * @param fURL     URL (like http://www.ap1.by/download/raspisanie_gorod.xls)
-     * @param filePath file path for saving
-     * @return true - true If the file has been downloaded and saved, false otherwise
+     * @param inputStream stream for saving
+     * @param filePath    path for saving
+     * @param fileSize    file size
+     * @return true - true If stream has been downloaded and saved, false otherwise
      */
-    private boolean downloadFile(URL fURL, String filePath) {
-        URLConnection uCon;
-        InputStream inputStream;
+    private boolean saveStreamToFile(InputStream inputStream, String filePath, int fileSize) {
+
         OutputStream outStream = null;
-        int fileSize = 0;
-
-        writeLogDebug("Try to download file <" + fURL + ">");
-
-        String msgText = mResources.getString(R.string.update_dialog_fload);
-        sendMessage(MSG_UPDATE_TEXT, 0, msgText);
-
-        /*   try open internet connection to remote host  */
-        try {
-            uCon = fURL.openConnection();
-            inputStream = uCon.getInputStream();
-        } catch (IOException e) {
-            writeLogDebug("IOException in downloadFile:" + e);
-            sendMessage(MSG_NO_INTERNET);
-            return false;
-        }
 
         /*   download file and save to filePath   */
+        if (fileSize > 0) {
+            notifyUser(getString(R.string.update_dialog_fparse),
+                    getString(R.string.update_dialog_fload));
+        }
         try {
-            /*  get file size and send to update dialog  */
-            fileSize = uCon.getContentLength();
-            if (fileSize > 0) {
-                sendMessage(MSG_UPDATE_FILE_SIZE, fileSize);
-            }
             File file = new File(filePath);
             inputStream = new BufferedInputStream(inputStream);
             outStream = new BufferedOutputStream(new FileOutputStream(file));
 
             byte[] buffer = new byte[MAX_BUFFER];
             int readBytes;
+            int readBytesSum = 0;
             while ((readBytes = inputStream.read(buffer)) != EOF) {
                 outStream.write(buffer, 0, readBytes);
+                readBytesSum += readBytes;
 
                 /*   send read bytes count to update dialog   */
                 if (fileSize > 0) {
-                    sendMessage(MSG_UPDATE_PROGRESS, readBytes);
-                }
-
-                /*   check if user press back button, update thread will be canceled   */
-                if (isCancelled()) {
-                    sendMessage(MSG_UPDATE_CANCELED);
-                    break;
+                    showProgressNotification(fileSize, readBytesSum);
                 }
             }
         } catch (IOException e) {
-            writeLogDebug("IOException in downloadFile:" + e);
+            writeLogDebug("IOException in saveStreamToFile:" + e);
             sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
             return false;
         } finally {
@@ -648,7 +693,7 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                     outStream.close();
                 }
             } catch (IOException e) {
-                writeLogDebug("IOException in downloadFile while close out stream:" + e);
+                writeLogDebug("IOException in saveStreamToFile while close out stream:" + e);
                 sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
             }
             try {
@@ -656,11 +701,11 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
                     inputStream.close();
                 }
             } catch (IOException e) {
-                writeLogDebug("IOException in downloadFile while close input stream:" + e);
+                writeLogDebug("IOException in saveStreamToFile while close input stream:" + e);
                 sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
             }
         }
-        writeLogDebug("Download complete <" + fURL + "> file size: " + fileSize);
+        writeLogDebug("Download complete file size: " + fileSize);
         return true;
     }
 
@@ -689,38 +734,9 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
         return strToInt(str, 0);
     }
 
-
-    /**
-     * Send message to main thread using mHandler (show update process information)
-     *
-     * @param type message type, this type define in {@link by.slutskiy.busschedule.MyAsyncTask}
-     * @param arg1 argument message, file size or percent
-     * @param obj  used for send String value
-     */
-    private void sendMessage(int type, int arg1, Object obj) {
-        Message msg = mHandler.obtainMessage(type);
-        msg.arg1 = arg1;
-        if (obj != null) {
-            msg.obj = obj;
-        }
-        mHandler.sendMessage(msg);
-    }
-
-    private void sendMessage(int type, int arg1) {
-        sendMessage(type, arg1, null);
-    }
-
-    private void sendMessage(int type) {
-        sendMessage(type, 0, null);
-    }
-
-    private void sendMessage(int type, Object obj) {
-        sendMessage(type, 0, obj);
-    }
-
     private void writeLogDebug(String msg) {
         if (BuildConfig.DEBUG) {
-            Log.d(LOG_TAG_UPD, msg);
+            Log.d(LOG_TAG, msg);
         }
     }
 
@@ -747,11 +763,11 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
      *
      * @param filePath file path
      */
-    private static void deleteFile(String filePath) {
+    private static void delFile(String filePath) {
         File fl = new File(filePath);
-        Log.i(LOG_TAG_UPD, "Try delete file:" + filePath);
+        Log.i(LOG_TAG, "Try delete file:" + filePath);
         if (fl.exists()) {
-            Log.i(LOG_TAG_UPD, (fl.delete() ? "File deleted:" : "Can't delete file:") +
+            Log.i(LOG_TAG, (fl.delete() ? "File deleted:" : "Can't delete file:") +
                     filePath);
         }
     }
@@ -761,6 +777,37 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
         //        public String type;
         public int typeID;                  //id in DB for current time type (по вых, по раб etc)
         public int typeRowSize;             //sometimes take 2 and more row for one time type
+    }
+
+    private void notifyUser(String title, String text) {
+
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, MainActivity.class);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+
+        stackBuilder.addParentStack(MainActivity.class);
+        stackBuilder.addNextIntent(resultIntent);
+
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(
+                0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        mBuilder.setContentIntent(resultPendingIntent);
+        updateNotification(title, text);
+    }
+
+    private void showProgressNotification(int max, int progress) {
+        mBuilder.setProgress(max, progress, false);
+        // Displays the progress bar for the first time.
+        mNotificationManager.notify(mNotificationId, mBuilder.build());
+    }
+
+    private void updateNotification(String title, String text) {
+        mBuilder.setSmallIcon(R.drawable.ic_launcher);
+        mBuilder.setContentTitle(title);
+        mBuilder.setContentText(text);
+
+        mNotificationManager.notify(mNotificationId, mBuilder.build());
     }
 
     /**
@@ -781,5 +828,33 @@ public class MyAsyncTask extends AsyncTask<Object, Void, Void> {
         public DBUpdateWorkException(String msg) {
             super(msg);
         }
+    }
+
+    /**
+     * Send message to main thread using mHandler (show update process information)
+     *
+     * @param type message type, this type define in
+     * @param obj  used for send String value
+     */
+    private void sendMessage(int type, Object obj) {
+        if (mMessenger != null) {
+            Message msg = new Message();
+            msg.what = type;
+
+            if (obj != null) {
+                msg.obj = obj;
+            }
+
+            try {
+                mMessenger.send(msg);
+            } catch (RemoteException e) {
+                //if the target Handler no longer exists - Handler - Activity (if closed)
+                //do nothing
+            }
+        }
+    }
+
+    private void sendMessage(int type) {
+        sendMessage(type, null);
     }
 }

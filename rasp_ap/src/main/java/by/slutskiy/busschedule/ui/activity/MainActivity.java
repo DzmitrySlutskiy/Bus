@@ -4,29 +4,38 @@
 
 package by.slutskiy.busschedule.ui.activity;
 
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Messenger;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.widget.PopupMenu;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import by.slutskiy.busschedule.MyAsyncTask;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import by.slutskiy.busschedule.BuildConfig;
+import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.fragments.NewsFragment;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.ui.fragments.RouteFragment;
 import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 import by.slutskiy.busschedule.ui.fragments.StopDetailFragment;
 import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
-import by.slutskiy.busschedule.data.DBHelper;
+import by.slutskiy.busschedule.data.DBReader;
 
 /*
  * main application activity
@@ -36,11 +45,11 @@ import by.slutskiy.busschedule.data.DBHelper;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class MainActivity extends ActionBarActivity implements RouteFragment.OnRouteSelectedListener, Handler.Callback, ProgressDialog.OnCancelListener,
-        View.OnClickListener, RouteStopFragment.OnRouteStopSelectedListener, StopDetailFragment.OnStopDetailListener {
-
-    private ProgressDialog mProgressDialog;
-    private MyAsyncTask mAsyncTask;
+public class MainActivity extends ActionBarActivity implements Handler.Callback,
+        RouteFragment.OnRouteSelectedListener,
+        View.OnClickListener, RouteStopFragment.OnRouteStopSelectedListener,
+        StopDetailFragment.OnStopDetailListener, PopupMenu.OnMenuItemClickListener,
+        PopupMenu.OnDismissListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,102 +80,55 @@ public class MainActivity extends ActionBarActivity implements RouteFragment.OnR
     }
 
     /**
-     * ProgressDialog.OnCancelListener - interface implementation
-     */
-    public void onCancel(DialogInterface dialog) {
-        if (mAsyncTask != null) {
-            mAsyncTask.cancel(false);
-            mAsyncTask = null;
-        }
-    }
-
-    /**
      * Handler.Callback - interface implementation
      * Get message from MyAsyncTask thread and show update progress information
      */
     public boolean handleMessage(Message msg) {
-        String messageStr;
+        String messageStr = "";
         switch (msg.what) {
-            case MyAsyncTask.MSG_START_PROGRESS:
-                mProgressDialog = new ProgressDialog(this);
-                mProgressDialog.setTitle(getResources().getString(R.string.update_dialog_title));
-                mProgressDialog.setMessage(getResources().getString(R.string.update_dialog_message));
-                mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                mProgressDialog.setMax(0);
-                mProgressDialog.setProgress(0);
-                mProgressDialog.setIndeterminate(true);
-                mProgressDialog.setOnCancelListener(this);
-                mProgressDialog.show();
-                mProgressDialog.setIndeterminate(false);
+
+            case UpdateService.MSG_UPDATE_FINISH:
+                messageStr = getResources().getString(R.string.update_finish);
                 break;
 
-            case MyAsyncTask.MSG_UPDATE_PROGRESS:
-                if (mProgressDialog != null) {
-                    mProgressDialog.incrementProgressBy(msg.arg1);
-                }
+            case UpdateService.MSG_NO_INTERNET:
+                messageStr = getResources().getString(R.string.update_no_internet);
                 break;
 
-            case MyAsyncTask.MSG_END_PROGRESS:
-                dismissDialog();
+            case UpdateService.MSG_UPDATE_FILE_STRUCTURE_ERROR:
+                messageStr = getResources().getString(R.string.update_file_struct_error);
                 break;
 
-            case MyAsyncTask.MSG_UPDATE_CANCELED:
-                dismissDialog();
+            case UpdateService.MSG_UPDATE_DB_WORK_ERROR:
+                messageStr = getResources().getString(R.string.update_db_update_error);
                 break;
 
-            case MyAsyncTask.MSG_UPDATE_TEXT:
-                messageStr = (String) msg.obj;
-                if (mProgressDialog != null) {
-                    mProgressDialog.setMessage(messageStr);
-                }
-                break;
-
-            case MyAsyncTask.MSG_NO_INTERNET:
-                dismissDialog();
-                Toast.makeText(getApplicationContext(),
-                        R.string.update_no_internet, Toast.LENGTH_LONG).show();
-                break;
-
-            case MyAsyncTask.MSG_UPDATE_FILE_SIZE:
-                if (mProgressDialog != null) {
-                    mProgressDialog.setMax(msg.arg1);
-                    mProgressDialog.setProgress(0);
-                }
-                break;
-
-            case MyAsyncTask.MSG_UPDATE_FILE_STRUCTURE_ERROR:
-                dismissDialog();
-                Toast.makeText(getApplicationContext(),
-                        R.string.update_file_struct_error, Toast.LENGTH_LONG).show();
-                break;
-
-            case MyAsyncTask.MSG_UPDATE_DB_WORK_ERROR:
-                dismissDialog();
-                Toast.makeText(getApplicationContext(),
-                        R.string.update_db_update_error, Toast.LENGTH_LONG).show();
-                break;
-
-            case MyAsyncTask.MSG_IO_ERROR:
-                dismissDialog();
+            case UpdateService.MSG_IO_ERROR:
                 messageStr = getResources().getString(R.string.update_io_error) + " " + msg.obj;
-                Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
                 break;
 
-            case MyAsyncTask.MSG_UPDATE_BIFF_ERROR:
-                dismissDialog();
+            case UpdateService.MSG_UPDATE_BIFF_ERROR:
                 messageStr = getResources().getString(R.string.update_biff_error) + " " + msg.obj;
-                Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
                 break;
 
-            case MyAsyncTask.MSG_APP_ERROR:
-                dismissDialog();
+            case UpdateService.MSG_APP_ERROR:
                 messageStr = getResources().getString(R.string.app_error) + " " + msg.obj;
-                Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
+                break;
+
+            case UpdateService.MSG_UPDATE_NOT_NEED:
+                messageStr = getResources().getString(R.string.update_not_available);
+                break;
+
+            case UpdateService.MSG_LAST_UPDATE:
+                messageStr = getResources().getString(R.string.update_available) + " " +
+                        new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format((Date) msg.obj);
                 break;
 
             default:
-                dismissDialog();
                 break;
+        }
+        if (! messageStr.equals("")) {
+            Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
         }
         return true;
     }
@@ -174,9 +136,9 @@ public class MainActivity extends ActionBarActivity implements RouteFragment.OnR
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        DBHelper dbHelper = DBHelper.getInstance(this);
-        if (dbHelper != null) {
-            dbHelper.closeDB();
+        DBReader dbReader = DBReader.getInstance(this);
+        if (dbReader != null) {
+            dbReader.closeDB();
         }
     }
 
@@ -187,14 +149,79 @@ public class MainActivity extends ActionBarActivity implements RouteFragment.OnR
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            Object[] objArr = new Object[2];
-            objArr[0] = new Handler(this);
-            objArr[1] = getApplicationContext();
-            mAsyncTask = new MyAsyncTask();
-            mAsyncTask.execute(objArr);
+
+        switch (id) {
+            case R.id.action_settings:
+
+                showPopup(findViewById(R.id.action_settings));
+                break;
+
+            default:
+                break;
         }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    public static Date getLastUpdateDate(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(BuildConfig.PACKAGE_NAME,
+                Context.MODE_PRIVATE);
+        String lastUpdateString =
+                preferences.getString(UpdateService.PREF_LAST_UPDATE, "07-07-2014 16:00:00");
+
+        SimpleDateFormat format = new SimpleDateFormat(UpdateService.USED_DATE_FORMAT);
+        try {
+            return format.parse(lastUpdateString);
+        } catch (ParseException e) {
+            return null;
+        }
+    }
+
+    private void showPopup(View v) {
+        if (v != null) {
+            PopupMenu popup = new PopupMenu(this, v);
+
+            MenuInflater inflater = popup.getMenuInflater();
+
+            inflater.inflate(R.menu.popupmenu, popup.getMenu());
+            popup.setOnMenuItemClickListener(this);
+            popup.setOnDismissListener(this);
+
+            popup.show();
+        }
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+
+        Intent serviceIntent = new Intent(this, UpdateService.class);
+        Messenger messenger = new Messenger(new Handler(this));
+        serviceIntent.putExtra(UpdateService.MESSENGER, messenger);
+
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+
+
+                return true;
+
+            case R.id.action_check_update:
+                serviceIntent.putExtra(UpdateService.CHECK_UPDATE, true);
+                startService(serviceIntent);
+                return true;
+
+            case R.id.action_update:
+                serviceIntent.putExtra(UpdateService.CHECK_UPDATE, false);
+                startService(serviceIntent);
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    public void onDismiss(PopupMenu menu) {
+        menu.setOnMenuItemClickListener(null);
+        menu.setOnDismissListener(null);
     }
 
     @Override
@@ -209,7 +236,7 @@ public class MainActivity extends ActionBarActivity implements RouteFragment.OnR
             case R.id.iBtnNews:
                 clearBackStack();
 
-                //in the top of backstack saved NewsFragment (method onCreate in this Activity)
+                //in the top of back stack saved NewsFragment (method onCreate in this Activity)
                 //replaceFragment(NewsFragment.newInstance());
                 break;
 
@@ -236,19 +263,6 @@ public class MainActivity extends ActionBarActivity implements RouteFragment.OnR
     @Override
     public void OnStopSelected(int stopId, String stopName) {
         replaceFragment(StopDetailFragment.newInstance(stopId, stopName));
-    }
-
-    /**
-     * dismiss dialog and set private variable mProgressDialog to null
-     */
-    private void dismissDialog() {
-        if (mProgressDialog != null) {
-            mProgressDialog.dismiss();
-            mProgressDialog = null;
-
-            //dismiss dialog when MyAsyncTask finish or crash
-            mAsyncTask = null;
-        }
     }
 
     private void clearBackStack() {

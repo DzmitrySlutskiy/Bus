@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import by.slutskiy.busschedule.BuildConfig;
-import by.slutskiy.busschedule.MyAsyncTask;
 import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.loaders.NewsLoader;
 
 /*
@@ -67,7 +67,7 @@ public class NewsFragment extends ListFragment implements
         SharedPreferences preferences = getActivity().getSharedPreferences(
                 BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
         String lastUpdateStr = getResources().getString(R.string.newsFrgUpdateStr);
-        lastUpdateStr += preferences.getString(MyAsyncTask.PREF_LAST_UPDATE, MyAsyncTask.EMPTY_STRING);
+        lastUpdateStr += preferences.getString(UpdateService.PREF_LAST_UPDATE, UpdateService.EMPTY_STRING);
 
         TextView tvUpdateDate = (TextView) fragmentView.findViewById(R.id.tvUpdateDate);
         tvUpdateDate.setText(lastUpdateStr);

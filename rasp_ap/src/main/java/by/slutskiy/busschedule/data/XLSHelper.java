@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import by.slutskiy.busschedule.MyAsyncTask;
+import by.slutskiy.busschedule.services.UpdateService;
 import jxl.Range;
 import jxl.Workbook;
 import jxl.Sheet;
@@ -31,6 +31,8 @@ import jxl.read.biff.BiffException;
  */
 
 public class XLSHelper {
+
+    private static final String LOG_TAG = XLSHelper.class.getSimpleName();
 
     public static final String TAG_A = "A";
     public static final int STOP_COLUMN_INDEX = 4;
@@ -166,13 +168,13 @@ public class XLSHelper {
             Sheet sheet = mWorkbook.getSheet(UPD_DATE_SHEET);
             Cell cell = sheet.getCell(UPD_DATE_COLUMN, UPD_DATE_ROW);
             String dateUpdate = cell.getContents().trim();
-            if ((! dateUpdate.equals(MyAsyncTask.EMPTY_STRING)) &&
+            if ((! dateUpdate.equals(UpdateService.EMPTY_STRING)) &&
                     (dateUpdate.length() > MAX_DATE_LENGTH)) {
                 dateUpdate = dateUpdate.substring(dateUpdate.length() - MAX_DATE_LENGTH);
             }
             return dateUpdate;
         }
-        return MyAsyncTask.EMPTY_STRING;
+        return UpdateService.EMPTY_STRING;
     }
 
     /**
@@ -194,8 +196,8 @@ public class XLSHelper {
             for (int i = NEWS_SEARCH_ROW; i < sheet.getRows(); i++) {
                 Cell cell = sheet.getCell(NEWS_SEARCH_COLUMN, i);
                 String cellContent = cell.getContents().trim();
-                String news = MyAsyncTask.EMPTY_STRING;
-                if (! cellContent.equals(MyAsyncTask.EMPTY_STRING)) {     //if string not empty
+                String news = UpdateService.EMPTY_STRING;
+                if (! cellContent.equals(UpdateService.EMPTY_STRING)) {     //if string not empty
                     firstNewsFound = true;                              //we found news
                     news = cellContent;
                 }
@@ -205,11 +207,11 @@ public class XLSHelper {
                     * check right cell to text data */
                     Cell rCell = sheet.getCell(NEWS_SEARCH_COLUMN + 1, i);
                     String rCellContent = rCell.getContents().trim();
-                    if (! rCellContent.equals(MyAsyncTask.EMPTY_STRING)) {
+                    if (! rCellContent.equals(UpdateService.EMPTY_STRING)) {
                         news += rCellContent;
                     }
                 }
-                if (! news.equals(MyAsyncTask.EMPTY_STRING)) {
+                if (! news.equals(UpdateService.EMPTY_STRING)) {
                     newsList.add(news);
                 }
             }
@@ -286,7 +288,7 @@ public class XLSHelper {
 
             /* if cell merged, we can't get data from this cells if using not top/left coordinate
             * check cell content, if has empty string - we need check Range array for this cell*/
-            if (cell.getContents().trim().equals(MyAsyncTask.EMPTY_STRING)) {
+            if (cell.getContents().trim().equals(UpdateService.EMPTY_STRING)) {
                 RangeIndex rangeIndex = checkRange(cell, deleteRangeItem);
                 if (rangeIndex != null) {
                     return sheet.getCell(rangeIndex.topColumn,
@@ -295,7 +297,7 @@ public class XLSHelper {
             }
             return cell.getContents().trim();
         } else {
-            Log.e(MyAsyncTask.LOG_TAG_UPD, "sheet.rows: " + sSheetRows + " row:"
+            Log.e(LOG_TAG, "sheet.rows: " + sSheetRows + " row:"
                     + row + " sheet.columns: " + sSheetColumns + " column: " + column);
             return "";
         }
@@ -338,7 +340,7 @@ public class XLSHelper {
     public static boolean isBadScheduleType(String typeStr) {
         typeStr = typeStr.trim();
         return (typeStr.equals(SCHEDULE_TYPE[0]) ||
-                typeStr.equals(MyAsyncTask.EMPTY_STRING) ||
+                typeStr.equals(UpdateService.EMPTY_STRING) ||
                 (Integer.getInteger(typeStr, Integer.MAX_VALUE) != Integer.MAX_VALUE));
     }
 

@@ -6,7 +6,7 @@ import android.support.v4.content.AsyncTaskLoader;
 import java.util.List;
 
 import by.slutskiy.busschedule.data.entities.BusRoute;
-import by.slutskiy.busschedule.data.DBHelper;
+import by.slutskiy.busschedule.data.DBReader;
 
 /**
  * background data loader
@@ -25,8 +25,8 @@ public class BusRouteLoader extends AsyncTaskLoader<List<BusRoute>> {
 
     @Override
     public List<BusRoute> loadInBackground() {
-        DBHelper dbHelper = DBHelper.getInstance(getContext());
-        return dbHelper.getRoutesList();
+        DBReader dbReader = DBReader.getInstance(getContext());
+        return dbReader.getRoutesList();
     }
 
 }
