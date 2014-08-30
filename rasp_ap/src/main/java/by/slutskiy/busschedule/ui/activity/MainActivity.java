@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import by.slutskiy.busschedule.BuildConfig;
+import by.slutskiy.busschedule.data.OrmDBHelper;
 import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.fragments.NewsFragment;
 import by.slutskiy.busschedule.R;
@@ -35,7 +36,6 @@ import by.slutskiy.busschedule.ui.fragments.RouteFragment;
 import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 import by.slutskiy.busschedule.ui.fragments.StopDetailFragment;
 import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
-import by.slutskiy.busschedule.data.DBReader;
 
 /*
  * main application activity
@@ -136,9 +136,11 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        DBReader dbReader = DBReader.getInstance(this);
-        if (dbReader != null) {
-            dbReader.closeDB();
+
+        OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getApplicationContext());
+
+        if ((dbHelper != null) && (dbHelper.isOpen())) {
+            dbHelper.close();
         }
     }
 
@@ -200,7 +202,6 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
         switch (item.getItemId()) {
             case R.id.action_settings:
-
 
                 return true;
 

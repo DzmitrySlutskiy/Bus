@@ -4,7 +4,15 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
-import by.slutskiy.busschedule.data.DBReader;
+import com.j256.ormlite.stmt.QueryBuilder;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import by.slutskiy.busschedule.data.OrmDBHelper;
+import by.slutskiy.busschedule.data.entities.RouteList;
+import by.slutskiy.busschedule.data.entities.Routes;
+import by.slutskiy.busschedule.data.entities.StopList;
 import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 
 /**
@@ -26,6 +34,7 @@ public class StopLoader extends AsyncTaskLoader<Object> {
      */
     public StopLoader(Context context, Bundle args) {
         super(context);
+
         if (args != null) {
             routeId = args.getInt(ATT_ROUT_ID);
         }
@@ -33,9 +42,42 @@ public class StopLoader extends AsyncTaskLoader<Object> {
 
     @Override
     public Object loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
-        return (getId() == RouteStopFragment.LOADER_ID_STOP_DETAIL)
-                ? dbReader.getRouteDetail(routeId)
-                : dbReader.getRouteStopsList(routeId);
+        OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getContext());
+
+        if (dbHelper == null) {
+            return null;
+        }
+
+        try {
+            if (getId() == RouteStopFragment.LOADER_ID_STOP_DETAIL) {
+                QueryBuilder<RouteList, Integer> qbRouteList = dbHelper.getRouteListDao().queryBuilder();
+                QueryBuilder<Routes, Integer> qbRoutes = dbHelper.getRoutesDao().queryBuilder();
+
+                qbRouteList.where().eq(RouteList.ROUTE_ID, routeId);
+                qbRoutes.join(qbRouteList);
+                List<Routes> routesList = qbRoutes.query();
+                if (routesList.size() > 0) {
+                    Routes routes = routesList.get(0);
+                    return routes.toString();
+                }
+                return "";
+            } else {
+                if (routeId < 0) {
+                    return dbHelper.getStopDao().queryForAll();
+                } else {
+                    QueryBuilder<RouteList, Integer> qbRouteList = dbHelper.getRouteListDao().queryBuilder();
+                    QueryBuilder<StopList, Integer> qbStopList = dbHelper.getStopDao().queryBuilder();
+
+                    qbStopList.join(qbRouteList);
+
+                    qbRouteList.where().eq(RouteList.ROUTE_ID, routeId);
+                    qbRouteList.orderBy(RouteList.STOP_INDEX, true);
+
+                    return qbStopList.query();
+                }
+            }
+        } catch (SQLException e) {
+            return null;
+        }
     }
 }

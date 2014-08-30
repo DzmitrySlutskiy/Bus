@@ -3,9 +3,11 @@ package by.slutskiy.busschedule.loaders;
 import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
 
+import java.sql.SQLException;
 import java.util.List;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.data.OrmDBHelper;
+import by.slutskiy.busschedule.data.entities.News;
 
 /**
  * background data loader
@@ -13,7 +15,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class NewsLoader extends AsyncTaskLoader<List<String>> {
+public class NewsLoader extends AsyncTaskLoader<List<News>> {
 
     /**
      * @param context used to retrieve the application context.
@@ -24,10 +26,19 @@ public class NewsLoader extends AsyncTaskLoader<List<String>> {
     }
 
     @Override
-    public List<String> loadInBackground() {
+    public List<News> loadInBackground() {
 
-        DBReader dbReader = DBReader.getInstance(getContext());
-        return dbReader.getNews();
+        OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getContext());
+
+        if (dbHelper == null) {
+            return null;
+        }
+
+        try {
+            return dbHelper.getNewsDao().queryForAll();
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
 }

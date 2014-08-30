@@ -15,12 +15,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.data.entities.News;
 import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.loaders.NewsLoader;
 
@@ -33,7 +35,7 @@ import by.slutskiy.busschedule.loaders.NewsLoader;
  */
 
 public class NewsFragment extends ListFragment implements
-        LoaderManager.LoaderCallbacks<List<String>> {
+        LoaderManager.LoaderCallbacks<List<News>> {
 
     private static final int LOADER_ID = 1;
 
@@ -60,13 +62,13 @@ public class NewsFragment extends ListFragment implements
 
         View fragmentView = inflater.inflate(R.layout.newsfragment, container, false);
 
-        List<String> updateText = new ArrayList<String>();
-        updateText.add(getResources().getString(R.string.refresh_data));
+        List<News> updateText = new ArrayList<News>();
+        updateText.add(new News(getString(R.string.refresh_data)));
         updateData(updateText);
 
         SharedPreferences preferences = getActivity().getSharedPreferences(
                 BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
-        String lastUpdateStr = getResources().getString(R.string.newsFrgUpdateStr);
+        String lastUpdateStr = getString(R.string.newsFrgUpdateStr);
         lastUpdateStr += preferences.getString(UpdateService.PREF_LAST_UPDATE, UpdateService.EMPTY_STRING);
 
         TextView tvUpdateDate = (TextView) fragmentView.findViewById(R.id.tvUpdateDate);
@@ -89,32 +91,37 @@ public class NewsFragment extends ListFragment implements
 
     /*  Async data loader callback implementation*/
     @Override
-    public Loader<List<String>> onCreateLoader(int id, Bundle args) {
+    public Loader<List<News>> onCreateLoader(int id, Bundle args) {
         return new NewsLoader(getActivity().getApplicationContext());
     }
 
     @Override
-    public void onLoadFinished(Loader<List<String>> loader, List<String> data) {
+    public void onLoadFinished(Loader<List<News>> loader, List<News> data) {
         updateData(data);                                           //update data in list
     }
 
     @Override
-    public void onLoaderReset(Loader<List<String>> loader) {
+    public void onLoaderReset(Loader<List<News>> loader) {
     }
 
     /**
      * Update data in fragment list
      * @param data list with news
      */
-    private void updateData(List<String> data) {
+    private void updateData(List<News> data) {
+        if (data != null) {
+            String[] newsArray = new String[data.size()];
 
-        String[] newsArray = new String[data.size()];
-        for (int i = 0; i < data.size(); i++) {
-            newsArray[i] = data.get(i);
+            for (int i = 0; i < data.size(); i++) {
+                newsArray[i] = data.get(i).getmNewsText();
+            }
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+                    android.R.layout.simple_list_item_1, newsArray);
+            setListAdapter(adapter);
+        } else{
+            Toast.makeText(getActivity().getApplicationContext(),
+                    getString(R.string.db_current_update),Toast.LENGTH_LONG).show();
         }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, newsArray);
-        setListAdapter(adapter);
     }
 }

@@ -4,7 +4,13 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
-import by.slutskiy.busschedule.data.DBReader;
+import com.j256.ormlite.stmt.QueryBuilder;
+
+import java.sql.SQLException;
+
+import by.slutskiy.busschedule.data.OrmDBHelper;
+import by.slutskiy.busschedule.data.entities.TimeList;
+import by.slutskiy.busschedule.data.entities.TypeList;
 import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
 
 /**
@@ -43,10 +49,29 @@ public class TimeListLoader extends AsyncTaskLoader<Object> {
 
     @Override
     public Object loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
+        OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getContext());
 
-        return (getId() == TimeListFragment.LOADER_TYPE_ID)
-                ? dbReader.getTypeListByRouteListId(mRouteListIdLoader)
-                : dbReader.getTimeListByRouteListId(mRouteListIdLoader);
+        if (dbHelper == null) {
+            return null;
+        }
+
+        try {
+            if (getId() == TimeListFragment.LOADER_TYPE_ID) {
+                QueryBuilder<TypeList, Integer> qbTypeList = dbHelper.getTypeListDao().queryBuilder();
+                QueryBuilder<TimeList, Integer> qbTimeList = dbHelper.getTimeListDao().queryBuilder();
+
+                qbTimeList.selectColumns(TimeList.DAY_TYPE_ID);
+                qbTimeList.distinct().where().eq(TimeList.ROUTE_LIST_ID, mRouteListIdLoader);
+                qbTypeList.where().in(TypeList.ID, qbTimeList);
+
+                return qbTypeList.query();
+            } else {
+                QueryBuilder<TimeList, Integer> qbTimeList = dbHelper.getTimeListDao().queryBuilder();
+                qbTimeList.where().eq(TimeList.ROUTE_LIST_ID, mRouteListIdLoader);
+                return qbTimeList.query();
+            }
+        } catch (SQLException e) {
+            return null;
+        }
     }
 }

@@ -16,13 +16,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import by.slutskiy.busschedule.data.entities.BusRoute;
+import by.slutskiy.busschedule.data.entities.Routes;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.BusRouteLoader;
 import by.slutskiy.busschedule.ui.viewbinders.BusRouteBinder;
@@ -35,7 +36,7 @@ import by.slutskiy.busschedule.ui.viewbinders.BusRouteBinder;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class RouteFragment extends Fragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<List<BusRoute>> {
+public class RouteFragment extends Fragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<List<Routes>> {
 
     private static final int LOADER_ID = 1;
     private OnRouteSelectedListener mListener;
@@ -113,20 +114,19 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
     }
 
 
-
     /*  implementation LoaderManager.LoaderCallbacks<List<String>>*/
     @Override
-    public Loader<List<BusRoute>> onCreateLoader(int id, Bundle args) {
+    public Loader<List<Routes>> onCreateLoader(int id, Bundle args) {
         return new BusRouteLoader(getActivity().getApplicationContext());
     }
 
     @Override
-    public void onLoadFinished(Loader<List<BusRoute>> loader, List<BusRoute> data) {
+    public void onLoadFinished(Loader<List<Routes>> loader, List<Routes> data) {
         updateData(data);
     }
 
     @Override
-    public void onLoaderReset(Loader<List<BusRoute>> loader) {
+    public void onLoaderReset(Loader<List<Routes>> loader) {
         if (mBusList != null) mBusList.setOnItemClickListener(null);
         clearList();
     }
@@ -149,36 +149,41 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
      *
      * @param routesList list with route info
      */
-    private void updateData(List<BusRoute> routesList) {
-        // упаковываем данные
-        String attBus = "bus";
-        String attBeginStop = "begin_stop";
-        String attEndStop = "end_stop";
-        String attId = "_id";
+    private void updateData(List<Routes> routesList) {
+        if (routesList != null) {
+            // упаковываем данные
+            String attBus = "bus";
+            String attBeginStop = "begin_stop";
+            String attEndStop = "end_stop";
+            String attId = "_id";
 
-        ArrayList<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>(
-                routesList.size());
-        Map<String, Object> map;
-        for (BusRoute bRoute : routesList) {
-            map = new HashMap<String, Object>();
-            map.put(attBus, bRoute.getBusNumber());
-            map.put(attBeginStop, bRoute.getBeginStop());
-            map.put(attEndStop, bRoute.getEndStop());
-            map.put(attId, Long.toString(bRoute.getRouteId()));
-            dataList.add(map);
-        }
+            ArrayList<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>(
+                    routesList.size());
+            Map<String, Object> map;
+            for (Routes bRoute : routesList) {
+                map = new HashMap<String, Object>();
+                map.put(attBus, bRoute.getmBus().getmBusNumber());
+                map.put(attBeginStop, bRoute.getmBeginStop().getmStopName());
+                map.put(attEndStop, bRoute.getmEndStop().getmStopName());
+                map.put(attId, Long.toString(bRoute.getmId()));
+                dataList.add(map);
+            }
 
-        String[] from = {attBus, attBeginStop,
-                attEndStop, attId};
-        int[] to = {R.id.tvBusNumber, R.id.tvBeginStop, R.id.tvEndStop, R.id.itemlayout};
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), dataList, R.layout.routeitem,
-                from, to);
+            String[] from = {attBus, attBeginStop,
+                    attEndStop, attId};
+            int[] to = {R.id.tvBusNumber, R.id.tvBeginStop, R.id.tvEndStop, R.id.itemlayout};
+            SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), dataList, R.layout.routeitem,
+                    from, to);
 
-        sAdapter.setViewBinder(new BusRouteBinder());
+            sAdapter.setViewBinder(new BusRouteBinder());
 
-        if (mBusList != null) {
-            mBusList.setAdapter(sAdapter);
-            mBusList.setOnItemClickListener(this);
+            if (mBusList != null) {
+                mBusList.setAdapter(sAdapter);
+                mBusList.setOnItemClickListener(this);
+            }
+        } else {
+            Toast.makeText(getActivity().getApplicationContext(),
+                    getString(R.string.db_current_update), Toast.LENGTH_LONG).show();
         }
     }
 

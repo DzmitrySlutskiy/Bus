@@ -18,12 +18,13 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Collections;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.entities.Stop;
+import by.slutskiy.busschedule.data.entities.StopList;
 import by.slutskiy.busschedule.loaders.StopLoader;
 
 /*
@@ -45,7 +46,7 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
     private static final String SAVE_SCROLL_POS = "scrollPos";
 
     private int mRouteId;
-    private List<Stop> mStopList;
+    private List<StopList> mStopList;
     private OnRouteStopSelectedListener mListener;
     private String mStopDetail = "";
 
@@ -139,13 +140,13 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (mStopList != null && position >= 0 && position < mStopList.size()) {
             if (mRouteId >= 0) {
-                int routeListId = mStopList.get(position).getKey();
-                String stopName = mStopList.get(position).getStopName();
+                int routeListId = mStopList.get(position).getmId();
+                String stopName = mStopList.get(position).getmStopName();
                 if (mListener != null && routeListId >= 0)
                     mListener.OnRouteStopSelected(routeListId, mRouteId, stopName, mStopDetail);
             } else {
-                int stopId = mStopList.get(position).getKey();
-                String stopName = mStopList.get(position).getStopName();
+                int stopId = mStopList.get(position).getmId();
+                String stopName = mStopList.get(position).getmStopName();
                 if (mListener != null) {
                     mListener.OnStopSelected(stopId, stopName);
                 }
@@ -197,11 +198,16 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
     @SuppressWarnings("unchecked")
     @Override
     public void onLoadFinished(Loader<Object> loader, Object data) {
-        if (data instanceof String) {
-            mStopDetail = (String) data;
-            mRouteNameView.setText(getResources().getString(R.string.time_list_route) + "\t\t" + mStopDetail);
-        } else if (data instanceof List<?>) {
-            updateData((List<Stop>) data);
+        if (data != null) {
+            if (data instanceof String) {
+                mStopDetail = (String) data;
+                mRouteNameView.setText(getResources().getString(R.string.time_list_route) + "\t\t" + mStopDetail);
+            } else if (data instanceof List<?>) {
+                updateData((List<StopList>) data);
+            }
+        } else {
+            Toast.makeText(getActivity().getApplicationContext(),
+                    getString(R.string.db_current_update), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -238,7 +244,7 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
      *
      * @param data stop list
      */
-    private void updateData(List<Stop> data) {
+    private void updateData(List<StopList> data) {
         String[] newsArr;
 
         mStopList = data;
@@ -250,7 +256,7 @@ public class RouteStopFragment extends Fragment implements AdapterView.OnItemCli
 
         newsArr = new String[mStopList.size()];
         for (int i = 0; i < mStopList.size(); i++) {
-            newsArr[i] = mStopList.get(i).getStopName();
+            newsArr[i] = mStopList.get(i).getmStopName();
         }
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, newsArr);

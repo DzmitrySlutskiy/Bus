@@ -1,45 +1,83 @@
-/*
- * Bus schedule for Grodno
- */
-
 package by.slutskiy.busschedule.data.entities;
 
-/*
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
+/**
  * TimeList
- * time for bus schedule for current {@code mHour}
- * used like mHour = 15 mMinutes = "10 35 57" - in hour = 15 bus will come at 10, 35 and 57 minutes
- *
  * Version 1.0
- * 2014
- * Created by Dzmitry Slutskiy
- * e-mail: dsslutskiy@gmail.com
+ * 28.08.2014
+ * Created by Dzmitry Slutskiy.
  */
+@DatabaseTable(tableName = "TimeList")
 public class TimeList {
 
+    public static final String ID = "_id";
+    public static final String ROUTE_LIST_ID = "RouteListId";
+    public static final String HOUR = "Hour";
+    public static final String MINUTES = "Minutes";
+    public static final String DAY_TYPE_ID = "DayTypeId";
+
+
     /*  private fields  */
+
+    @DatabaseField(generatedId = true, columnName = ID)
+    private int mId;
+
+    @DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = ROUTE_LIST_ID, index = true)
+    private RouteList mRouteList;
+
+    @DatabaseField(columnName = HOUR)
     private int mHour;
+
+    @DatabaseField(columnName = MINUTES)
     private String mMinutes;
+
+    @DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = DAY_TYPE_ID)
+    private TypeList mDayType;
 
     /*  public constructors */
 
     public TimeList() {
+        mId = - 1;
     }
 
-    public int getHour() {
+    /*  public methods  */
+
+    public int getmId() {
+        return mId;
+    }
+
+    public void setmRouteList(RouteList mRouteList) {
+        this.mRouteList = mRouteList;
+    }
+
+    public int getmHour() {
         return mHour;
     }
 
-    public void setHour(int hour) {
-        this.mHour = hour;
+    public void setmHour(int mHour) {
+        this.mHour = mHour;
     }
 
-    public String getMinutes() {
+    public String getmMinutes() {
         return mMinutes;
     }
 
-    public void setMinutes(String minutes) {
-        this.mMinutes = minutes;
+    public void setmMinutes(String mMinutes) {
+        this.mMinutes = mMinutes;
     }
-    /*  private methods */
 
+    public TypeList getmDayType() {
+        return mDayType;
+    }
+
+    public void setmDayType(TypeList mDayType) {
+        this.mDayType = mDayType;
+    }
+
+    @Override
+    public String toString() {
+        return "" + mHour + " : " + mMinutes;
+    }
 }

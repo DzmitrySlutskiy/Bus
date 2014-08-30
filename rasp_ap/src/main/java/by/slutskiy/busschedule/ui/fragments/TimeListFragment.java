@@ -18,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.data.entities.TypeList;
 import by.slutskiy.busschedule.data.entities.TimeList;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
 import by.slutskiy.busschedule.ui.viewbinders.TimeListBinder;
@@ -54,7 +56,7 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
     private ListView mTimeListView;
     private View mHeaderView;
 
-    private List<String> mTypeList;
+    private List<TypeList> mTypeList;
 
     /**
      * Use this factory method to create a new instance of
@@ -140,19 +142,23 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
     @SuppressWarnings("unchecked")
     @Override
     public void onLoadFinished(Loader<Object> loader, Object data) {
+        if (data != null) {
+            if (loader.getId() == LOADER_TYPE_ID) {
+                initListHeader((List<TypeList>) data);
 
-        if (loader.getId() == LOADER_TYPE_ID) {
-            initListHeader((List<String>) data);
-
-            //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
-            //т.к. от количества типа времени зависит как будет выводится результат
-            //лоадеры запускаются по цепочке, а не вместе
-            Loader<Object> timeLoader = getLoaderManager().getLoader(LOADER_TIME_ID);
-            if (timeLoader != null) {
-                timeLoader.forceLoad();
+                //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
+                //т.к. от количества типа времени зависит как будет выводится результат
+                //лоадеры запускаются по цепочке, а не вместе
+                Loader<Object> timeLoader = getLoaderManager().getLoader(LOADER_TIME_ID);
+                if (timeLoader != null) {
+                    timeLoader.forceLoad();
+                }
+            } else if (loader.getId() == LOADER_TIME_ID) {
+                updateData((List<TimeList>) data);
             }
-        } else if (loader.getId() == LOADER_TIME_ID) {
-            updateData((List<TimeList>) data);
+        } else {
+            Toast.makeText(getActivity().getApplicationContext(),
+                    getString(R.string.db_current_update), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -178,12 +184,12 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     /*  private methods */
-    private void initListHeader(List<String> listHeader) {
+    private void initListHeader(List<TypeList> listHeader) {
         if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
             mTypeList = listHeader;
             LinearLayout layoutMinutes = (LinearLayout) mHeaderView.findViewById(R.id.layoutMinutes);
-            for (String minute : mTypeList) {
-                layoutMinutes.addView(getTextView(mHeaderView.getContext(), minute));
+            for (TypeList minute : mTypeList) {
+                layoutMinutes.addView(getTextView(mHeaderView.getContext(), minute.getmType()));
             }
             mTimeListView.addHeaderView(mHeaderView);
         }
@@ -200,11 +206,11 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
         for (int i = 0; i < timeList.size(); i += mTypeList.size()) {
             TimeList listItem = timeList.get(i);
             map = new HashMap<String, Object>();
-            map.put(ATT_HOUR, listItem.getHour());
+            map.put(ATT_HOUR, listItem.getmHour());
             String[] minArray = new String[mTypeList.size()];
             for (int j = 0; j < mTypeList.size(); j++) {
                 listItem = timeList.get(i + j);
-                minArray[j] = listItem.getMinutes();
+                minArray[j] = listItem.getmMinutes();
             }
             map.put(ATT_MIN, minArray);
             data.add(map);

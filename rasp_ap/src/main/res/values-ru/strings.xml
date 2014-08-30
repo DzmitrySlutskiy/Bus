@@ -21,6 +21,7 @@
     <string name="update_db_update_error">Ошибка при обновлении записей в БД.</string>
     <string name="update_io_error">Ошибка работы с файлом. </string>
     <string name="update_biff_error">Ошибка работы с xls файлом. </string>
+    <string name="db_current_update">База данных обновляется.</string>
 
     <string name="app_error">Внутренняя ошибка приложения. Пожалуйста, обновите или переустановите приложение.</string>
 

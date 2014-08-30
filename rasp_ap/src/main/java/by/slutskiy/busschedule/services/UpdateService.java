@@ -13,6 +13,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
+import com.j256.ormlite.dao.Dao;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -23,17 +25,23 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBReader;
-import by.slutskiy.busschedule.data.DBUpdater;
+import by.slutskiy.busschedule.data.OrmDBHelper;
 import by.slutskiy.busschedule.data.XLSHelper;
+import by.slutskiy.busschedule.data.entities.BusList;
+import by.slutskiy.busschedule.data.entities.News;
+import by.slutskiy.busschedule.data.entities.RouteList;
+import by.slutskiy.busschedule.data.entities.Routes;
+import by.slutskiy.busschedule.data.entities.StopList;
+import by.slutskiy.busschedule.data.entities.TimeList;
+import by.slutskiy.busschedule.data.entities.TypeList;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import jxl.Cell;
 import jxl.Sheet;
@@ -62,32 +70,38 @@ public class UpdateService extends IntentService {
     public static final int MSG_UPDATE_BIFF_ERROR = 22;
     public static final int MSG_APP_ERROR = 23;
 
+    /*  preferences params  */
+    public static final String PREF_LAST_UPDATE = "lastUpdate";
+    public static final String EMPTY_STRING = "";
+
     /*  private fields  */
     private static final String LOG_TAG = UpdateService.class.getSimpleName();
 
     /*   constants for update    */
     private static final String BUS_PARK_URL = "http://www.ap1.by/download/";
     private static final String FILE_NAME = "raspisanie_gorod.xls";
-    /*  preferences params  */
-    public static final String PREF_LAST_UPDATE = "lastUpdate";
-    public static final String EMPTY_STRING = "";
+
+
+    private static final int MAX_BUFFER = 1024;
+    private static final int EOF = - 1;
+    private static final String UPDATE_DB_NAME = "apORM_update.db";
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
-    private HashMap<String, Integer> mBusList;
+    private ArrayList<BusList> mBusList;
     /**
      * full stop list, String Key - stop name, Integer Value - ID record in DB
      */
-    private HashMap<String, Integer> mStopList;
+    private ArrayList<StopList> mStopList;
     /**
      * type list for all bus ("вых", "раб", "суб", "воскр" и т.д.)
      * , String Key - type string, Integer Value - ID record in DB
      */
-    private HashMap<String, Integer> mTypeList;
+    private ArrayList<TypeList> mTypeList;
     /**
      * full route list, String Key - route name, Integer Value - ID record in DB
      */
-    private HashMap<String, Integer> mRouteList;
+    private ArrayList<Routes> mRoutesList;
 
     /**
      * type list only for current stop in bus route
@@ -96,13 +110,10 @@ public class UpdateService extends IntentService {
 
     private XLSHelper mXlsHelper = null;
 
-    private int mCurrentBusId;          // current parsing bus id
+    private BusList mCurrentBus;
     private int mLastRouteId;
-    private int mCurrentRouteId;
     private int mStopIndex;             //stop index in bus route (increment from start stop)
     private int mLastHourColumnIndex;
-
-    private String mBusNumber;          //bus number like "16" or "40Э"
 
     /**
      * call Sheet method getRows and getColumns take more time
@@ -117,10 +128,16 @@ public class UpdateService extends IntentService {
      */
     private int mTagAColumnIndex;
 
-    private static final int MAX_BUFFER = 1024;
-    private static final int EOF = - 1;
 
-    private DBUpdater mDbUpdater;
+    //private DBUpdater mDbUpdater;
+    /*  DAO    */
+    private Dao<BusList, Integer> mBusListDao;
+    private Dao<StopList, Integer> mStopListDao;
+    private Dao<Routes, Integer> mRoutesDao;
+    private Dao<TypeList, Integer> mTypeListDao;
+    private Dao<News, Integer> mNewsDao;
+    private Dao<RouteList, Integer> mRouteListDao;
+    private Dao<TimeList, Integer> mTimeListDao;
 
     private NotificationManager mNotificationManager;
     private final int mNotificationId = 1;
@@ -200,15 +217,29 @@ public class UpdateService extends IntentService {
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mBuilder = new NotificationCompat.Builder(this);
 
-        mDbUpdater = DBUpdater.getInstance(getApplicationContext());
-        String filePath = getApplicationContext().getFilesDir().getPath() + "/" + FILE_NAME;
+//        mDbUpdater = DBUpdater.getInstance(getApplicationContext());
 
+        OrmDBHelper ormDBHelper = OrmDBHelper.getWriterInstance(getApplicationContext(), UPDATE_DB_NAME);
+
+        String filePath = getApplicationContext().getFilesDir().getPath() + "/" + FILE_NAME;
 
         if (saveStreamToFile(stream, filePath, uCon.getContentLength())) {
             try {
-                writeLogDebug("Begin transaction");
-                mDbUpdater.beginTran();                              //begin transaction
-                mDbUpdater.clearDB();
+//                writeLogDebug("Begin transaction");
+//                mDbUpdater.beginTran();                              //begin transaction
+//                mDbUpdater.clearDB();
+
+                try {
+                    mBusListDao = ormDBHelper.getBusDao();
+                    mStopListDao = ormDBHelper.getStopDao();
+                    mRoutesDao = ormDBHelper.getRoutesDao();
+                    mTypeListDao = ormDBHelper.getTypeListDao();
+                    mNewsDao = ormDBHelper.getNewsDao();
+                    mRouteListDao = ormDBHelper.getRouteListDao();
+                    mTimeListDao = ormDBHelper.getTimeListDao();
+                } catch (SQLException e) {
+                    throw new ORMDaoException(e.getMessage());
+                }
 
                 writeLogDebug("Open xls file");
                 mXlsHelper = new XLSHelper(filePath);               //open xls file
@@ -216,7 +247,7 @@ public class UpdateService extends IntentService {
 
                 extractNews(mXlsHelper);                            //get news from first sheet
 
-                int sheetCount = (BuildConfig.DEBUG) ? mXlsHelper.getSheetCount() : mXlsHelper.getSheetCount();
+                int sheetCount = (BuildConfig.DEBUG) ? 5 : mXlsHelper.getSheetCount();
 
                 double percent = 0.0;
                 if (sheetCount > 0) {
@@ -234,7 +265,7 @@ public class UpdateService extends IntentService {
 
                 saveUpdateDate(lastUpdate);
 
-                mDbUpdater.setTranSuccessful();          //commit transaction
+//                mDbUpdater.setTranSuccessful();          //commit transaction
             } catch (IOException e) {
                 writeLogDebug("IOException:" + e.getMessage());
                 sendMessage(MSG_IO_ERROR, e.getMessage());
@@ -247,24 +278,30 @@ public class UpdateService extends IntentService {
             } catch (DBUpdateWorkException e) {
                 writeLogDebug("DBUpdateWorkException:" + e.getMessage());
                 sendMessage(MSG_UPDATE_DB_WORK_ERROR);
+            } catch (SQLException e) {
+                writeLogDebug("DBUpdateWorkException:" + e.getMessage());
+                sendMessage(MSG_UPDATE_DB_WORK_ERROR);
+            } catch (ORMDaoException e) {
+                writeLogDebug("ORMDaoException:" + e.getMessage());
+                sendMessage(MSG_UPDATE_DB_WORK_ERROR);
             } finally {
-                mDbUpdater.endTran();                    //end transaction
-                mDbUpdater.close();                      //close updated db connection
-                mDbUpdater = null;
+//                mOrmDBHelper.endTran();                    //end transaction
+                OrmDBHelper.clearWriter();                  //close updated db connection
 
                 Log.d(LOG_TAG, "Close main DB connection");
-                DBReader dbReader = DBReader.getInstance(getApplicationContext());
+
+                OrmDBHelper dbReader = OrmDBHelper.getReaderInstance(getApplicationContext());
                 dbReader.setUpdateState(true);        //disallow open DB
                 dbReader.close();                     //close main database connection
 
                 Log.d(LOG_TAG, "Delete main DB file");
-                delFile(getApplicationContext().getDatabasePath(DBReader.DEFAULT_DB_NAME).getPath());
+                delFile(getApplicationContext().getDatabasePath(OrmDBHelper.DEFAULT_DB_NAME).getPath());
 
                 File sourceFile = new File(
-                        getApplicationContext().getDatabasePath(DBUpdater.DB_NAME).getPath());
+                        getApplicationContext().getDatabasePath(UPDATE_DB_NAME).getPath());
 
                 File destinationFile = new File(
-                        getApplicationContext().getDatabasePath(DBReader.DEFAULT_DB_NAME).getPath());
+                        getApplicationContext().getDatabasePath(OrmDBHelper.DEFAULT_DB_NAME).getPath());
 
                 Log.d(LOG_TAG, "Rename file DB result: " + sourceFile.renameTo(destinationFile));
 
@@ -274,6 +311,7 @@ public class UpdateService extends IntentService {
                     mXlsHelper.closeWorkbook();         //close workbook
                     mXlsHelper = null;
                 }
+
                 mNotificationManager.cancel(mNotificationId);
 
                 delFile(filePath);                       //delete temporary xls file
@@ -292,23 +330,22 @@ public class UpdateService extends IntentService {
      * @throws FileStructureErrorException if parsing stop failed (out of bound or any error)
      * @throws DBUpdateWorkException       if adding to database return error
      */
-    private void parseSheet(Sheet sheet) throws FileStructureErrorException, DBUpdateWorkException {
+    private void parseSheet(Sheet sheet) throws FileStructureErrorException, DBUpdateWorkException, SQLException, ORMDaoException {
         mSheetRows = sheet.getRows();
         mSheetColumns = sheet.getColumns();
         XLSHelper.updateSheetSize(sheet);
         XLSHelper.updateMergedCell(sheet);
 
         /*  parsing bus number from sheet name  */
-        mBusNumber = XLSHelper.processingString(sheet.getName());
-        if (isBusNumber(mBusNumber)) {
-            writeLogDebug("Get new bus:" + mBusNumber);
+        String busNumber = XLSHelper.processingString(sheet.getName());
+        if (isBusNumber(busNumber)) {
+            writeLogDebug("Get new bus:" + busNumber);
 
-            mCurrentBusId = checkBus(mBusNumber);
+            mCurrentBus = checkBus(busNumber);
 
             int rowIndex = 0;
             mStopIndex = 0;
             mLastRouteId = - 1;
-            mCurrentRouteId = - 1;                                          //reset routeID
 
             /*Иногда расписание находится/начинается не в 1ом столбце и даже строке
             * необходимо найти тег "А" пройдя по строкам и столбцам
@@ -337,7 +374,7 @@ public class UpdateService extends IntentService {
                 }
             }
         } else {
-            writeLogDebug("Get sheet name:" + mBusNumber);
+            writeLogDebug("Get sheet name:" + busNumber);
         }
     }
 
@@ -351,7 +388,7 @@ public class UpdateService extends IntentService {
      * @throws DBUpdateWorkException       if adding to database return error
      */
     private int parseStop(Sheet sheet, int rowIndex) throws FileStructureErrorException,
-            DBUpdateWorkException {
+            DBUpdateWorkException, SQLException, ORMDaoException {
 
         /*stopSize - размер блока расписания в высоту (RowSize)
         * + 2 - так как 2 строки от тега "А" до номера автобуса*/
@@ -363,18 +400,25 @@ public class UpdateService extends IntentService {
         String cellContent = XLSHelper.getCellContent(sheet, mTagAColumnIndex +
                 XLSHelper.STOP_COLUMN_INDEX, rowIndex);
         String stopName = XLSHelper.processingString(cellContent);
-        int stopId = checkStop(stopName);
+        StopList currentStop = checkStop(stopName);
 
         /*   processing route info   */
         String routeName = XLSHelper.getCellContent(sheet, mTagAColumnIndex +
                 XLSHelper.ROUTE_NAME_COLUMN_OFFSET, rowIndex + XLSHelper.ROUTE_NAME_ROW_OFFSET);
-        mCurrentRouteId = checkRoute(routeName);
-        if (mCurrentRouteId != mLastRouteId) {
+        Routes currentRoute = checkRoute(routeName);
+        if (currentRoute.getmId() != mLastRouteId) {
             mStopIndex = 0;
-            mLastRouteId = mCurrentRouteId;
+            mLastRouteId = currentRoute.getmId();
         }
-        int mRouteListId = mDbUpdater.addRouteList(mCurrentRouteId, stopId, mStopIndex);
-        if (mRouteListId < 0) {
+
+        RouteList cRouteList = new RouteList();
+        cRouteList.setmRoutes(currentRoute);
+        cRouteList.setmStop(currentStop);
+        cRouteList.setmStopIndex(mStopIndex);
+
+        mRouteListDao.create(cRouteList);
+
+        if (cRouteList.getmId() < 0) {
             throw new DBUpdateWorkException("Error add RouteList stop: " +
                     stopName + " route: " + routeName);
         }
@@ -399,10 +443,23 @@ public class UpdateService extends IntentService {
                     minStr += XLSHelper.processingMinutes(
                             getCell(sheet, hourIndex, rIndex).getContents()) + " ";
                 }
-                if (mDbUpdater.addTime(mRouteListId, hour, minStr.trim(), type.typeID) < 0) {
-                    throw new DBUpdateWorkException("Error add time for stop: " +
-                            stopName + " for route " + routeName);
+
+                TimeList timeList = new TimeList();
+                timeList.setmRouteList(cRouteList);
+                timeList.setmHour(hour);
+                timeList.setmMinutes(minStr.trim());
+                timeList.setmDayType(type.type);
+
+                mTimeListDao.create(timeList);
+                if (timeList.getmId() < 0) {
+                    throw new DBUpdateWorkException("Error add time for stop: " + timeList);
                 }
+
+//                if (mDbUpdater.addTime(mRouteListId, hour, minStr.trim(), type.typeID) < 0) {
+//                    throw new DBUpdateWorkException("Error add time for stop: " +
+//                            stopName + " for route " + routeName);
+//                }
+
                 minuteRowIndex += type.typeRowSize;
             }
         }
@@ -418,7 +475,7 @@ public class UpdateService extends IntentService {
      * @param stopSize stop size (row count used for stop info)
      * @throws DBUpdateWorkException error adding to database
      */
-    private void fillDayType(Sheet sheet, int rowIndex, int stopSize) throws DBUpdateWorkException {
+    private void fillDayType(Sheet sheet, int rowIndex, int stopSize) throws DBUpdateWorkException, SQLException {
         for (int typeIndex = rowIndex + XLSHelper.TYPE_DAY_ROW_OFFSET; typeIndex < rowIndex + stopSize; ) {
             int lastColumn = mTagAColumnIndex + mLastHourColumnIndex;
 
@@ -459,15 +516,27 @@ public class UpdateService extends IntentService {
             cellContent = XLSHelper.processingDayType(cellContent);
 
             /*  сохраняем в БД и в mTypeList значение типа (если его там еще нет)*/
-            if (! mTypeList.containsKey(cellContent)) {
-                int typeId = mDbUpdater.addType(cellContent);
-                if (typeId == - 1) {
-                    throw new DBUpdateWorkException("Error add type: " + cellContent);
+            TypeList cType = new TypeList(cellContent);
+            int index = mTypeList.indexOf(cType);
+            if (index < 0) {
+                if (mTypeListDao != null) {
+
+                    mTypeListDao.create(cType);
+
+                    if (cType.getmId() < 0) {
+                        throw new DBUpdateWorkException("mTypeListDao add error:" + cType);
+                    }
+                    mTypeList.add(cType);
                 }
-                mTypeList.put(cellContent, typeId);
             }
+
             ScheduleDayType type = new ScheduleDayType();
-            type.typeID = mTypeList.get(cellContent);
+            index = mTypeList.indexOf(cType);
+            if (index >= 0 && index < mTypeList.size()) {
+                type.type = mTypeList.get(index);
+            } else {
+                throw new DBUpdateWorkException("mTypeList index error: " + cType + " in list " + mTypeList);
+            }
             type.typeRowSize = typeRowSize;
 
             /*  save day type for current stop in bus route */
@@ -479,59 +548,60 @@ public class UpdateService extends IntentService {
 
     /**
      * check route name - split route to first and last stops in route, add this route to database
-     * and save route id info in list mRouteList
+     * and save route id info in list mRoutesList
      *
      * @param routeName route name for checking
      * @return id record in database about this route
      * @throws DBUpdateWorkException if can't add info to database
      */
-    private int checkRoute(String routeName) throws DBUpdateWorkException {
-        int routeId;
+    private Routes checkRoute(String routeName) throws DBUpdateWorkException, SQLException, ORMDaoException {
 
         /*  split info about stops  */
-        String firstStop = XLSHelper.processingString(XLSHelper.getFirstStopInRoute(routeName));
-        String lastStop = XLSHelper.processingString(XLSHelper.getLastStopInRoute(routeName));
+        String firstStopName = XLSHelper.processingString(XLSHelper.getFirstStopInRoute(routeName));
+        String lastStopName = XLSHelper.processingString(XLSHelper.getLastStopInRoute(routeName));
 
         /*   check stops in stop list   */
-        int firstStopId = checkStop(firstStop);
-        int lastStopId = checkStop(lastStop);
+        StopList firstStop = checkStop(firstStopName);
+        StopList lastStop = checkStop(lastStopName);
 
-        /*   full route name with bus number   */
-        String fullRouteName = mBusNumber + " " + routeName;
+        Routes thisRoute = new Routes();
+        thisRoute.setmBus(mCurrentBus);
+        thisRoute.setmBeginStop(firstStop);
+        thisRoute.setmEndStop(lastStop);
 
-        /*  check route list mRouteList for info about route fullRouteName */
-        if (! mRouteList.containsKey(fullRouteName)) {
+        int index = mRoutesList.indexOf(thisRoute);
+        if (index < 0) {
+            if (mRoutesDao != null) {
 
-            /*   if this route not exists in route list add this route to database   */
-            routeId = mDbUpdater.addRoutes(mCurrentBusId, firstStopId, lastStopId);
-            if (routeId >= 0) {
+                mRoutesDao.create(thisRoute);
 
-                /*  save this route in route list with routeId info*/
-                mRouteList.put(fullRouteName, routeId);
+                if (thisRoute.getmId() >= 0) {
+                    mRoutesList.add(thisRoute);
+                } else {
+                    throw new DBUpdateWorkException("mRoutesDao add error:" + thisRoute);
+                }
             } else {
-                throw new DBUpdateWorkException("Error add route: " + fullRouteName);
+                throw new ORMDaoException("mRoutesDao null reference");
             }
-        } else {    //if route contains in list return route id
-            routeId = mRouteList.get(fullRouteName);
+        } else {
+            return mRoutesList.get(index);
         }
-        return routeId;
+
+        return thisRoute;
     }
 
     private void initLists() {
-        mBusList = new HashMap<String, Integer>();
-        mStopList = new HashMap<String, Integer>();
-        mTypeList = new HashMap<String, Integer>();
-        mRouteList = new HashMap<String, Integer>();
+        mBusList = new ArrayList<BusList>();
+        mStopList = new ArrayList<StopList>();
+        mTypeList = new ArrayList<TypeList>();
+        mRoutesList = new ArrayList<Routes>();
     }
 
-    /**
-     * clear private reference
-     */
     private void clearReference() {
         mBusList = null;
         mStopList = null;
         mTypeList = null;
-        mRouteList = null;
+        mRoutesList = null;
         mNotificationManager = null;
         mBuilder = null;
         mMessenger = null;
@@ -560,9 +630,13 @@ public class UpdateService extends IntentService {
      */
     private void extractNews(XLSHelper xlsHelper) throws DBUpdateWorkException {
         List<String> newsList = xlsHelper.getNewsList();
-        for (String news : newsList) {
-            if (mDbUpdater.addNews(news) < 0) {
-                throw new DBUpdateWorkException("Error add news: " + news);
+        if (mNewsDao != null) {
+            try {
+                for (String newsText : newsList) {
+                    mNewsDao.create(new News(newsText));
+                }
+            } catch (SQLException e) {
+                throw new DBUpdateWorkException("Error add news: " + e.getMessage());
             }
         }
     }
@@ -591,19 +665,28 @@ public class UpdateService extends IntentService {
      * @return id for checked stop in database
      * @throws DBUpdateWorkException if can't add record to database
      */
-    private int checkStop(String stopName) throws DBUpdateWorkException {
-        int stopId;
-        if (! mStopList.containsKey(stopName)) {
-            stopId = mDbUpdater.addStop(stopName);
-            if (stopId >= 0) {
-                mStopList.put(stopName, stopId);
+    private StopList checkStop(String stopName) throws DBUpdateWorkException, SQLException, ORMDaoException {
+        StopList stopList = new StopList(stopName);
+
+        int index = mStopList.indexOf(stopList);
+        if (index < 0) {
+            if (mStopListDao != null) {
+
+                mStopListDao.create(stopList);
+
+                if (stopList.getmId() >= 0) {
+                    mStopList.add(stopList);
+                } else {
+                    throw new DBUpdateWorkException("mStopListDao add error:" + stopList);
+                }
             } else {
-                throw new DBUpdateWorkException("Error add stop:" + stopName);
+                throw new ORMDaoException("mStopListDao null reference");
             }
         } else {
-            stopId = mStopList.get(stopName);
+            return mStopList.get(index);
         }
-        return stopId;
+
+        return stopList;
     }
 
     /**
@@ -613,19 +696,28 @@ public class UpdateService extends IntentService {
      * @param busNumber bus number for checking
      * @return id record in database
      */
-    private int checkBus(String busNumber) throws DBUpdateWorkException {
-        int busId;
-        if (! mBusList.containsKey(busNumber)) {
-            busId = mDbUpdater.addBus(busNumber);
-            if (busId >= 0) {
-                mBusList.put(busNumber, busId);
+    private BusList checkBus(String busNumber) throws DBUpdateWorkException, SQLException, ORMDaoException {
+        BusList busList = new BusList(busNumber);
+
+        int index = mBusList.indexOf(busList);
+        if (index < 0) {
+            if (mBusListDao != null) {
+
+                mBusListDao.create(busList);
+
+                if (busList.getmId() >= 0) {
+                    mBusList.add(busList);
+                } else {
+                    throw new DBUpdateWorkException("mBusListDao add error:" + busList);
+                }
             } else {
-                throw new DBUpdateWorkException("Error add bus: " + busNumber);
+                throw new ORMDaoException("mBusListDao null reference");
             }
         } else {
-            busId = mBusList.get(busNumber);
+            return mBusList.get(index);
         }
-        return busId;
+
+        return busList;
     }
 
     /**
@@ -686,6 +778,7 @@ public class UpdateService extends IntentService {
         } catch (IOException e) {
             writeLogDebug("IOException in saveStreamToFile:" + e);
             sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
+
             return false;
         } finally {
             try {
@@ -771,13 +864,6 @@ public class UpdateService extends IntentService {
                     filePath);
         }
     }
-    /*   private classes   */
-
-    private class ScheduleDayType {         //class using like data structure without behavior
-        //        public String type;
-        public int typeID;                  //id in DB for current time type (по вых, по раб etc)
-        public int typeRowSize;             //sometimes take 2 and more row for one time type
-    }
 
     private void notifyUser(String title, String text) {
 
@@ -811,6 +897,45 @@ public class UpdateService extends IntentService {
     }
 
     /**
+     * Send message to main thread using mHandler (show update process information)
+     *
+     * @param type message type, this type define in
+     * @param obj  used for send String value
+     */
+    private void sendMessage(int type, Object obj) {
+        if (mMessenger != null) {
+            Message msg = new Message();
+            msg.what = type;
+
+            if (obj != null) {
+                msg.obj = obj;
+            }
+
+            try {
+                mMessenger.send(msg);
+            } catch (RemoteException e) {
+                //if the target Handler no longer exists - Handler - Activity (if closed)
+                //do nothing
+                Log.e(LOG_TAG, "sendMessage RemoteException: " + e.getMessage());
+            }
+        }
+    }
+
+    private void sendMessage(int type) {
+        sendMessage(type, null);
+    }
+
+    /*   private classes   */
+
+    private class ScheduleDayType {         //class using like data structure without behavior
+        //        public String type;
+        public TypeList type;                  //id in DB for current time type (по вых, по раб etc)
+        public int typeRowSize;             //sometimes take 2 and more row for one time type
+    }
+
+    /*   EXCEPTIONS   */
+
+    /**
      * class show that the structure does not match the algorithm,
      * algorithm needs to be updated to new file structure
      */
@@ -831,30 +956,11 @@ public class UpdateService extends IntentService {
     }
 
     /**
-     * Send message to main thread using mHandler (show update process information)
-     *
-     * @param type message type, this type define in
-     * @param obj  used for send String value
+     * Class exception - generate when any DAO object throws SQLException
      */
-    private void sendMessage(int type, Object obj) {
-        if (mMessenger != null) {
-            Message msg = new Message();
-            msg.what = type;
-
-            if (obj != null) {
-                msg.obj = obj;
-            }
-
-            try {
-                mMessenger.send(msg);
-            } catch (RemoteException e) {
-                //if the target Handler no longer exists - Handler - Activity (if closed)
-                //do nothing
-            }
+    private class ORMDaoException extends Exception {
+        public ORMDaoException(String msg) {
+            super(msg);
         }
-    }
-
-    private void sendMessage(int type) {
-        sendMessage(type, null);
     }
 }

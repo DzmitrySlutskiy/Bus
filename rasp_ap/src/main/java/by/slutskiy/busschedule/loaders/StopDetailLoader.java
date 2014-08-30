@@ -4,10 +4,18 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
+import com.j256.ormlite.dao.ForeignCollection;
+import com.j256.ormlite.stmt.QueryBuilder;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
+import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.data.OrmDBHelper;
+import by.slutskiy.busschedule.data.entities.RouteList;
+import by.slutskiy.busschedule.data.entities.TimeList;
 import by.slutskiy.busschedule.data.entities.StopDetail;
-import by.slutskiy.busschedule.data.DBReader;
 
 /**
  * background task loader
@@ -37,8 +45,42 @@ public class StopDetailLoader extends AsyncTaskLoader<List<StopDetail>> {
 
     @Override
     public List<StopDetail> loadInBackground() {
-        DBReader dbReader1 = DBReader.getInstance(getContext());
+        List<StopDetail> stopDetailList = new ArrayList<StopDetail>();
+        OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getContext());
 
-        return dbReader1.getStopDetail(mStopIdLoader, mCurrentHourLoader);
+        if (dbHelper == null) {
+            return null;
+        }
+
+        List<RouteList> routeList;
+        try {
+            QueryBuilder<RouteList, Integer> qbRouteList = dbHelper.getRouteListDao().queryBuilder();
+            qbRouteList.where().eq(RouteList.STOP_ID, mStopIdLoader);
+
+            routeList = qbRouteList.query();
+        } catch (SQLException e) {
+            return null;
+        }
+
+        for (RouteList item : routeList) {
+            StopDetail stopDetail = new StopDetail();
+            stopDetail.setRouteListId(item.getmId());
+            stopDetail.setRouteId(item.getmRoutes().getmId());
+            stopDetail.setRouteName(item.getmRoutes().toString());
+            ForeignCollection<TimeList> timeLists = item.getmTimeList();
+            for (TimeList timeListItem : timeLists) {
+                if (timeListItem.getmHour() == mCurrentHourLoader) {
+                    String minutes = timeListItem.getmMinutes();
+                    if (minutes.isEmpty()) {
+                        minutes = getContext().getString(R.string.schedule_noBus);
+                    }
+                    stopDetail.addMinute(timeListItem.getmDayType().getmType() +
+                            " " + minutes);
+                }
+            }
+            stopDetailList.add(stopDetail);
+        }
+
+        return stopDetailList;
     }
 }
