@@ -11,9 +11,9 @@ android {
         versionName "1.0"
     }
     buildTypes {
-        release {
-            runProguard false
-        }
+//        release {
+//            runProguard false
+//        }
     }
 }
 

@@ -15,9 +15,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.support.v7.widget.PopupMenu;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -48,8 +46,7 @@ import by.slutskiy.busschedule.data.DBReader;
 public class MainActivity extends ActionBarActivity implements Handler.Callback,
         RouteFragment.OnRouteSelectedListener,
         View.OnClickListener, RouteStopFragment.OnRouteStopSelectedListener,
-        StopDetailFragment.OnStopDetailListener, PopupMenu.OnMenuItemClickListener,
-        PopupMenu.OnDismissListener {
+        StopDetailFragment.OnStopDetailListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,19 +145,31 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
-        switch (id) {
+        switch (item.getItemId()) {
             case R.id.action_settings:
 
-                showPopup(findViewById(R.id.action_settings));
-                break;
+                return true;
+
+            case R.id.action_check_update:
+                startService(getServiceIntent(true));
+                return true;
+
+            case R.id.action_update:
+                startService(getServiceIntent(false));
+                return true;
 
             default:
-                break;
+                return super.onOptionsItemSelected(item);
         }
+    }
 
-        return super.onOptionsItemSelected(item);
+    private Intent getServiceIntent(boolean isCheckUpdate) {
+        Intent serviceIntent = new Intent(this, UpdateService.class);
+        Messenger messenger = new Messenger(new Handler(this));
+        serviceIntent.putExtra(UpdateService.MESSENGER, messenger);
+        serviceIntent.putExtra(UpdateService.CHECK_UPDATE, isCheckUpdate);
+        return serviceIntent;
     }
 
     public static Date getLastUpdateDate(Context context) {
@@ -175,53 +184,6 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         } catch (ParseException e) {
             return null;
         }
-    }
-
-    private void showPopup(View v) {
-        if (v != null) {
-            PopupMenu popup = new PopupMenu(this, v);
-
-            MenuInflater inflater = popup.getMenuInflater();
-
-            inflater.inflate(R.menu.popupmenu, popup.getMenu());
-            popup.setOnMenuItemClickListener(this);
-            popup.setOnDismissListener(this);
-
-            popup.show();
-        }
-    }
-
-    @Override
-    public boolean onMenuItemClick(MenuItem item) {
-
-        Intent serviceIntent = new Intent(this, UpdateService.class);
-        Messenger messenger = new Messenger(new Handler(this));
-        serviceIntent.putExtra(UpdateService.MESSENGER, messenger);
-
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-
-
-                return true;
-
-            case R.id.action_check_update:
-                serviceIntent.putExtra(UpdateService.CHECK_UPDATE, true);
-                startService(serviceIntent);
-                return true;
-
-            case R.id.action_update:
-                serviceIntent.putExtra(UpdateService.CHECK_UPDATE, false);
-                startService(serviceIntent);
-                return true;
-
-            default:
-                return false;
-        }
-    }
-
-    public void onDismiss(PopupMenu menu) {
-        menu.setOnMenuItemClickListener(null);
-        menu.setOnDismissListener(null);
     }
 
     @Override
