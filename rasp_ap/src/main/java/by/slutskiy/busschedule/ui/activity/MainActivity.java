@@ -21,7 +21,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import java.text.ParseException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -172,18 +172,10 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         return serviceIntent;
     }
 
-    public static Date getLastUpdateDate(Context context) {
+    public static Timestamp getLastUpdateDate(Context context) {
         SharedPreferences preferences = context.getSharedPreferences(BuildConfig.PACKAGE_NAME,
                 Context.MODE_PRIVATE);
-        String lastUpdateString =
-                preferences.getString(UpdateService.PREF_LAST_UPDATE, "07-07-2014 16:00:00");
-
-        SimpleDateFormat format = new SimpleDateFormat(UpdateService.USED_DATE_FORMAT);
-        try {
-            return format.parse(lastUpdateString);
-        } catch (ParseException e) {
-            return null;
-        }
+        return new Timestamp(preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
     }
 
     @Override

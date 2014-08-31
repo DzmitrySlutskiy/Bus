@@ -23,9 +23,8 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -158,20 +157,20 @@ public class UpdateService extends IntentService {
 
         int what = MSG_LAST_UPDATE;
 
-        Date lastUpdate;
+        Timestamp lastUpdate;
 
         /*   try open internet connection to remote host  */
         try {
             uCon = fURL.openConnection();
             stream = uCon.getInputStream();               //check internet IOException throws
-            lastUpdate = new Date(uCon.getLastModified());
-            Log.i(LOG_TAG, "last mod: " + lastUpdate);
+            lastUpdate = new Timestamp(uCon.getLastModified());
+            Log.i(LOG_TAG, "last modified: " + lastUpdate);
         } catch (IOException e) {
             what = MSG_NO_INTERNET;
             lastUpdate = null;
         }
 
-        Date dbUpdateDate = MainActivity.getLastUpdateDate(getApplicationContext());
+        Timestamp dbUpdateDate = MainActivity.getLastUpdateDate(getApplicationContext());
 
         //  if need only check file modification date
         if (intent.getBooleanExtra(CHECK_UPDATE, false)) {
@@ -216,7 +215,7 @@ public class UpdateService extends IntentService {
 
                 extractNews(mXlsHelper);                            //get news from first sheet
 
-                int sheetCount = (BuildConfig.DEBUG) ? mXlsHelper.getSheetCount() : mXlsHelper.getSheetCount();
+                int sheetCount = (BuildConfig.DEBUG) ? 2 : mXlsHelper.getSheetCount();
 
                 double percent = 0.0;
                 if (sheetCount > 0) {
@@ -572,13 +571,12 @@ public class UpdateService extends IntentService {
      *
      * @param updateDate update date
      */
-    private void saveUpdateDate(Date updateDate) {
+    private void saveUpdateDate(Timestamp updateDate) {
         if (updateDate != null) {
             SharedPreferences preferences = getApplicationContext().
                     getSharedPreferences(BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = preferences.edit();
-            editor.putString(PREF_LAST_UPDATE,
-                    new SimpleDateFormat(USED_DATE_FORMAT).format(updateDate));
+            editor.putLong(PREF_LAST_UPDATE, updateDate.getTime());
             editor.commit();
         }
     }
