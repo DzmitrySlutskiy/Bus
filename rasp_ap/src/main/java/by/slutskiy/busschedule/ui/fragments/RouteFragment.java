@@ -7,7 +7,6 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +26,9 @@ import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.BusRouteLoader;
 import by.slutskiy.busschedule.ui.viewbinders.BusRouteBinder;
 
+import static android.support.v4.app.LoaderManager.LoaderCallbacks;
+import static android.widget.AdapterView.OnItemClickListener;
+
 
 /*
  * RouteFragment
@@ -35,7 +37,8 @@ import by.slutskiy.busschedule.ui.viewbinders.BusRouteBinder;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class RouteFragment extends Fragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<List<BusRoute>> {
+public class RouteFragment extends Fragment implements OnItemClickListener,
+        LoaderCallbacks<List<BusRoute>> {
 
     private static final int LOADER_ID = 1;
     private OnRouteSelectedListener mListener;
@@ -113,7 +116,6 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
     }
 
 
-
     /*  implementation LoaderManager.LoaderCallbacks<List<String>>*/
     @Override
     public Loader<List<BusRoute>> onCreateLoader(int id, Bundle args) {
@@ -150,6 +152,9 @@ public class RouteFragment extends Fragment implements AdapterView.OnItemClickLi
      * @param routesList list with route info
      */
     private void updateData(List<BusRoute> routesList) {
+        if (routesList == null) {
+            return;
+        }
         // упаковываем данные
         String attBus = "bus";
         String attBeginStop = "begin_stop";

@@ -25,8 +25,8 @@ public class NewsLoader extends AsyncTaskLoader<List<String>> {
 
     @Override
     public List<String> loadInBackground() {
-
         DBReader dbReader = DBReader.getInstance(getContext());
+
         return dbReader.getNews();
     }
 

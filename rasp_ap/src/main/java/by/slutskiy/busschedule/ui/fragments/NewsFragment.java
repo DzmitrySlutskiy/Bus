@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +15,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +24,8 @@ import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.loaders.NewsLoader;
+
+import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
 /*
  * NewsFragment - show news in list style
@@ -32,8 +35,7 @@ import by.slutskiy.busschedule.loaders.NewsLoader;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class NewsFragment extends ListFragment implements
-        LoaderManager.LoaderCallbacks<List<String>> {
+public class NewsFragment extends ListFragment implements LoaderCallbacks<List<String>> {
 
     private static final int LOADER_ID = 1;
 
@@ -67,7 +69,13 @@ public class NewsFragment extends ListFragment implements
         SharedPreferences preferences = getActivity().getSharedPreferences(
                 BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
         String lastUpdateStr = getResources().getString(R.string.newsFrgUpdateStr);
-        lastUpdateStr += preferences.getString(UpdateService.PREF_LAST_UPDATE, UpdateService.EMPTY_STRING);
+
+        Timestamp lastUpdate = new Timestamp(
+                preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
+
+        if (lastUpdate.getTime() > 0) {
+            lastUpdateStr += new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format(lastUpdate);
+        }
 
         TextView tvUpdateDate = (TextView) fragmentView.findViewById(R.id.tvUpdateDate);
         tvUpdateDate.setText(lastUpdateStr);
@@ -104,17 +112,19 @@ public class NewsFragment extends ListFragment implements
 
     /**
      * Update data in fragment list
+     *
      * @param data list with news
      */
     private void updateData(List<String> data) {
+        if (data != null) {
+            String[] newsArray = new String[data.size()];
+            for (int i = 0; i < data.size(); i++) {
+                newsArray[i] = data.get(i);
+            }
 
-        String[] newsArray = new String[data.size()];
-        for (int i = 0; i < data.size(); i++) {
-            newsArray[i] = data.get(i);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+                    android.R.layout.simple_list_item_1, newsArray);
+            setListAdapter(adapter);
         }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, newsArray);
-        setListAdapter(adapter);
     }
 }

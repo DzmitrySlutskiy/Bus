@@ -228,7 +228,7 @@ public class UpdateService extends IntentService {
                 for (int i = 0; i < sheetCount; i++) {
                     parseSheet(mXlsHelper.getSheet(i));
 
-                    showProgressNotification(100, (int) (percent * i));//show progress
+                    showProgressNotification(100, (int) (percent * (i + 1)));//show progress
                 }
 
                 saveUpdateDate(lastUpdate);
@@ -848,6 +848,7 @@ public class UpdateService extends IntentService {
             } catch (RemoteException e) {
                 //if the target Handler no longer exists - Handler - Activity (if closed)
                 //do nothing
+                Log.e(LOG_TAG, "send message error: " + e.getMessage());
             }
         }
     }

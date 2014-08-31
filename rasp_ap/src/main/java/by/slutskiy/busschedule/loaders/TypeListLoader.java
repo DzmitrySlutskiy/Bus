@@ -1,5 +1,6 @@
 package by.slutskiy.busschedule.loaders;
 
+
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
@@ -9,12 +10,12 @@ import java.util.List;
 import by.slutskiy.busschedule.data.DBReader;
 
 /**
- * TimeListLoader
+ * TypeListLoader
  * Version 1.0
- * 25.08.2014
+ * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class TimeListLoader extends AsyncTaskLoader<List<?>> {
+public class TypeListLoader extends AsyncTaskLoader<List<?>> {
 
     /**
      * background loader
@@ -26,6 +27,7 @@ public class TimeListLoader extends AsyncTaskLoader<List<?>> {
      */
 
     public static final String ATT_ROUT_LIST_ID = "routeListIdLoader";
+
     private int mRouteListIdLoader;
 
     /**
@@ -34,7 +36,7 @@ public class TimeListLoader extends AsyncTaskLoader<List<?>> {
      *
      * @param context used to retrieve the application context.
      */
-    public TimeListLoader(Context context, Bundle args) {
+    public TypeListLoader(Context context, Bundle args) {
         super(context);
 
         if (args != null) {
@@ -46,6 +48,6 @@ public class TimeListLoader extends AsyncTaskLoader<List<?>> {
     public List<?> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getTimeListByRouteListId(mRouteListIdLoader);
+        return dbReader.getTypeListByRouteListId(mRouteListIdLoader);
     }
 }

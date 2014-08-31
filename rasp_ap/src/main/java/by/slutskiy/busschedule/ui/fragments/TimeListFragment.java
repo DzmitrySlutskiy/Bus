@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -27,7 +26,10 @@ import java.util.Map;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.TimeList;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
+import by.slutskiy.busschedule.loaders.TypeListLoader;
 import by.slutskiy.busschedule.ui.viewbinders.TimeListBinder;
+
+import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
 /*
  * TimeListFragment - show bus schedule for selected route and stop
@@ -37,9 +39,9 @@ import by.slutskiy.busschedule.ui.viewbinders.TimeListBinder;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class TimeListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Object> {
+public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?>> {
 
-    public static final int LOADER_TYPE_ID = 1;
+    private static final int LOADER_TYPE_ID = 1;
     private static final int LOADER_TIME_ID = LOADER_TYPE_ID + 1;
 
     private static final String ARG_ROUTE_LIST_ID = "routeListId";
@@ -95,7 +97,7 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
         super.onActivityCreated(savedInstanceState);
 
         Bundle args = new Bundle();
-        args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
+        args.putInt(TypeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
         getLoaderManager().initLoader(LOADER_TYPE_ID, args, this);
 
         args = new Bundle();
@@ -125,7 +127,7 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
     public void onStart() {
         super.onStart();
 
-        Loader<Object> loader = getLoaderManager().getLoader(LOADER_TYPE_ID);
+        Loader<List<?>> loader = getLoaderManager().getLoader(LOADER_TYPE_ID);
         if (loader != null) {
             loader.forceLoad();
         }
@@ -133,32 +135,38 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
 
     /*  Async data loader callback implementation*/
     @Override
-    public Loader<Object> onCreateLoader(int id, Bundle args) {
-        return new TimeListLoader(getActivity().getApplicationContext(), args);
+    public Loader<List<?>> onCreateLoader(int id, Bundle args) {
+        if (id == LOADER_TYPE_ID) {
+            return new TypeListLoader(getActivity().getApplicationContext(), args);
+        } else if (id == LOADER_TIME_ID) {
+            return new TimeListLoader(getActivity().getApplicationContext(), args);
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public void onLoadFinished(Loader<Object> loader, Object data) {
+    public void onLoadFinished(Loader<List<?>> loader, List<?> data) {
+        if (data != null) {
+            if (loader.getId() == LOADER_TYPE_ID) {
+                initListHeader((List<String>) data);
 
-        if (loader.getId() == LOADER_TYPE_ID) {
-            initListHeader((List<String>) data);
-
-            //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
-            //т.к. от количества типа времени зависит как будет выводится результат
-            //лоадеры запускаются по цепочке, а не вместе
-            Loader<Object> timeLoader = getLoaderManager().getLoader(LOADER_TIME_ID);
-            if (timeLoader != null) {
-                timeLoader.forceLoad();
+                //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
+                //т.к. от количества типа времени зависит как будет выводится результат
+                //лоадеры запускаются по цепочке, а не вместе
+                Loader<Object> timeLoader = getLoaderManager().getLoader(LOADER_TIME_ID);
+                if (timeLoader != null) {
+                    timeLoader.forceLoad();
+                }
+            } else if (loader.getId() == LOADER_TIME_ID) {
+                updateData((List<TimeList>) data);
             }
-        } else if (loader.getId() == LOADER_TIME_ID) {
-            updateData((List<TimeList>) data);
         }
     }
 
 
     @Override
-    public void onLoaderReset(Loader<Object> loader) {
+    public void onLoaderReset(Loader<List<?>> loader) {
     }
 
     public static TextView getTextView(Context context, String text) {
@@ -190,7 +198,9 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     private void updateData(List<TimeList> timeList) {
-        if (mTypeList == null || timeList == null) return;
+        if (mTypeList == null || timeList == null) {
+            return;
+        }
         // упаковываем данные
         ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(
                 timeList.size());

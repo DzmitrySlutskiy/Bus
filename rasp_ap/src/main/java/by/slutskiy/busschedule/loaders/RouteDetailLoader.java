@@ -4,18 +4,16 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
-import java.util.List;
-
 import by.slutskiy.busschedule.data.DBReader;
-import by.slutskiy.busschedule.data.entities.Stop;
 
 /**
- * background download task
- * Version information
- * 25.08.2014
+ * RouteDetailLoader
+ * Version 1.0
+ * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopLoader extends AsyncTaskLoader<List<Stop>> {
+public class RouteDetailLoader extends AsyncTaskLoader<String> {
+
     public static final String ATT_ROUT_ID = "routeId";
 
     private int routeId;
@@ -26,7 +24,7 @@ public class StopLoader extends AsyncTaskLoader<List<Stop>> {
      *
      * @param context used to retrieve the application context.
      */
-    public StopLoader(Context context, Bundle args) {
+    public RouteDetailLoader(Context context, Bundle args) {
         super(context);
 
         if (args != null) {
@@ -35,9 +33,9 @@ public class StopLoader extends AsyncTaskLoader<List<Stop>> {
     }
 
     @Override
-    public List<Stop> loadInBackground() {
+    public String loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getRouteStopsList(routeId);
+        return dbReader.getRouteDetail(routeId);
     }
 }

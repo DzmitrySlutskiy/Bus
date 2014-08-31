@@ -26,6 +26,7 @@ public class BusRouteLoader extends AsyncTaskLoader<List<BusRoute>> {
     @Override
     public List<BusRoute> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
+
         return dbReader.getRoutesList();
     }
 

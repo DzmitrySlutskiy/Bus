@@ -7,7 +7,6 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +27,9 @@ import by.slutskiy.busschedule.data.entities.StopDetail;
 import by.slutskiy.busschedule.loaders.StopDetailLoader;
 import by.slutskiy.busschedule.ui.viewbinders.StopDetailBinder;
 
+import static android.support.v4.app.LoaderManager.LoaderCallbacks;
+import static android.widget.AdapterView.OnItemClickListener;
+
 
 /*
  * StopDetailFragment
@@ -36,7 +38,9 @@ import by.slutskiy.busschedule.ui.viewbinders.StopDetailBinder;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class StopDetailFragment extends Fragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<List<StopDetail>> {
+public class StopDetailFragment extends Fragment implements OnItemClickListener,
+        LoaderCallbacks<List<StopDetail>> {
+
     // the fragment initialization parameters
     private static final String ARG_STOP_ID = "stopId";
     private static final String ARG_STOP_NAME = "stopName";
@@ -117,7 +121,10 @@ public class StopDetailFragment extends Fragment implements AdapterView.OnItemCl
     public void onStart() {
         super.onStart();
 
-        getLoaderManager().getLoader(LOADER_ID).forceLoad();
+        Loader<List<StopDetail>> stopDetailLoader = getLoaderManager().getLoader(LOADER_ID);
+        if (stopDetailLoader != null) {
+            stopDetailLoader.forceLoad();
+        }
     }
 
     @Override
