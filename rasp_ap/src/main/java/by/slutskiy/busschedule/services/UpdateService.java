@@ -1,16 +1,12 @@
 package by.slutskiy.busschedule.services;
 
 import android.app.IntentService;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -34,6 +30,7 @@ import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.data.DBUpdater;
 import by.slutskiy.busschedule.data.XLSHelper;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
+import by.slutskiy.busschedule.utils.NotificationUtils;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
@@ -121,9 +118,8 @@ public class UpdateService extends IntentService {
 
     private DBUpdater mDbUpdater;
 
-    private NotificationManager mNotificationManager;
-    private final int mNotificationId = 1;
-    private NotificationCompat.Builder mBuilder;
+    private NotificationUtils mNotifier;
+
     private Messenger mMessenger;
 
     /*  public constructors */
@@ -196,8 +192,10 @@ public class UpdateService extends IntentService {
             return;
         }
 
-        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mBuilder = new NotificationCompat.Builder(this);
+        mNotifier = new NotificationUtils(this);
+        mNotifier.createNotification(MainActivity.class,
+                getString(R.string.update_dialog_title),
+                getString(R.string.update_dialog_message), R.drawable.ic_launcher);
 
         mDbUpdater = DBUpdater.getInstance(getApplicationContext());
         String filePath = getApplicationContext().getFilesDir().getPath() + "/" + FILE_NAME;
@@ -215,20 +213,20 @@ public class UpdateService extends IntentService {
 
                 extractNews(mXlsHelper);                            //get news from first sheet
 
-                int sheetCount = (BuildConfig.DEBUG) ? 2 : mXlsHelper.getSheetCount();
+                int sheetCount = (BuildConfig.DEBUG) ? mXlsHelper.getSheetCount() : mXlsHelper.getSheetCount();
 
                 double percent = 0.0;
                 if (sheetCount > 0) {
                     percent = 100.0 / sheetCount;
                 }
 
-                updateNotification(getString(R.string.update_dialog_title),
+                mNotifier.updateNotification(getString(R.string.update_dialog_title),
                         getString(R.string.update_dialog_fparse));
 
                 for (int i = 0; i < sheetCount; i++) {
                     parseSheet(mXlsHelper.getSheet(i));
 
-                    showProgressNotification(100, (int) (percent * (i + 1)));//show progress
+                    mNotifier.showProgressNotification(100, (int) (percent * (i + 1)));//show progress
                 }
 
                 saveUpdateDate(lastUpdate);
@@ -273,7 +271,7 @@ public class UpdateService extends IntentService {
                     mXlsHelper.closeWorkbook();         //close workbook
                     mXlsHelper = null;
                 }
-                mNotificationManager.cancel(mNotificationId);
+                mNotifier.deleteNotification();
 
                 delFile(filePath);                       //delete temporary xls file
 
@@ -531,8 +529,7 @@ public class UpdateService extends IntentService {
         mStopList = null;
         mTypeList = null;
         mRouteList = null;
-        mNotificationManager = null;
-        mBuilder = null;
+        mNotifier = null;
         mMessenger = null;
     }
 
@@ -661,7 +658,7 @@ public class UpdateService extends IntentService {
 
         /*   download file and save to filePath   */
         if (fileSize > 0) {
-            notifyUser(getString(R.string.update_dialog_fparse),
+            mNotifier.updateNotification(getString(R.string.update_dialog_fparse),
                     getString(R.string.update_dialog_fload));
         }
         try {
@@ -678,7 +675,7 @@ public class UpdateService extends IntentService {
 
                 /*   send read bytes count to update dialog   */
                 if (fileSize > 0) {
-                    showProgressNotification(fileSize, readBytesSum);
+                    mNotifier.showProgressNotification(fileSize, readBytesSum);
                 }
             }
         } catch (IOException e) {
@@ -775,37 +772,6 @@ public class UpdateService extends IntentService {
         //        public String type;
         public int typeID;                  //id in DB for current time type (по вых, по раб etc)
         public int typeRowSize;             //sometimes take 2 and more row for one time type
-    }
-
-    private void notifyUser(String title, String text) {
-
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, MainActivity.class);
-
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(
-                0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        mBuilder.setContentIntent(resultPendingIntent);
-        updateNotification(title, text);
-    }
-
-    private void showProgressNotification(int max, int progress) {
-        mBuilder.setProgress(max, progress, false);
-        // Displays the progress bar for the first time.
-        mNotificationManager.notify(mNotificationId, mBuilder.build());
-    }
-
-    private void updateNotification(String title, String text) {
-        mBuilder.setSmallIcon(R.drawable.ic_launcher);
-        mBuilder.setContentTitle(title);
-        mBuilder.setContentText(text);
-
-        mNotificationManager.notify(mNotificationId, mBuilder.build());
     }
 
     /**

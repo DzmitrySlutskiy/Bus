@@ -19,7 +19,7 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile files('libs/jxl.jar')
+
     compile 'com.android.support:support-v4:20.0.0'
     compile 'com.android.support:appcompat-v7:20.0.0'
     // You must install or update the Support Repository through the SDK manager to use this dependency.
@@ -27,6 +27,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:20.0.0'
     //setting additional testing libraries
     //exclude the hamcrest lib!
-
     compile 'net.sourceforge.jexcelapi:jxl:2.6.12'
 }
