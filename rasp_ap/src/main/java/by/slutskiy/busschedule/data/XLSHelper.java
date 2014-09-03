@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import by.slutskiy.busschedule.services.UpdateService;
+import by.slutskiy.busschedule.utils.StringUtils;
 import jxl.Range;
 import jxl.Workbook;
 import jxl.Sheet;
@@ -43,22 +43,20 @@ public class XLSHelper {
     public static final int STOP_ROW_OFFSET = 2;        //offset from "A" tag to hour line
 
     private static final String[] SCHEDULE_TYPE = {"по", "по раб.", "по вых.", "вых.", "раб.",
-            "субб", "воскр", "вт,ср,чт,пт", "пн", "вт", "пт", "пн,вт,ср,чт,пт", "ежедневно"};
-    public static final String DEFAULT_SCHEDULE_TYPE = SCHEDULE_TYPE[4];
+            "субб", "воскр", "пн", "вт", "ср", "чт", "пт", "сб", "вс", "ежедневно"};
 
+    public static final String DEFAULT_SCHEDULE_TYPE = SCHEDULE_TYPE[4];
 
     private static final String TAG_TERM = "(КОНЕЧНАЯ)";
     private static final String TAG_STREET = "УЛИЦА";
-    private static final String TAG_STOP_DIVIDER = " - ";
+
+    public static final String[] DELETING_SUBSTRING = {TAG_TERM, TAG_STREET};
+
+    public static final String TAG_STOP_DIVIDER = " - ";
+
     private static final int NEWS_SEARCH_ROW = 1;
     private static final int NEWS_SEARCH_COLUMN = 0;
     private static final int UPD_DATE_SHEET = 0;
-    private static final int UPD_DATE_ROW = 0;
-    private static final int UPD_DATE_COLUMN = 0;
-
-
-    //in xls file date in format [dd.mm.yyyy] - length 10 chars
-    private static final int MAX_DATE_LENGTH = 10;
 
     private static LinkedList<RangeIndex> sRangeList;
     private static int sSheetRows;
@@ -67,7 +65,6 @@ public class XLSHelper {
     private Workbook mWorkbook = null;
 
     public enum MergeSearchType {Row, Column}
-
 
     /**
      * Public constructor for XLSHelper
@@ -89,95 +86,6 @@ public class XLSHelper {
     }
 
     /**
-     * Method cut cuttingStr string from source string
-     * using for delete word parasite like "Улица", "Конечная" etc from stop name
-     *
-     * @param source     source string
-     * @param cuttingStr cutting string
-     * @return string without cutting string
-     */
-    private static String cutSubString(String source, String cuttingStr) {
-        String resultString = source.trim();
-        if (resultString.contains(cuttingStr)) {//УЛИЦА ТАВЛАЯ  (КОНЕЧНАЯ)
-            if (cuttingStr.length() < source.length()) {
-                int index = resultString.indexOf(cuttingStr);
-                if (index == 0) {//start word
-                    resultString = resultString.substring(cuttingStr.length(), resultString.length());
-                } else if (index > 0) {
-                    String startStr = resultString.substring(0, index);
-                    String endStr = resultString.substring(index + cuttingStr.length(), resultString.length());
-                    resultString = startStr + endStr;
-                }
-            }
-        }
-        return resultString.trim();
-    }
-
-    /**
-     * Delete parasite word from source string
-     *
-     * @param source - source string
-     * @return - processed string
-     */
-
-    public static String processingString(String source) {
-        String resultString = cutSubString(source, TAG_TERM);
-        resultString = cutSubString(resultString, TAG_STREET);
-        return resultString;
-    }
-
-    /**
-     * Cut first word from route name. Route name saved in format:
-     * FIRST_STOP - LAST_STOP in xls file. This method return FIRST_STOP
-     *
-     * @param routeName route name string
-     * @return first stop from route name
-     */
-    public static String getFirstStopInRoute(String routeName) {
-        String result = routeName;
-        if (result.contains(TAG_STOP_DIVIDER)) {
-            int index = result.indexOf(TAG_STOP_DIVIDER);
-            result = result.substring(0, index).trim();
-        }
-        return result;
-    }
-
-    /**
-     * Cut last word from route name. Route name saved in format:
-     * FIRST_STOP - LAST_STOP in xls file. This method return LAST_STOP
-     *
-     * @param routeName route name string
-     * @return last stop from route name
-     */
-    public static String getLastStopInRoute(String routeName) {
-        String result = routeName;
-        if (result.contains(TAG_STOP_DIVIDER)) {
-            int index = result.indexOf(TAG_STOP_DIVIDER);
-            result = result.substring(index + TAG_STOP_DIVIDER.length(), result.length()).trim();
-        }
-        return result;
-    }
-
-    /**
-     * Method get update string from xls file (Update string saved in first sheet in xls file)
-     *
-     * @return string with date last update
-     */
-    public String getUpdateString() {
-        if (mWorkbook != null) {
-            Sheet sheet = mWorkbook.getSheet(UPD_DATE_SHEET);
-            Cell cell = sheet.getCell(UPD_DATE_COLUMN, UPD_DATE_ROW);
-            String dateUpdate = cell.getContents().trim();
-            if ((! dateUpdate.equals(UpdateService.EMPTY_STRING)) &&
-                    (dateUpdate.length() > MAX_DATE_LENGTH)) {
-                dateUpdate = dateUpdate.substring(dateUpdate.length() - MAX_DATE_LENGTH);
-            }
-            return dateUpdate;
-        }
-        return UpdateService.EMPTY_STRING;
-    }
-
-    /**
      * read news from {@code UPD_DATE_SHEET} sheet
      *
      * @return list with news
@@ -196,8 +104,8 @@ public class XLSHelper {
             for (int i = NEWS_SEARCH_ROW; i < sheet.getRows(); i++) {
                 Cell cell = sheet.getCell(NEWS_SEARCH_COLUMN, i);
                 String cellContent = cell.getContents().trim();
-                String news = UpdateService.EMPTY_STRING;
-                if (! cellContent.equals(UpdateService.EMPTY_STRING)) {     //if string not empty
+                String news = StringUtils.EMPTY_STRING;
+                if (! cellContent.equals(StringUtils.EMPTY_STRING)) {     //if string not empty
                     firstNewsFound = true;                              //we found news
                     news = cellContent;
                 }
@@ -207,11 +115,11 @@ public class XLSHelper {
                     * check right cell to text data */
                     Cell rCell = sheet.getCell(NEWS_SEARCH_COLUMN + 1, i);
                     String rCellContent = rCell.getContents().trim();
-                    if (! rCellContent.equals(UpdateService.EMPTY_STRING)) {
+                    if (! rCellContent.equals(StringUtils.EMPTY_STRING)) {
                         news += rCellContent;
                     }
                 }
-                if (! news.equals(UpdateService.EMPTY_STRING)) {
+                if (! news.equals(StringUtils.EMPTY_STRING)) {
                     newsList.add(news);
                 }
             }
@@ -288,7 +196,7 @@ public class XLSHelper {
 
             /* if cell merged, we can't get data from this cells if using not top/left coordinate
             * check cell content, if has empty string - we need check Range array for this cell*/
-            if (cell.getContents().trim().equals(UpdateService.EMPTY_STRING)) {
+            if (cell.getContents().trim().equals(StringUtils.EMPTY_STRING)) {
                 RangeIndex rangeIndex = checkRange(cell, deleteRangeItem);
                 if (rangeIndex != null) {
                     return sheet.getCell(rangeIndex.topColumn,
@@ -340,7 +248,7 @@ public class XLSHelper {
     public static boolean isBadScheduleType(String typeStr) {
         typeStr = typeStr.trim();
         return (typeStr.equals(SCHEDULE_TYPE[0]) ||
-                typeStr.equals(UpdateService.EMPTY_STRING) ||
+                typeStr.equals(StringUtils.EMPTY_STRING) ||
                 (Integer.getInteger(typeStr, Integer.MAX_VALUE) != Integer.MAX_VALUE));
     }
 
@@ -371,7 +279,7 @@ public class XLSHelper {
         String[] clear = {SCHEDULE_TYPE[0], "."};
         for (String clearItem : clear) {
             if (type.contains(clearItem)) {
-                type = cutSubString(type, clearItem);
+                type = StringUtils.deleteSubString(type, clearItem);
             }
         }
         return type.trim();

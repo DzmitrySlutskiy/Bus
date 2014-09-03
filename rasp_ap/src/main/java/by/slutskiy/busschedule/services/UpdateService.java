@@ -23,6 +23,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.R;
@@ -31,6 +32,7 @@ import by.slutskiy.busschedule.data.DBUpdater;
 import by.slutskiy.busschedule.data.XLSHelper;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.utils.NotificationUtils;
+import by.slutskiy.busschedule.utils.StringUtils;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
@@ -58,7 +60,6 @@ public class UpdateService extends IntentService {
     public static final int MSG_UPDATE_BIFF_ERROR = 22;
     public static final int MSG_APP_ERROR = 23;
 
-    /*  private fields  */
     private static final String LOG_TAG = UpdateService.class.getSimpleName();
 
     /*   constants for update    */
@@ -66,7 +67,7 @@ public class UpdateService extends IntentService {
     private static final String FILE_NAME = "raspisanie_gorod.xls";
     /*  preferences params  */
     public static final String PREF_LAST_UPDATE = "lastUpdate";
-    public static final String EMPTY_STRING = "";
+    public static final String BUS_NUMBER_PATTERN = "^[0-9]{1,3}(Э|э){0,1}$";
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
@@ -213,7 +214,12 @@ public class UpdateService extends IntentService {
 
                 extractNews(mXlsHelper);                            //get news from first sheet
 
-                int sheetCount = (BuildConfig.DEBUG) ? mXlsHelper.getSheetCount() : mXlsHelper.getSheetCount();
+                int sheetCount;
+                if (BuildConfig.SHEET_COUNT > 1) {
+                    sheetCount = BuildConfig.SHEET_COUNT;
+                } else {
+                    sheetCount = mXlsHelper.getSheetCount();
+                }
 
                 double percent = 0.0;
                 if (sheetCount > 0) {
@@ -296,7 +302,8 @@ public class UpdateService extends IntentService {
         XLSHelper.updateMergedCell(sheet);
 
         /*  parsing bus number from sheet name  */
-        mBusNumber = XLSHelper.processingString(sheet.getName());
+        mBusNumber = StringUtils.deleteSubString(sheet.getName(), XLSHelper.DELETING_SUBSTRING);
+
         if (isBusNumber(mBusNumber)) {
             writeLogDebug("Get new bus:" + mBusNumber);
 
@@ -359,7 +366,8 @@ public class UpdateService extends IntentService {
         /*   processing stop name   */
         String cellContent = XLSHelper.getCellContent(sheet, mTagAColumnIndex +
                 XLSHelper.STOP_COLUMN_INDEX, rowIndex);
-        String stopName = XLSHelper.processingString(cellContent);
+        String stopName = StringUtils.deleteSubString(cellContent, XLSHelper.DELETING_SUBSTRING);
+
         int stopId = checkStop(stopName);
 
         /*   processing route info   */
@@ -386,7 +394,7 @@ public class UpdateService extends IntentService {
 
         for (int hourIndex = 1; hourIndex < mLastHourColumnIndex; hourIndex++) {
             Cell cell = getCell(sheet, hourIndex, rowIndex + 1);
-            int hour = strToInt(cell.getContents().trim());
+            int hour = StringUtils.strToInt(cell.getContents().trim());
             int minuteRowIndex = rowIndex + 4;
             for (ScheduleDayType type : mDayTypes) {
                 String minStr = "";
@@ -427,7 +435,7 @@ public class UpdateService extends IntentService {
             *  в сравнении с другими остановками. Поля "по вых" как-будто вырваны в сторону.
             *  поэтому если в ячейке типа расписания находим число, читаем данные из правого столбца
             * */
-            if ((strToInt(cellContent, Integer.MAX_VALUE) != Integer.MAX_VALUE) &&
+            if ((StringUtils.strToInt(cellContent, Integer.MAX_VALUE) != Integer.MAX_VALUE) &&
                     (lastColumn + 1 < mSheetColumns)) {
                 cellContent = XLSHelper.getCellContent(sheet, ++ lastColumn, typeIndex, false);
             }
@@ -435,7 +443,7 @@ public class UpdateService extends IntentService {
                     typeIndex, XLSHelper.MergeSearchType.Row);
 
             if (XLSHelper.isBadScheduleType(cellContent)) {
-                if (cellContent.equals(EMPTY_STRING)) {
+                if (cellContent.equals(StringUtils.EMPTY_STRING)) {
                     cellContent = XLSHelper.DEFAULT_SCHEDULE_TYPE;
                 } else {
 
@@ -486,8 +494,11 @@ public class UpdateService extends IntentService {
         int routeId;
 
         /*  split info about stops  */
-        String firstStop = XLSHelper.processingString(XLSHelper.getFirstStopInRoute(routeName));
-        String lastStop = XLSHelper.processingString(XLSHelper.getLastStopInRoute(routeName));
+        String firstStop = StringUtils.getSubStringByIndex(routeName, 0, XLSHelper.TAG_STOP_DIVIDER);
+        firstStop = StringUtils.deleteSubString(firstStop, XLSHelper.DELETING_SUBSTRING);
+
+        String lastStop = StringUtils.getSubStringByIndex(routeName, 1, XLSHelper.TAG_STOP_DIVIDER);
+        lastStop = StringUtils.deleteSubString(lastStop, XLSHelper.DELETING_SUBSTRING);
 
         /*   check stops in stop list   */
         int firstStopId = checkStop(firstStop);
@@ -632,16 +643,8 @@ public class UpdateService extends IntentService {
      * @return true - true if a valid bus number, false otherwise
      */
     private boolean isBusNumber(String busNumber) {
-        if (busNumber.trim().length() > 0) {
-            try {
-                if (Integer.parseInt(busNumber.substring(0, 1)) > 0) {
-                    return true;
-                }
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }
-        return false;
+        Pattern busNumberPattern = Pattern.compile(BUS_NUMBER_PATTERN);
+        return busNumberPattern.matcher(busNumber.trim()).find();
     }
 
     /**
@@ -702,31 +705,6 @@ public class UpdateService extends IntentService {
         }
         writeLogDebug("Download complete file size: " + fileSize);
         return true;
-    }
-
-    /**
-     * Convert String str to int value, if parse error return default value defaultInt
-     *
-     * @param str        string for convert to int
-     * @param defaultInt default int value if convert failed
-     * @return integer value for str String, or default value defaultInt if str convert failed
-     */
-    private int strToInt(String str, int defaultInt) {
-        try {
-            return Integer.parseInt(str);
-        } catch (NumberFormatException e) {
-            return defaultInt;
-        }
-    }
-
-    /**
-     * Convert String str to int value, if parse error return 0
-     *
-     * @param str string for convert
-     * @return integer value for str String, or 0 if str convert failed
-     */
-    private int strToInt(String str) {
-        return strToInt(str, 0);
     }
 
     private void writeLogDebug(String msg) {
