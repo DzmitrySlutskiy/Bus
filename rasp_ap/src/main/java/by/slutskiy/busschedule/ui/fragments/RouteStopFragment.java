@@ -25,6 +25,7 @@ import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.Stop;
 import by.slutskiy.busschedule.loaders.RouteDetailLoader;
 import by.slutskiy.busschedule.loaders.StopLoader;
+import by.slutskiy.busschedule.ui.activity.MainActivity;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 import static android.widget.AdapterView.OnItemClickListener;
@@ -37,10 +38,10 @@ import static android.widget.AdapterView.OnItemClickListener;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class RouteStopFragment extends Fragment implements OnItemClickListener, LoaderCallbacks<String> {
+public class RouteStopFragment extends Fragment implements OnItemClickListener {
 
-    private static final int LOADER_ID_STOP_DETAIL = 1;
-    private static final int LOADER_ID_STOP_LIST = LOADER_ID_STOP_DETAIL + 1;
+    private static final int LOADER_ID_STOP_DETAIL = MainActivity.getNextLoaderId();
+    private static final int LOADER_ID_STOP_LIST = MainActivity.getNextLoaderId();
 
     private static final String ARG_ROUTE_ID = "routeId";
 
@@ -54,6 +55,10 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener, 
 
     private ListView mStopListView;
     private TextView mRouteNameView;
+
+    /*  call backs  */
+    private StringCallback mStringCallBack = null;
+    private ListStopCallBack mListStopCallBack = null;
 
     /**
      * Use this factory method to create a new instance of
@@ -91,28 +96,13 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener, 
 
         Bundle args = new Bundle();
         args.putInt(StopLoader.ATT_ROUT_ID, mRouteId);
-        getLoaderManager().initLoader(LOADER_ID_STOP_LIST, args, new ListStopLoaderCallBacks());
+        getLoaderManager().initLoader(LOADER_ID_STOP_LIST, args, getListStopCallBack());
 
         //если загружаем конкретный маршрут запускаем дополнительный лоадер для инфо по маршруту
         if (mRouteId >= 0) {
             args = new Bundle();
             args.putInt(RouteDetailLoader.ATT_ROUT_ID, mRouteId);
-            getLoaderManager().initLoader(LOADER_ID_STOP_DETAIL, args, this);
-        }
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        Loader<String> stringLoader = getLoaderManager().getLoader(LOADER_ID_STOP_DETAIL);
-        if (stringLoader != null) {
-            stringLoader.forceLoad();
-        }
-
-        Loader<List<Stop>> listStopLoader = getLoaderManager().getLoader(LOADER_ID_STOP_LIST);
-        if (listStopLoader != null) {
-            listStopLoader.forceLoad();
+            getLoaderManager().initLoader(LOADER_ID_STOP_DETAIL, args, getStringCallback());
         }
     }
 
@@ -255,29 +245,46 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener, 
     }
 
 
+    private StringCallback getStringCallback() {
+        if (mStringCallBack == null) {
+            mStringCallBack = new StringCallback();
+        }
+
+        return mStringCallBack;
+    }
+
+    private ListStopCallBack getListStopCallBack() {
+        if (mListStopCallBack == null) {
+            mListStopCallBack = new ListStopCallBack();
+        }
+
+        return mListStopCallBack;
+    }
+
     /*  Async data loader callback implementation
     * for loader return String object*/
-    @Override
-    public Loader<String> onCreateLoader(int i, Bundle bundle) {
-        return new RouteDetailLoader(getActivity().getApplicationContext(), bundle);
-    }
+    private class StringCallback implements LoaderCallbacks<String> {
+        @Override
+        public Loader<String> onCreateLoader(int i, Bundle bundle) {
+            return new RouteDetailLoader(getActivity().getApplicationContext(), bundle);
+        }
 
-    @Override
-    public void onLoadFinished(Loader<String> stringLoader, String data) {
-        mStopDetail = data;
-        mRouteNameView.setText(getString(R.string.text_view_route) + "\t\t" + mStopDetail);
-    }
+        @Override
+        public void onLoadFinished(Loader<String> stringLoader, String data) {
+            mStopDetail = data;
+            mRouteNameView.setText(getString(R.string.text_view_route) + "\t\t" + mStopDetail);
+        }
 
-    @Override
-    public void onLoaderReset(Loader<String> stringLoader) {
+        @Override
+        public void onLoaderReset(Loader<String> stringLoader) {
+        }
     }
-
     /*  Async data loader callback implementation for loader return List<Stop> object
     * uses inner class because can't create more than one
     * callback implementation in one fragment class or in generic type LoaderCallbacks need
     * set Object type class*/
 
-    private class ListStopLoaderCallBacks implements LoaderCallbacks<List<Stop>> {
+    private class ListStopCallBack implements LoaderCallbacks<List<Stop>> {
 
         @Override
         public Loader<List<Stop>> onCreateLoader(int i, Bundle bundle) {

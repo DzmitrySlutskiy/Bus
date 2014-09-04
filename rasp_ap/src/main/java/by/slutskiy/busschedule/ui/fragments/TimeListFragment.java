@@ -27,6 +27,7 @@ import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.TimeList;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
 import by.slutskiy.busschedule.loaders.TypeListLoader;
+import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.ui.viewbinders.TimeListBinder;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -39,10 +40,10 @@ import static android.support.v4.app.LoaderManager.LoaderCallbacks;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?>> {
+public class TimeListFragment extends Fragment {
 
-    private static final int LOADER_TYPE_ID = 1;
-    private static final int LOADER_TIME_ID = LOADER_TYPE_ID + 1;
+    private static final int LOADER_TYPE_ID = MainActivity.getNextLoaderId();
+    private static final int LOADER_TIME_ID = MainActivity.getNextLoaderId();
 
     private static final String ARG_ROUTE_LIST_ID = "routeListId";
     private static final String ARG_ROUTE_ID = "routeId";
@@ -57,6 +58,8 @@ public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?
     private View mHeaderView;
 
     private List<String> mTypeList;
+
+    private CallBackImpl mCallBackImpl = null;
 
     /**
      * Use this factory method to create a new instance of
@@ -98,11 +101,7 @@ public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?
 
         Bundle args = new Bundle();
         args.putInt(TypeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
-        getLoaderManager().initLoader(LOADER_TYPE_ID, args, this);
-
-        args = new Bundle();
-        args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
-        getLoaderManager().initLoader(LOADER_TIME_ID, args, this);
+        getLoaderManager().initLoader(LOADER_TYPE_ID, args, getCallBackImpl());
     }
 
     @Override
@@ -123,50 +122,48 @@ public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?
         return view;
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        Loader<List<?>> loader = getLoaderManager().getLoader(LOADER_TYPE_ID);
-        if (loader != null) {
-            loader.forceLoad();
-        }
-    }
-
     /*  Async data loader callback implementation*/
-    @Override
-    public Loader<List<?>> onCreateLoader(int id, Bundle args) {
-        if (id == LOADER_TYPE_ID) {
-            return new TypeListLoader(getActivity().getApplicationContext(), args);
-        } else if (id == LOADER_TIME_ID) {
-            return new TimeListLoader(getActivity().getApplicationContext(), args);
+    private class CallBackImpl implements LoaderCallbacks<List<?>> {
+        @Override
+        public Loader<List<?>> onCreateLoader(int id, Bundle args) {
+            if (id == LOADER_TYPE_ID) {
+                return new TypeListLoader(getActivity().getApplicationContext(), args);
+            } else if (id == LOADER_TIME_ID) {
+                return new TimeListLoader(getActivity().getApplicationContext(), args);
+            }
+            return null;
         }
-        return null;
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void onLoadFinished(Loader<List<?>> loader, List<?> data) {
-        if (data != null) {
-            if (loader.getId() == LOADER_TYPE_ID) {
-                initListHeader((List<String>) data);
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onLoadFinished(Loader<List<?>> loader, List<?> data) {
+            if (data != null) {
+                if (loader.getId() == LOADER_TYPE_ID) {
+                    initListHeader((List<String>) data);
 
-                //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
-                //т.к. от количества типа времени зависит как будет выводится результат
-                //лоадеры запускаются по цепочке, а не вместе
-                Loader<Object> timeLoader = getLoaderManager().getLoader(LOADER_TIME_ID);
-                if (timeLoader != null) {
-                    timeLoader.forceLoad();
+                    //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
+                    //т.к. от количества типа времени зависит как будет выводится результат
+                    //лоадеры запускаются по цепочке, а не вместе
+                    Bundle args = new Bundle();
+                    args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
+                    getLoaderManager().initLoader(LOADER_TIME_ID, args, getCallBackImpl());
+                } else if (loader.getId() == LOADER_TIME_ID) {
+                    updateData((List<TimeList>) data);
                 }
-            } else if (loader.getId() == LOADER_TIME_ID) {
-                updateData((List<TimeList>) data);
             }
         }
+
+        @Override
+        public void onLoaderReset(Loader<List<?>> loader) {
+        }
     }
 
+    private CallBackImpl getCallBackImpl() {
+        if (mCallBackImpl == null) {
+            mCallBackImpl = new CallBackImpl();
+        }
 
-    @Override
-    public void onLoaderReset(Loader<List<?>> loader) {
+        return mCallBackImpl;
     }
 
     public static TextView getTextView(Context context, String text) {

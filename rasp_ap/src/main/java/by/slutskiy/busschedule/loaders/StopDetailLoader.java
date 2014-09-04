@@ -19,8 +19,8 @@ public class StopDetailLoader extends AsyncTaskLoader<List<StopDetail>> {
 
     public static final String ATT_STOP_ID = "stopId";
     public static final String ATT_HOUR = "currentHour";
-    private final int mStopIdLoader;
-    private final int mCurrentHourLoader;
+    private int mStopIdLoader;
+    private int mCurrentHourLoader;
 
     /**
      * Stores away the application context associated with context. Since Loaders can be used
@@ -31,8 +31,10 @@ public class StopDetailLoader extends AsyncTaskLoader<List<StopDetail>> {
     public StopDetailLoader(Context context, Bundle args) {
         super(context);
 
-        mStopIdLoader = args.getInt(ATT_STOP_ID);
-        mCurrentHourLoader = args.getInt(ATT_HOUR);
+        if (args != null) {
+            mStopIdLoader = args.getInt(ATT_STOP_ID);
+            mCurrentHourLoader = args.getInt(ATT_HOUR);
+        }
     }
 
     @Override
@@ -40,5 +42,15 @@ public class StopDetailLoader extends AsyncTaskLoader<List<StopDetail>> {
         DBReader dbReader1 = DBReader.getInstance(getContext());
 
         return dbReader1.getStopDetail(mStopIdLoader, mCurrentHourLoader);
+    }
+
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
     }
 }

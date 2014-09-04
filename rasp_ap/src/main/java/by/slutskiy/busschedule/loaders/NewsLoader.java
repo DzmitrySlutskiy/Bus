@@ -20,7 +20,6 @@ public class NewsLoader extends AsyncTaskLoader<List<String>> {
      */
     public NewsLoader(Context context) {
         super(context);
-
     }
 
     @Override
@@ -30,4 +29,13 @@ public class NewsLoader extends AsyncTaskLoader<List<String>> {
         return dbReader.getNews();
     }
 
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
+    }
 }

@@ -48,4 +48,14 @@ public class TimeListLoader extends AsyncTaskLoader<List<?>> {
 
         return dbReader.getTimeListByRouteListId(mRouteListIdLoader);
     }
+
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
+    }
 }

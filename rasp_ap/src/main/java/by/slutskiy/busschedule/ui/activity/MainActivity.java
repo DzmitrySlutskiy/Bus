@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -47,6 +48,13 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         RouteFragment.OnRouteSelectedListener,
         View.OnClickListener, RouteStopFragment.OnRouteStopSelectedListener,
         StopDetailFragment.OnStopDetailListener {
+
+    private volatile static int LOADER_ID = 0;
+
+    public synchronized static int getNextLoaderId() {
+        Log.d(MainActivity.class.getSimpleName(), "getNextLoaderId           LOADER_ID: " + LOADER_ID);
+        return LOADER_ID++;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -30,4 +30,13 @@ public class BusRouteLoader extends AsyncTaskLoader<List<BusRoute>> {
         return dbReader.getRoutesList();
     }
 
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
+    }
 }

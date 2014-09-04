@@ -38,4 +38,14 @@ public class RouteDetailLoader extends AsyncTaskLoader<String> {
 
         return dbReader.getRouteDetail(routeId);
     }
+
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
+    }
 }

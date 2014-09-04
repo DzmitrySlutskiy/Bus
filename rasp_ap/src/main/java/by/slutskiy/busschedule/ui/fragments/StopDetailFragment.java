@@ -25,6 +25,7 @@ import java.util.Map;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.StopDetail;
 import by.slutskiy.busschedule.loaders.StopDetailLoader;
+import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.ui.viewbinders.StopDetailBinder;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -38,13 +39,12 @@ import static android.widget.AdapterView.OnItemClickListener;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class StopDetailFragment extends Fragment implements OnItemClickListener,
-        LoaderCallbacks<List<StopDetail>> {
+public class StopDetailFragment extends Fragment implements OnItemClickListener {
 
     // the fragment initialization parameters
     private static final String ARG_STOP_ID = "stopId";
     private static final String ARG_STOP_NAME = "stopName";
-    private static final int LOADER_ID = 1;
+    private static final int LOADER_ID = MainActivity.getNextLoaderId();
 
     private List<StopDetail> mStopDetList = null;
     private int mStopId;
@@ -54,6 +54,8 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener,
     private OnStopDetailListener mListener;
 
     private ListView mDetailList;
+
+    private StopDetailCallBack mStopDetailCallBack = null;
 
     /**
      * Use this factory method to create a new instance of
@@ -84,7 +86,7 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener,
         Bundle args = new Bundle();
         args.putInt(StopDetailLoader.ATT_STOP_ID, mStopId);
         args.putInt(StopDetailLoader.ATT_HOUR, mCurrentHour);
-        getLoaderManager().initLoader(LOADER_ID, args, this);
+        getLoaderManager().initLoader(LOADER_ID, args, getStopDetailCallBack());
     }
 
     @Override
@@ -118,16 +120,6 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener,
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-        Loader<List<StopDetail>> stopDetailLoader = getLoaderManager().getLoader(LOADER_ID);
-        if (stopDetailLoader != null) {
-            stopDetailLoader.forceLoad();
-        }
-    }
-
-    @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
@@ -158,19 +150,29 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener,
         }
     }
 
+    private StopDetailCallBack getStopDetailCallBack() {
+        if (mStopDetailCallBack == null) {
+            mStopDetailCallBack = new StopDetailCallBack();
+        }
+
+        return mStopDetailCallBack;
+    }
+
     /*  Async data loader callback implementation*/
-    @Override
-    public Loader<List<StopDetail>> onCreateLoader(int id, Bundle args) {
-        return new StopDetailLoader(getActivity().getApplicationContext(), args);
-    }
+    private class StopDetailCallBack implements LoaderCallbacks<List<StopDetail>> {
+        @Override
+        public Loader<List<StopDetail>> onCreateLoader(int id, Bundle args) {
+            return new StopDetailLoader(getActivity().getApplicationContext(), args);
+        }
 
-    @Override
-    public void onLoadFinished(Loader<List<StopDetail>> loader, List<StopDetail> data) {
-        updateData(data);
-    }
+        @Override
+        public void onLoadFinished(Loader<List<StopDetail>> loader, List<StopDetail> data) {
+            updateData(data);
+        }
 
-    @Override
-    public void onLoaderReset(Loader<List<StopDetail>> loader) {
+        @Override
+        public void onLoaderReset(Loader<List<StopDetail>> loader) {
+        }
     }
 
     /**

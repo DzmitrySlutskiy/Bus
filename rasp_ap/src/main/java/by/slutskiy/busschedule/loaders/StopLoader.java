@@ -40,4 +40,14 @@ public class StopLoader extends AsyncTaskLoader<List<Stop>> {
 
         return dbReader.getRouteStopsList(routeId);
     }
+
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
+    }
 }
