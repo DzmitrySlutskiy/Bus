@@ -15,9 +15,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import by.slutskiy.busschedule.BuildConfig;
@@ -70,7 +70,7 @@ public class NewsFragment extends ListFragment {
                 BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
         String lastUpdateStr = getString(R.string.text_view_update_date);
 
-        Timestamp lastUpdate = new Timestamp(
+        Date lastUpdate = new Date(
                 preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
 
         if (lastUpdate.getTime() > 0) {

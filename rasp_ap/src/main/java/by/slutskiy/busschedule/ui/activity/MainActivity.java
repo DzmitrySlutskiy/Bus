@@ -15,14 +15,12 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -52,7 +50,6 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
     private volatile static int LOADER_ID = 0;
 
     public synchronized static int getNextLoaderId() {
-        Log.d(MainActivity.class.getSimpleName(), "getNextLoaderId           LOADER_ID: " + LOADER_ID);
         return LOADER_ID++;
     }
 
@@ -180,10 +177,10 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         return serviceIntent;
     }
 
-    public static Timestamp getLastUpdateDate(Context context) {
+    public static Date getLastUpdateDate(Context context) {
         SharedPreferences preferences = context.getSharedPreferences(BuildConfig.PACKAGE_NAME,
                 Context.MODE_PRIVATE);
-        return new Timestamp(preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
+        return new Date(preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
     }
 
     @Override

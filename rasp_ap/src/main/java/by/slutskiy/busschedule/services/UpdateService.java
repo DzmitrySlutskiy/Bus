@@ -19,8 +19,8 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -67,7 +67,7 @@ public class UpdateService extends IntentService {
     private static final String FILE_NAME = "raspisanie_gorod.xls";
     /*  preferences params  */
     public static final String PREF_LAST_UPDATE = "lastUpdate";
-    public static final String BUS_NUMBER_PATTERN = "^[0-9]{1,3}(Э|э){0,1}$";
+    public static final String BUS_NUMBER_PATTERN = "^[0-9]{1,3}(Э|э)?$";
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
@@ -154,20 +154,20 @@ public class UpdateService extends IntentService {
 
         int what = MSG_LAST_UPDATE;
 
-        Timestamp lastUpdate;
+        Date lastUpdate;
 
         /*   try open internet connection to remote host  */
         try {
             uCon = fURL.openConnection();
             stream = uCon.getInputStream();               //check internet IOException throws
-            lastUpdate = new Timestamp(uCon.getLastModified());
+            lastUpdate = new Date(uCon.getLastModified());
             Log.i(LOG_TAG, "last modified: " + lastUpdate);
         } catch (IOException e) {
             what = MSG_NO_INTERNET;
             lastUpdate = null;
         }
 
-        Timestamp dbUpdateDate = MainActivity.getLastUpdateDate(getApplicationContext());
+        Date dbUpdateDate = MainActivity.getLastUpdateDate(getApplicationContext());
 
         //  if need only check file modification date
         if (intent.getBooleanExtra(CHECK_UPDATE, false)) {
@@ -208,6 +208,9 @@ public class UpdateService extends IntentService {
                 mDbUpdater.beginTran();                              //begin transaction
                 mDbUpdater.clearDB();
 
+                mNotifier.updateNotification(getString(R.string.notification_title_update),
+                        getString(R.string.notification_title_update_db));
+
                 writeLogDebug("Open xls file");
                 mXlsHelper = new XLSHelper(filePath);               //open xls file
                 writeLogDebug("Xls file opened");
@@ -226,13 +229,10 @@ public class UpdateService extends IntentService {
                     percent = 100.0 / sheetCount;
                 }
 
-                mNotifier.updateNotification(getString(R.string.notification_title_update),
-                        getString(R.string.notification_title_update_db));
-
                 for (int i = 0; i < sheetCount; i++) {
                     parseSheet(mXlsHelper.getSheet(i));
-
-                    mNotifier.showProgressNotification(100, (int) (percent * (i + 1)));//show progress
+                    //show progress - every sheet more than 1 percent
+                    mNotifier.showProgressNotification(100, (int) (percent * (i + 1)));
                 }
 
                 saveUpdateDate(lastUpdate);
@@ -579,7 +579,7 @@ public class UpdateService extends IntentService {
      *
      * @param updateDate update date
      */
-    private void saveUpdateDate(Timestamp updateDate) {
+    private void saveUpdateDate(Date updateDate) {
         if (updateDate != null) {
             SharedPreferences preferences = getApplicationContext().
                     getSharedPreferences(BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
@@ -647,6 +647,8 @@ public class UpdateService extends IntentService {
         return busNumberPattern.matcher(busNumber.trim()).find();
     }
 
+    private static final int NOTIFY_PERCENT = 5;
+
     /**
      * saveStreamToFile
      *
@@ -669,6 +671,11 @@ public class UpdateService extends IntentService {
             inputStream = new BufferedInputStream(inputStream);
             outStream = new BufferedOutputStream(new FileOutputStream(file));
 
+            /*  cycle count for NOTIFY_PERCENT - if read maxCount time - we read more than
+            * NOTIFY_PERCENT % and can notify user*/
+            int maxCount = fileSize / MAX_BUFFER / 100 * NOTIFY_PERCENT;
+            int currentCount = 0;       //current cycle count
+
             byte[] buffer = new byte[MAX_BUFFER];
             int readBytes;
             int readBytesSum = 0;
@@ -677,9 +684,15 @@ public class UpdateService extends IntentService {
                 readBytesSum += readBytes;
 
                 /*   send read bytes count to update dialog   */
-                if (fileSize > 0) {
+                if (fileSize > 0 &&
+                        (currentCount++ > maxCount)) {          //if true next NOTIFY_PERCENT % read
+                    currentCount = 0;                           //reset counter
                     mNotifier.showProgressNotification(fileSize, readBytesSum);
                 }
+            }
+
+            if (fileSize > 0) {
+                mNotifier.showProgressNotification(fileSize, readBytesSum);     //show 100% read
             }
         } catch (IOException e) {
             writeLogDebug("IOException in saveStreamToFile:" + e);
