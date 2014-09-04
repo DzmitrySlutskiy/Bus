@@ -2,40 +2,43 @@
 <resources>
 
     <string name="app_name">BusSchedule</string>
+    <!--menu action-->
     <string name="action_settings">Settings</string>
     <string name="action_settings_check_update">Check update</string>
     <string name="action_settings_update">Update</string>
 
-    <string name="newsFragment">Update date:</string>
-    <string name="newsFrgUpdateStr">Update date: </string>
-    <!-- update dialog strings -->
-    <string name="update_available">New update available</string>
-    <string name="update_not_available">No update available</string>
-    <string name="update_dialog_title">Update bus schedule</string>
-    <string name="update_dialog_message">Trying to update bus schedule from web-site rasp.ap1.by</string>
-    <string name="update_dialog_fload">Download file</string>
-    <string name="update_dialog_fparse">Update the database</string>
-    <string name="update_dialog_bus_added">Add to BD bus:</string>
-    <string name="update_no_internet">Can not update schedule. No internet connection!</string>
-    <string name="update_finish">Update finish</string>
-    <string name="update_file_struct_error">Error while parsing the file. Possible change in the structure of the file. Try update app</string>
-    <string name="update_db_update_error">Error update DB records.</string>
-    <string name="update_io_error">File input/output error. </string>
-    <string name="update_biff_error">Error work with xls file. </string>
+    <!--Toast strings-->
+    <string name="toast_update_available">New update available</string>
+    <string name="toast_update_not_available">No update available</string>
+    <string name="toast_no_internet">Can not update schedule. No internet connection!</string>
+    <string name="toast_update_finish">Update finish</string>
+    <string name="toast_file_struct_error">Error while parsing the file. Possible change in the structure of the file. Try update app</string>
+    <string name="toast_db_update_error">Error update DB records.</string>
+    <string name="toast_io_error">File input/output error. </string>
+    <string name="toast_biff_error">Error work with xls file. </string>
+    <string name="toast_app_error">Internal application error. Please, reinstall or update application. </string>
 
-    <string name="app_error">Internal application error. Please, reinstall or update application. </string>
+    <string name="toast_extract_db_error">Error extracting database archive. Update bus schedule manual.</string>
 
-    <string name="extract_error">Error extracting database archive. Update bus schedule manual.</string>
+    <!--Notification strings-->
+    <string name="notification_title_update">Update bus schedule</string>
+    <string name="notification_title_update_db">Update the database</string>
 
+    <string name="notification_message_try_update">Trying to update bus schedule from web-site rasp.ap1.by</string>
+    <string name="notification_message_download_file">Download file</string>
 
-    <string name="time_list_hour">Hour</string>
-    <string name="time_list_route">Route:  </string>
-    <string name="time_list_stop">Stop:  </string>
-    <string name="full_stop_list">Full stop list</string>
-    <string name="schedule_noBus">no</string>
-    <string name="refresh_data">get data</string>
+    <!--TextView strings-->
+    <string name="text_view_hour">Hour</string>
+    <string name="text_view_route">Route:  </string>
+    <string name="text_view_stop">Stop:  </string>
+    <string name="text_view_stop_list">Full stop list</string>
+    <string name="text_view_no_bus">no</string>
+    <string name="text_view_get_data">get data</string>
+    <string name="text_view_update_date">Update date:</string>
 
-    <string name="ibtnNews">News</string>
-    <string name="ibtnRoute">Routes</string>
-    <string name="ibtnStops">Stops</string>
+    <!--buttons-->
+    <string name="button_news">News</string>
+    <string name="button_route">Routes</string>
+    <string name="button_stops">Stops</string>
+
 </resources>

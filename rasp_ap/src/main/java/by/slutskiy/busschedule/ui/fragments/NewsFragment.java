@@ -60,15 +60,15 @@ public class NewsFragment extends ListFragment implements LoaderCallbacks<List<S
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
 
-        View fragmentView = inflater.inflate(R.layout.newsfragment, container, false);
+        View fragmentView = inflater.inflate(R.layout.fragment_news, container, false);
 
         List<String> updateText = new ArrayList<String>();
-        updateText.add(getResources().getString(R.string.refresh_data));
+        updateText.add(getString(R.string.text_view_get_data));
         updateData(updateText);
 
         SharedPreferences preferences = getActivity().getSharedPreferences(
                 BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
-        String lastUpdateStr = getResources().getString(R.string.newsFrgUpdateStr);
+        String lastUpdateStr = getString(R.string.text_view_update_date);
 
         Timestamp lastUpdate = new Timestamp(
                 preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));

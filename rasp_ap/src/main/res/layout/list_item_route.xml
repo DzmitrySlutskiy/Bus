@@ -3,16 +3,16 @@
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:id="@+id/itemlayout">
+              android:id="@+id/list_view_item">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/tvBusNumber"
+        android:id="@+id/text_view_bus_number"
         android:layout_gravity="center"
-        android:layout_margin="@dimen/d2dp"
-        android:minWidth="@dimen/d30dp"
+        android:layout_margin="@dimen/text_view_padding"
+        android:minWidth="@dimen/text_view_bus_min_width"
         android:textAlignment="center"
         android:typeface="normal"/>
 
@@ -20,18 +20,18 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/tvBeginStop"
-        android:layout_weight="1"
+        android:id="@+id/text_view_begin_stop"
         android:layout_gravity="center"
-        android:layout_margin="@dimen/d2dp"/>
+        android:layout_weight="1"
+        android:layout_margin="@dimen/text_view_padding"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/tvEndStop"
-        android:layout_weight="1"
+        android:id="@+id/text_view_end_stop"
         android:layout_gravity="center"
-        android:layout_margin="@dimen/d2dp"/>
+        android:layout_weight="1"
+        android:layout_margin="@dimen/text_view_padding"/>
 
 </LinearLayout>

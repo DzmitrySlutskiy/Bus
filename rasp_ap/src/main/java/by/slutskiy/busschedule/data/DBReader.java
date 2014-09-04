@@ -344,7 +344,7 @@ public class DBReader extends DBStructure {
                     }
 
                     if (minutes.isEmpty()) {
-                        minutes = mContext.getString(R.string.schedule_noBus);
+                        minutes = mContext.getString(R.string.text_view_no_bus);
                     }
                     stopDetail.addMinute(type + " " + minutes);
                 } while (cursor.moveToNext());

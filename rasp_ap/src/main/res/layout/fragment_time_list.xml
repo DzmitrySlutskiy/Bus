@@ -4,19 +4,29 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical"
-              tools:context="by.slutskiy.busschedule.ui.fragments.RouteStopFragment">
+              tools:context="by.slutskiy.busschedule.ui.fragments.TimeListFragment">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/tvRouteDetail"
+        android:id="@+id/text_view_route_detail_time"
         android:textStyle="bold"
         android:gravity="center"
-        android:padding="@dimen/d2dp"/>
+        android:padding="@dimen/text_view_padding"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/text_view_stop_detail"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="@dimen/text_view_padding"/>
 
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/lvStopList"/>
+        android:id="@+id/list_view_time"
+        android:padding="@dimen/text_view_padding"
+        android:headerDividersEnabled="true"/>
 
 </LinearLayout>

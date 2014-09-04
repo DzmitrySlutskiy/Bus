@@ -109,16 +109,16 @@ public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.timelistfragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_time_list, container, false);
 
-        TextView tvRouteName = (TextView) view.findViewById(R.id.tvRouteDetailTimelist);
-        tvRouteName.setText(getResources().getString(R.string.time_list_route) + "\t\t" + mRouteDetail);
+        TextView tvRouteName = (TextView) view.findViewById(R.id.text_view_route_detail_time);
+        tvRouteName.setText(getString(R.string.text_view_route) + "\t\t" + mRouteDetail);
 
-        TextView tvStopDetail = (TextView) view.findViewById(R.id.tvStopDetail);
-        tvStopDetail.setText(getResources().getString(R.string.time_list_stop) + "\t\t" + mStopName);
+        TextView tvStopDetail = (TextView) view.findViewById(R.id.text_view_stop_detail);
+        tvStopDetail.setText(getString(R.string.text_view_stop) + "\t\t" + mStopName);
 
-        mTimeListView = (ListView) view.findViewById(R.id.lvTimeList);
-        mHeaderView = inflater.inflate(R.layout.timelistitem, (ViewGroup) view.findViewById(R.id.lvTimeList), false);
+        mTimeListView = (ListView) view.findViewById(R.id.list_view_time);
+        mHeaderView = inflater.inflate(R.layout.list_item_time, (ViewGroup) view.findViewById(R.id.list_view_time), false);
 
         return view;
     }
@@ -175,7 +175,7 @@ public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?
 
         Resources resources = context.getApplicationContext().getResources();
 
-        int dimPadding = Math.round(resources.getDimension(R.dimen.d5dp));
+        int dimPadding = Math.round(resources.getDimension(R.dimen.text_view_time_list_padding));
 
         tvTemp.setPadding(dimPadding, dimPadding, dimPadding, dimPadding);
         tvTemp.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -189,7 +189,7 @@ public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?
     private void initListHeader(List<String> listHeader) {
         if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
             mTypeList = listHeader;
-            LinearLayout layoutMinutes = (LinearLayout) mHeaderView.findViewById(R.id.layoutMinutes);
+            LinearLayout layoutMinutes = (LinearLayout) mHeaderView.findViewById(R.id.layout_minutes);
             for (String minute : mTypeList) {
                 layoutMinutes.addView(getTextView(mHeaderView.getContext(), minute));
             }
@@ -220,9 +220,9 @@ public class TimeListFragment extends Fragment implements LoaderCallbacks<List<?
             data.add(map);
         }
         String[] from = {ATT_HOUR, ATT_MIN};
-        int[] to = {R.id.tvHour, R.id.layoutMinutes};
+        int[] to = {R.id.text_view_hour, R.id.layout_minutes};
 
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), data, R.layout.timelistitem,
+        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), data, R.layout.list_item_time,
                 from, to);
         sAdapter.setViewBinder(new TimeListBinder());
 

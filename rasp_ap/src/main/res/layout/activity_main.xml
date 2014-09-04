@@ -5,47 +5,47 @@
               android:layout_height="match_parent"
               android:orientation="vertical"
               tools:context=".MainActivity"
-              android:padding="@dimen/d2dp">
+              android:padding="@dimen/std_padding">
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:baselineAligned="false">
+        android:baselineAligned="true">
 
         <ImageButton
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/iBtnNews"
-            android:src="@drawable/news"
-            android:padding="@dimen/d5dp"
-            android:layout_weight="1"
+            android:id="@+id/button_news"
+            android:src="@drawable/ic_news"
+            android:padding="@dimen/image_button_padding"
             android:adjustViewBounds="false"
-            android:contentDescription="@string/ibtnNews"/>
+            android:contentDescription="@string/button_news"
+            android:layout_weight="1"/>
 
         <ImageButton
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/iBtnRoute"
-            android:src="@drawable/route"
-            android:padding="@dimen/d5dp"
-            android:layout_weight="1"
-            android:contentDescription="@string/ibtnRoute"/>
+            android:id="@+id/button_route"
+            android:src="@drawable/ic_route"
+            android:padding="@dimen/image_button_padding"
+            android:contentDescription="@string/button_route"
+            android:layout_weight="1"/>
 
         <ImageButton
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/iBtnStops"
-            android:src="@drawable/stop"
-            android:padding="@dimen/d5dp"
-            android:layout_weight="1"
-            android:contentDescription="@string/ibtnStops"/>
+            android:id="@+id/button_stops"
+            android:src="@drawable/ic_stop"
+            android:padding="@dimen/image_button_padding"
+            android:contentDescription="@string/button_stops"
+            android:layout_weight="1"/>
+
     </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/frmMain">
-    </FrameLayout>
+        android:id="@+id/fragment_main"/>
 
 </LinearLayout>

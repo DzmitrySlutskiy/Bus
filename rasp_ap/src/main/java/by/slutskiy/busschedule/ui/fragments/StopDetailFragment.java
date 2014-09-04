@@ -101,15 +101,15 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener,
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.stopdetailfragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_stop_detail, container, false);
 
-        TextView tvStopDetail = (TextView) view.findViewById(R.id.tvStopDetail);
+        TextView tvStopDetail = (TextView) view.findViewById(R.id.text_view_stop_detail);
         tvStopDetail.setText(mStopName);
 
         Calendar rightNow = Calendar.getInstance();
         mCurrentHour = rightNow.get(Calendar.HOUR_OF_DAY);
 
-        mDetailList = (ListView) view.findViewById(R.id.lvStopDetail);
+        mDetailList = (ListView) view.findViewById(R.id.list_view_stop_detail);
         mDetailList.setOnItemClickListener(this);
 
         updateData(null);
@@ -203,14 +203,14 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener,
             Map<String, Object> map;
 
             map = new HashMap<String, Object>();
-            map.put(ATT_ROUTE_NAME, getResources().getString(R.string.refresh_data));
+            map.put(ATT_ROUTE_NAME, getString(R.string.text_view_get_data));
             map.put(ATT_MINUTES, "");
             pData.add(map);
         }
         String[] from = {ATT_ROUTE_NAME, ATT_MINUTES};
-        int[] to = {R.id.tvRouteName, R.id.tvNextTime};
+        int[] to = {R.id.text_view_route_name, R.id.text_view_next_time};
 
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), pData, R.layout.stopdetailitem,
+        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), pData, R.layout.list_item_stop_detail,
                 from, to);
         sAdapter.setViewBinder(new StopDetailBinder());
 

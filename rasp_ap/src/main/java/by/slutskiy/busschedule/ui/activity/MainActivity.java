@@ -51,28 +51,28 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.mainactivity);
+        setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
             FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.replace(R.id.frmMain, NewsFragment.newInstance());
+            fragmentTransaction.replace(R.id.fragment_main, NewsFragment.newInstance());
             fragmentTransaction.commit();
         }
 
-        ImageButton iBtnRoute = (ImageButton) findViewById(R.id.iBtnRoute);
+        ImageButton iBtnRoute = (ImageButton) findViewById(R.id.button_route);
         iBtnRoute.setOnClickListener(this);
 
-        ImageButton iBtnNews = (ImageButton) findViewById(R.id.iBtnNews);
+        ImageButton iBtnNews = (ImageButton) findViewById(R.id.button_news);
         iBtnNews.setOnClickListener(this);
 
-        ImageButton iBtnStops = (ImageButton) findViewById(R.id.iBtnStops);
+        ImageButton iBtnStops = (ImageButton) findViewById(R.id.button_stops);
         iBtnStops.setOnClickListener(this);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.mainactivity, menu);
+        getMenuInflater().inflate(R.menu.activity_menu_main, menu);
         return true;
     }
 
@@ -85,39 +85,39 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         switch (msg.what) {
 
             case UpdateService.MSG_UPDATE_FINISH:
-                messageStr = getResources().getString(R.string.update_finish);
+                messageStr = getString(R.string.toast_update_finish);
                 break;
 
             case UpdateService.MSG_NO_INTERNET:
-                messageStr = getResources().getString(R.string.update_no_internet);
+                messageStr = getString(R.string.toast_no_internet);
                 break;
 
             case UpdateService.MSG_UPDATE_FILE_STRUCTURE_ERROR:
-                messageStr = getResources().getString(R.string.update_file_struct_error);
+                messageStr = getString(R.string.toast_file_struct_error);
                 break;
 
             case UpdateService.MSG_UPDATE_DB_WORK_ERROR:
-                messageStr = getResources().getString(R.string.update_db_update_error);
+                messageStr = getString(R.string.toast_db_update_error);
                 break;
 
             case UpdateService.MSG_IO_ERROR:
-                messageStr = getResources().getString(R.string.update_io_error) + " " + msg.obj;
+                messageStr = getString(R.string.toast_io_error) + " " + msg.obj;
                 break;
 
             case UpdateService.MSG_UPDATE_BIFF_ERROR:
-                messageStr = getResources().getString(R.string.update_biff_error) + " " + msg.obj;
+                messageStr = getString(R.string.toast_biff_error) + " " + msg.obj;
                 break;
 
             case UpdateService.MSG_APP_ERROR:
-                messageStr = getResources().getString(R.string.app_error) + " " + msg.obj;
+                messageStr = getString(R.string.toast_app_error) + " " + msg.obj;
                 break;
 
             case UpdateService.MSG_UPDATE_NOT_NEED:
-                messageStr = getResources().getString(R.string.update_not_available);
+                messageStr = getString(R.string.toast_update_not_available);
                 break;
 
             case UpdateService.MSG_LAST_UPDATE:
-                messageStr = getResources().getString(R.string.update_available) + " " +
+                messageStr = getString(R.string.toast_update_available) + " " +
                         new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format((Date) msg.obj);
                 break;
 
@@ -182,19 +182,19 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
     public void onClick(View v) {
         switch (v.getId()) {
 
-            case R.id.iBtnRoute:
+            case R.id.button_route:
                 clearBackStack();
                 replaceFragment(RouteFragment.newInstance());
                 break;
 
-            case R.id.iBtnNews:
+            case R.id.button_news:
                 clearBackStack();
 
                 //in the top of back stack saved NewsFragment (method onCreate in this Activity)
                 //replaceFragment(NewsFragment.newInstance());
                 break;
 
-            case R.id.iBtnStops:
+            case R.id.button_stops:
                 clearBackStack();
                 replaceFragment(RouteStopFragment.newInstance(- 1));
                 break;
@@ -228,7 +228,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
     private void replaceFragment(Fragment fragment) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.frmMain, fragment);
+        fragmentTransaction.replace(R.id.fragment_main, fragment);
         //fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         if (fragmentTransaction.isAddToBackStackAllowed()) {
             fragmentTransaction.addToBackStack(((Object) fragment).getClass().getSimpleName());

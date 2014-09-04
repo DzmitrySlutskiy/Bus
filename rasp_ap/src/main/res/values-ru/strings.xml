@@ -2,40 +2,43 @@
 <resources>
 
     <string name="app_name">Расписание автобусов</string>
+    <!--menu action-->
     <string name="action_settings">Настройки</string>
     <string name="action_settings_check_update">Проверить обновления</string>
     <string name="action_settings_update">Обновить</string>
 
-    <string name="newsFragment">Update date:</string>
-    <string name="newsFrgUpdateStr">Последние обновления: </string>
-    <!--update dialog strings-->
-    <string name="update_available">Доступно обновление</string>
-    <string name="update_not_available">Обновление недоступны</string>
-    <string name="update_dialog_title">Обновление расписания</string>
-    <string name="update_dialog_message">Попытка обновить расписание автобусов с сайта rasp.ap1.by</string>
-    <string name="update_dialog_fload">Загрузка файла обновления…</string>
-    <string name="update_dialog_fparse">Обновление базы данных…</string>
-    <string name="update_finish">Обновление завершено</string>
-    <string name="update_dialog_bus_added">Добавление в БД автобуса:</string>
-    <string name="update_file_struct_error">Ошибка при разборе файл. Возможно изменилась структура файла. Попробуйте обновить приложение</string>
-    <string name="update_db_update_error">Ошибка при обновлении записей в БД.</string>
-    <string name="update_io_error">Ошибка работы с файлом. </string>
-    <string name="update_biff_error">Ошибка работы с xls файлом. </string>
+    <!--Toast strings-->
+    <string name="toast_update_available">Доступно обновление</string>
+    <string name="toast_update_not_available">Обновление недоступны</string>
+    <string name="toast_no_internet">Невозможно обновить расписание. Нет подключения к интернет!</string>
+    <string name="toast_update_finish">Обновление завершено</string>
+    <string name="toast_file_struct_error">Ошибка при разборе файл. Возможно изменилась структура файла. Попробуйте обновить приложение</string>
+    <string name="toast_db_update_error">Ошибка при обновлении записей в БД.</string>
+    <string name="toast_io_error">Ошибка работы с файлом. </string>
+    <string name="toast_biff_error">Ошибка работы с xls файлом. </string>
+    <string name="toast_app_error">Внутренняя ошибка приложения. Пожалуйста, обновите или переустановите приложение.</string>
 
-    <string name="app_error">Внутренняя ошибка приложения. Пожалуйста, обновите или переустановите приложение.</string>
+    <string name="toast_extract_db_error">Ошибка извлечения базы данных с архива. Обновите расписание в ручную.</string>
 
-    <string name="extract_error">Ошибка извлечения базы данных с архива. Обновите расписание в ручную.</string>
+    <!--Notification strings-->
+    <string name="notification_title_update">Обновление расписания</string>
+    <string name="notification_title_update_db">Обновление базы данных…</string>
 
-    <string name="update_no_internet">Невозможно обновить расписание. Нет подключения к интернет!</string>
-    <string name="time_list_hour">Часы</string>
-    <string name="time_list_route">Маршрут:  </string>
-    <string name="time_list_stop">Остановка:  </string>
-    <string name="full_stop_list">Список остановок</string>
+    <string name="notification_message_try_update">Попытка обновить расписание автобусов с сайта rasp.ap1.by</string>
+    <string name="notification_message_download_file">Загрузка файла обновления…</string>
 
-    <string name="schedule_noBus">нет</string>
-    <string name="refresh_data">Получение данных</string>
+    <!--TextView strings-->
+    <string name="text_view_hour">Часы</string>
+    <string name="text_view_route">Маршрут:  </string>
+    <string name="text_view_stop">Остановка:  </string>
+    <string name="text_view_stop_list">Список остановок</string>
+    <string name="text_view_no_bus">нет</string>
+    <string name="text_view_get_data">Получение данных</string>
+    <string name="text_view_update_date">Последние обновления: </string>
 
-    <string name="ibtnNews">Новости</string>
-    <string name="ibtnRoute">Маршруты</string>
-    <string name="ibtnStops">Остановки</string>
+    <!--buttons-->
+    <string name="button_news">Новости</string>
+    <string name="button_route">Маршруты</string>
+    <string name="button_stops">Остановки</string>
+
 </resources>

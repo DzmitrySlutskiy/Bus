@@ -195,8 +195,8 @@ public class UpdateService extends IntentService {
 
         mNotifier = new NotificationUtils(this);
         mNotifier.createNotification(MainActivity.class,
-                getString(R.string.update_dialog_title),
-                getString(R.string.update_dialog_message), R.drawable.ic_launcher);
+                getString(R.string.notification_title_update),
+                getString(R.string.notification_message_try_update), R.drawable.ic_launcher);
 
         mDbUpdater = DBUpdater.getInstance(getApplicationContext());
         String filePath = getApplicationContext().getFilesDir().getPath() + "/" + FILE_NAME;
@@ -226,8 +226,8 @@ public class UpdateService extends IntentService {
                     percent = 100.0 / sheetCount;
                 }
 
-                mNotifier.updateNotification(getString(R.string.update_dialog_title),
-                        getString(R.string.update_dialog_fparse));
+                mNotifier.updateNotification(getString(R.string.notification_title_update),
+                        getString(R.string.notification_title_update_db));
 
                 for (int i = 0; i < sheetCount; i++) {
                     parseSheet(mXlsHelper.getSheet(i));
@@ -661,8 +661,8 @@ public class UpdateService extends IntentService {
 
         /*   download file and save to filePath   */
         if (fileSize > 0) {
-            mNotifier.updateNotification(getString(R.string.update_dialog_fparse),
-                    getString(R.string.update_dialog_fload));
+            mNotifier.updateNotification(getString(R.string.notification_title_update_db),
+                    getString(R.string.notification_message_download_file));
         }
         try {
             File file = new File(filePath);

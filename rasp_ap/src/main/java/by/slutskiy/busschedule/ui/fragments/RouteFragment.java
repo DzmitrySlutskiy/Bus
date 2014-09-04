@@ -78,9 +78,9 @@ public class RouteFragment extends Fragment implements OnItemClickListener,
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View fragmentView = inflater.inflate(R.layout.routefragment, container, false);
+        View fragmentView = inflater.inflate(R.layout.fragment_route, container, false);
 
-        mBusList = (ListView) fragmentView.findViewById(R.id.lvBusList);
+        mBusList = (ListView) fragmentView.findViewById(R.id.list_view_bus);
         clearList();
 
         return fragmentView;
@@ -106,7 +106,7 @@ public class RouteFragment extends Fragment implements OnItemClickListener,
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        View itemView = view.findViewById(R.id.itemlayout);
+        View itemView = view.findViewById(R.id.list_view_item);
         if (itemView != null) {
             String tag = (String) itemView.getTag();
             if (mListener != null) {
@@ -139,7 +139,7 @@ public class RouteFragment extends Fragment implements OnItemClickListener,
     private void clearList() {
         if (mBusList != null) {
             List<String> updateText = new ArrayList<String>();
-            updateText.add(getResources().getString(R.string.refresh_data));
+            updateText.add(getString(R.string.text_view_get_data));
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
                     android.R.layout.simple_list_item_1, updateText);
             mBusList.setAdapter(adapter);
@@ -175,8 +175,8 @@ public class RouteFragment extends Fragment implements OnItemClickListener,
 
         String[] from = {attBus, attBeginStop,
                 attEndStop, attId};
-        int[] to = {R.id.tvBusNumber, R.id.tvBeginStop, R.id.tvEndStop, R.id.itemlayout};
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), dataList, R.layout.routeitem,
+        int[] to = {R.id.text_view_bus_number, R.id.text_view_begin_stop, R.id.text_view_end_stop, R.id.list_view_item};
+        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), dataList, R.layout.list_item_route,
                 from, to);
 
         sAdapter.setViewBinder(new BusRouteBinder());

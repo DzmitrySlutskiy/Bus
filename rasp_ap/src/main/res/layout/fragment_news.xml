@@ -4,21 +4,20 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               tools:context="by.slutskiy.busschedule.ui.fragments.NewsFragment"
-              android:id="@+id/newsFrag"
+              android:id="@+id/fragment_news"
               android:orientation="vertical">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/newsFragment"
-        android:padding="@dimen/d5dp"
+        android:text="@string/text_view_update_date"
+        android:padding="@dimen/text_view_padding"
         android:id="@+id/tvUpdateDate"
         android:singleLine="false"
-        android:textSize="@dimen/d15sp"
+        android:textSize="@dimen/text_view_news_text_size"
         android:textIsSelectable="false"
         android:textStyle="bold"
-        android:layout_gravity="top|center"
-        />
+        android:layout_gravity="top|center"/>
 
     <ListView
         android:layout_width="match_parent"

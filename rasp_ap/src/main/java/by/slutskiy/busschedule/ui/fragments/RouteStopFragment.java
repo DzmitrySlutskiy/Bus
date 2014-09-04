@@ -120,19 +120,19 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener, 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.routestopfragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_route_stop, container, false);
 
-        mRouteNameView = (TextView) view.findViewById(R.id.tvRouteDetail);
-        mStopListView = (ListView) view.findViewById(R.id.lvStopList);
+        mRouteNameView = (TextView) view.findViewById(R.id.text_view_route_detail);
+        mStopListView = (ListView) view.findViewById(R.id.list_view_stop);
 
         String[] newsArr;
         newsArr = new String[1];
-        newsArr[0] = getResources().getString(R.string.refresh_data);
+        newsArr[0] = getString(R.string.text_view_get_data);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, newsArr);
         mStopListView.setAdapter(adapter);
         if (mRouteId < 0) {
-            mRouteNameView.setText(getResources().getString(R.string.full_stop_list));
+            mRouteNameView.setText(getString(R.string.text_view_stop_list));
         }
 
         return view;
@@ -265,7 +265,7 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener, 
     @Override
     public void onLoadFinished(Loader<String> stringLoader, String data) {
         mStopDetail = data;
-        mRouteNameView.setText(getResources().getString(R.string.time_list_route) + "\t\t" + mStopDetail);
+        mRouteNameView.setText(getString(R.string.text_view_route) + "\t\t" + mStopDetail);
     }
 
     @Override

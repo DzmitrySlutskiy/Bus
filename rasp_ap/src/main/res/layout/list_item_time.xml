@@ -3,22 +3,22 @@
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:id="@+id/hourItem">
+              android:id="@+id/layout_hour_item">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:text="@string/time_list_hour"
-        android:id="@+id/tvHour"
+        android:text="@string/text_view_hour"
+        android:id="@+id/text_view_hour"
         android:singleLine="false"
         android:textStyle="bold"
-        android:minWidth="@dimen/d30dp"
+        android:minWidth="@dimen/text_view_hour_min_width"
         android:gravity="center"/>
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/layoutMinutes"/>
+        android:id="@+id/layout_minutes"/>
 
 </LinearLayout>

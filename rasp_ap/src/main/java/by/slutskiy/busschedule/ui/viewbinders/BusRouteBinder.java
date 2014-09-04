@@ -17,15 +17,15 @@ public class BusRouteBinder implements SimpleAdapter.ViewBinder {
     public boolean setViewValue(View view, Object data,
                                 String textRepresentation) {
         int id = view.getId();
-        if (id == R.id.tvBusNumber ||
-                id == R.id.tvBeginStop ||
-                id == R.id.tvEndStop) {
+        if (id == R.id.text_view_bus_number ||
+                id == R.id.text_view_begin_stop ||
+                id == R.id.text_view_end_stop) {
             TextView tvTemp = (TextView) view;
             tvTemp.setText((String) data);
             return true;
         }
             /*save item _id in layout tags*/
-        if (id == R.id.itemlayout) {
+        if (id == R.id.list_view_item) {
             view.setTag(data);
             return true;
         }

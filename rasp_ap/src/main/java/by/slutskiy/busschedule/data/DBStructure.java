@@ -431,7 +431,7 @@ public class DBStructure extends SQLiteOpenHelper {
         } catch (IOException ioe) {
             Log.e(LOG_TAG, "unzip error: " + ioe.getMessage() + ". Run createDB()");
             Toast.makeText(mContext.getApplicationContext(),
-                    R.string.extract_error, Toast.LENGTH_LONG).show();
+                    R.string.toast_extract_db_error, Toast.LENGTH_LONG).show();
             createDB();                                     //create clear DB
         } finally {
 
@@ -461,7 +461,7 @@ public class DBStructure extends SQLiteOpenHelper {
         } catch (IOException ioError) {
             Log.e(LOG_TAG, "closeStream: " + ioError.getMessage());
             Toast.makeText(mContext.getApplicationContext(),
-                    R.string.extract_error, Toast.LENGTH_LONG).show();
+                    R.string.toast_extract_db_error, Toast.LENGTH_LONG).show();
         }
     }
 }
