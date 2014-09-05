@@ -1,0 +1,11 @@
+.idea
+/build
+/db
+/gradle
+/PSD
+/rasp_ap/src/androidTest/
+local.properties
+.gradle/
+*.iml
+gradlew
+gradlew.bat
