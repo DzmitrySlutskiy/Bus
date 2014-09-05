@@ -188,8 +188,8 @@ public class RouteFragment extends Fragment implements OnItemClickListener {
         }
         String[] from = {attBus, attBeginStop,
                 attEndStop, attId};
-        int[] to = {R.id.tvBusNumber, R.id.tvBeginStop, R.id.tvEndStop, R.id.itemlayout};
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), dataList, R.layout.routeitem,
+        int[] to = {R.id.text_view_bus_number, R.id.text_view_begin_stop, R.id.text_view_end_stop, R.id.list_view_item};
+        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), dataList, R.layout.list_item_route,
                 from, to);
         sAdapter.setViewBinder(new BusRouteBinder());
 

@@ -83,7 +83,7 @@ public class UpdateService extends IntentService {
     private static final int MAX_BUFFER = 1024;
     private static final int EOF = - 1;
     private static final String UPDATE_DB_NAME = "apORM_update.db";
-    
+
     private static final int NOTIFY_PERCENT = 5;
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB

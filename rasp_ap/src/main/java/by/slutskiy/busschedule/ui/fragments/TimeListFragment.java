@@ -187,7 +187,7 @@ public class TimeListFragment extends Fragment {
     private void initListHeader(List<TypeList> listHeader) {
         if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
             mTypeList = listHeader;
-            LinearLayout layoutMinutes = (LinearLayout) mHeaderView.findViewById(R.id.layoutMinutes);
+            LinearLayout layoutMinutes = (LinearLayout) mHeaderView.findViewById(R.id.layout_minutes);
             for (TypeList minute : mTypeList) {
                 layoutMinutes.addView(getTextView(mHeaderView.getContext(), minute.getmType()));
             }

@@ -41,4 +41,13 @@ public class NewsLoader extends AsyncTaskLoader<List<News>> {
         }
     }
 
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
+    }
 }

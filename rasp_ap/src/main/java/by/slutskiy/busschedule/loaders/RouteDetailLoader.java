@@ -4,7 +4,14 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
-import by.slutskiy.busschedule.data.DBReader;
+import com.j256.ormlite.stmt.QueryBuilder;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import by.slutskiy.busschedule.data.OrmDBHelper;
+import by.slutskiy.busschedule.data.entities.RouteList;
+import by.slutskiy.busschedule.data.entities.Routes;
 
 /**
  * RouteDetailLoader
@@ -34,9 +41,26 @@ public class RouteDetailLoader extends AsyncTaskLoader<String> {
 
     @Override
     public String loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
+        OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getContext());
 
-        return dbReader.getRouteDetail(routeId);
+        if (dbHelper == null) {
+            return null;
+        }
+        try {
+            QueryBuilder<RouteList, Integer> qbRouteList = dbHelper.getRouteListDao().queryBuilder();
+            QueryBuilder<Routes, Integer> qbRoutes = dbHelper.getRoutesDao().queryBuilder();
+
+            qbRouteList.where().eq(RouteList.ROUTE_ID, routeId);
+            qbRoutes.join(qbRouteList);
+            List<Routes> routesList = qbRoutes.query();
+            if (routesList.size() > 0) {
+                Routes routes = routesList.get(0);
+                return routes.toString();
+            }
+            return "";
+        } catch (SQLException e) {
+            return "";
+        }
     }
 
     /**

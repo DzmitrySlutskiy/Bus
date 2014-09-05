@@ -5,9 +5,14 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
+import com.j256.ormlite.stmt.QueryBuilder;
+
+import java.sql.SQLException;
 import java.util.List;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.data.OrmDBHelper;
+import by.slutskiy.busschedule.data.entities.TimeList;
+import by.slutskiy.busschedule.data.entities.TypeList;
 
 /**
  * TypeListLoader
@@ -46,9 +51,24 @@ public class TypeListLoader extends AsyncTaskLoader<List<?>> {
 
     @Override
     public List<?> loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
+        OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getContext());
 
-        return dbReader.getTypeListByRouteListId(mRouteListIdLoader);
+        if (dbHelper == null) {
+            return null;
+        }
+
+        try {
+            QueryBuilder<TypeList, Integer> qbTypeList = dbHelper.getTypeListDao().queryBuilder();
+            QueryBuilder<TimeList, Integer> qbTimeList = dbHelper.getTimeListDao().queryBuilder();
+
+            qbTimeList.selectColumns(TimeList.DAY_TYPE_ID);
+            qbTimeList.distinct().where().eq(TimeList.ROUTE_LIST_ID, mRouteListIdLoader);
+            qbTypeList.where().in(TypeList.ID, qbTimeList);
+
+            return qbTypeList.query();
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     /**

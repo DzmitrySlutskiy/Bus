@@ -74,7 +74,7 @@ public class StopDetailLoader extends AsyncTaskLoader<List<StopDetail>> {
                 if (timeListItem.getmHour() == mCurrentHourLoader) {
                     String minutes = timeListItem.getmMinutes();
                     if (minutes.isEmpty()) {
-                        minutes = getContext().getString(R.string.schedule_noBus);
+                        minutes = getContext().getString(R.string.text_view_no_bus);
                     }
                     stopDetail.addMinute(timeListItem.getmDayType().getmType() +
                             " " + minutes);
