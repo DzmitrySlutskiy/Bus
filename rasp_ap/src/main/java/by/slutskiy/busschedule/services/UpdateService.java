@@ -119,7 +119,7 @@ public class UpdateService extends IntentService {
 
     private DBUpdater mDbUpdater;
 
-    private NotificationUtils mNotifier;
+    private int mNotificationId;
 
     private Messenger mMessenger;
 
@@ -193,10 +193,10 @@ public class UpdateService extends IntentService {
             return;
         }
 
-        mNotifier = new NotificationUtils(this);
-        mNotifier.createNotification(MainActivity.class,
+        mNotificationId = NotificationUtils.createNotification(getApplicationContext(),
                 getString(R.string.notification_title_update),
-                getString(R.string.notification_message_try_update), R.drawable.ic_launcher);
+                getString(R.string.notification_message_try_update),
+                R.drawable.ic_launcher);
 
         mDbUpdater = DBUpdater.getInstance(getApplicationContext());
         String filePath = getApplicationContext().getFilesDir().getPath() + "/" + FILE_NAME;
@@ -208,12 +208,19 @@ public class UpdateService extends IntentService {
                 mDbUpdater.beginTran();                              //begin transaction
                 mDbUpdater.clearDB();
 
-                mNotifier.updateNotification(getString(R.string.notification_title_update),
-                        getString(R.string.notification_title_update_db));
+                NotificationUtils.updateNotification(mNotificationId,
+                        getString(R.string.notification_title_update),
+                        getString(R.string.notification_message_open_file));
+
+                NotificationUtils.showIndeterminateProgress(mNotificationId);
 
                 writeLogDebug("Open xls file");
                 mXlsHelper = new XLSHelper(filePath);               //open xls file
                 writeLogDebug("Xls file opened");
+
+                NotificationUtils.updateNotification(mNotificationId,
+                        getString(R.string.notification_title_update),
+                        getString(R.string.notification_message_update_db));
 
                 extractNews(mXlsHelper);                            //get news from first sheet
 
@@ -232,7 +239,7 @@ public class UpdateService extends IntentService {
                 for (int i = 0; i < sheetCount; i++) {
                     parseSheet(mXlsHelper.getSheet(i));
                     //show progress - every sheet more than 1 percent
-                    mNotifier.showProgressNotification(100, (int) (percent * (i + 1)));
+                    NotificationUtils.showProgress(mNotificationId, 100, (int) (percent * (i + 1)));
                 }
 
                 saveUpdateDate(lastUpdate);
@@ -277,7 +284,7 @@ public class UpdateService extends IntentService {
                     mXlsHelper.closeWorkbook();         //close workbook
                     mXlsHelper = null;
                 }
-                mNotifier.deleteNotification();
+                NotificationUtils.cancelNotification(mNotificationId);
 
                 delFile(filePath);                       //delete temporary xls file
 
@@ -540,7 +547,6 @@ public class UpdateService extends IntentService {
         mStopList = null;
         mTypeList = null;
         mRouteList = null;
-        mNotifier = null;
         mMessenger = null;
     }
 
@@ -663,7 +669,9 @@ public class UpdateService extends IntentService {
 
         /*   download file and save to filePath   */
         if (fileSize > 0) {
-            mNotifier.updateNotification(getString(R.string.notification_title_update_db),
+
+            NotificationUtils.updateNotification(mNotificationId,
+                    getString(R.string.notification_message_update_db),
                     getString(R.string.notification_message_download_file));
         }
         try {
@@ -687,12 +695,13 @@ public class UpdateService extends IntentService {
                 if (fileSize > 0 &&
                         (currentCount++ > maxCount)) {          //if true next NOTIFY_PERCENT % read
                     currentCount = 0;                           //reset counter
-                    mNotifier.showProgressNotification(fileSize, readBytesSum);
+
+                    NotificationUtils.showProgress(mNotificationId, fileSize, readBytesSum);
                 }
             }
 
-            if (fileSize > 0) {
-                mNotifier.showProgressNotification(fileSize, readBytesSum);     //show 100% read
+            if (fileSize > 0) {                                 //show 100% read
+                NotificationUtils.showProgress(mNotificationId, fileSize, readBytesSum);
             }
         } catch (IOException e) {
             writeLogDebug("IOException in saveStreamToFile:" + e);

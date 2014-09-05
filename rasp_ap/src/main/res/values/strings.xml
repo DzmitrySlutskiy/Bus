@@ -22,10 +22,11 @@
 
     <!--Notification strings-->
     <string name="notification_title_update">Update bus schedule</string>
-    <string name="notification_title_update_db">Update the database</string>
 
     <string name="notification_message_try_update">Trying to update bus schedule from web-site rasp.ap1.by</string>
     <string name="notification_message_download_file">Download file</string>
+    <string name="notification_message_open_file">Opening file</string>
+    <string name="notification_message_update_db">Update the database</string>
 
     <!--TextView strings-->
     <string name="text_view_hour">Hour</string>

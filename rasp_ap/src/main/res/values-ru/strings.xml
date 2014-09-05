@@ -22,10 +22,12 @@
 
     <!--Notification strings-->
     <string name="notification_title_update">Обновление расписания</string>
-    <string name="notification_title_update_db">Обновление базы данных…</string>
 
     <string name="notification_message_try_update">Попытка обновить расписание автобусов с сайта rasp.ap1.by</string>
     <string name="notification_message_download_file">Загрузка файла обновления…</string>
+    <string name="notification_message_open_file">Открытие файла</string>
+    <string name="notification_message_update_db">Обновление базы данных…</string>
+
 
     <!--TextView strings-->
     <string name="text_view_hour">Часы</string>

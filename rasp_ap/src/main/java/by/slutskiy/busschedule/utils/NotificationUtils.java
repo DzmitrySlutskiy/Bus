@@ -1,13 +1,9 @@
 package by.slutskiy.busschedule.utils;
 
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 
-import by.slutskiy.busschedule.ui.activity.MainActivity;
+import static android.support.v4.app.NotificationCompat.Builder;
 
 /**
  * NotificationUtils
@@ -17,60 +13,107 @@ import by.slutskiy.busschedule.ui.activity.MainActivity;
  */
 public class NotificationUtils {
 
-    private static int NOTIFICATION_ID = 0;
+    private static int NOTIFICATION_ID = 0;         //used for generate notification id
     /*  private fields  */
-    private NotificationManager mNotificationManager;
+    private static NotificationManager mNotificationManager;
+    private static Builder mBuilder;
 
-    private NotificationCompat.Builder mBuilder;
-    private Context mContext;
-
-    private int mNotificationId;
-    private int mIconId;
-    /*  public constructors */
-
-    public NotificationUtils(Context context) {
-        mContext = context;
-        mNotificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        mBuilder = new NotificationCompat.Builder(mContext);
+    private NotificationUtils() {
     }
 
-    public void createNotification(Class activityClass, String title, String text, int iconId) {
-        mNotificationId = NOTIFICATION_ID++;
-        mIconId = iconId;
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(mContext, activityClass);
+    /**
+     * Create notification and show it
+     *
+     * @param context context
+     * @param title   notification title
+     * @param text    notification text
+     * @param iconId  notification icon
+     * @return Id notification for next update
+     */
+    public static int createNotification(Context context,
+                                         String title, String text, int iconId) {
+        int notificationId = NOTIFICATION_ID++;
 
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mContext);
+        Builder builder = getBuilder(context);  //initialize builder
+        builder.setSmallIcon(iconId);
+        builder.setContentTitle(title);
+        builder.setContentText(text);
 
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
+        //initialize manager
+        NotificationManager nManager = getNotificationManager(context);
+        nManager.notify(notificationId, builder.build());
 
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(
-                0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        mBuilder.setContentIntent(resultPendingIntent);
-        updateNotification(title, text);
+        return notificationId;
     }
 
-    public void updateNotification(String title, String text) {
+    /**
+     * Update notification with specified id
+     *
+     * @param id    notification id for update
+     * @param title notification text
+     * @param text  notification icon
+     */
+    public static void updateNotification(int id, String title, String text) {
         if (mBuilder != null && mNotificationManager != null) {
-            mBuilder.setSmallIcon(mIconId);
+
             mBuilder.setContentTitle(title);
             mBuilder.setContentText(text);
 
-            mNotificationManager.notify(mNotificationId, mBuilder.build());
+            mNotificationManager.notify(id, mBuilder.build());
         }
     }
 
-    public void showProgressNotification(int max, int progress) {
+    /**
+     * Show progress bar in notification with specified id as indeterminate progress
+     *
+     * @param id notification id for update
+     */
+    public static void showIndeterminateProgress(int id) {
+        showProgress(id, 0, 0, true);
+    }
+
+    /**
+     * Show progress bar in notification with specified id
+     *
+     * @param id       notification id for update
+     * @param max      max position in progress bar
+     * @param progress progress position in progress bar
+     */
+    public static void showProgress(int id, int max, int progress) {
+        showProgress(id, max, progress, false);
+    }
+
+    private static void showProgress(int id, int max, int progress, boolean isIndeterminate) {
         if (mBuilder != null && mNotificationManager != null) {
-            mBuilder.setProgress(max, progress, false);
-            // Displays the progress bar for the first time.
-            mNotificationManager.notify(mNotificationId, mBuilder.build());
+            mBuilder.setProgress(max, progress, isIndeterminate);
+
+            mNotificationManager.notify(id, mBuilder.build());
         }
     }
 
-    public void deleteNotification() {
-        mNotificationManager.cancel(mNotificationId);
+    /**
+     * delete notification with specified id
+     *
+     * @param id notification id for cancel
+     */
+    public static void cancelNotification(int id) {
+        if (mNotificationManager != null) {
+            mNotificationManager.cancel(id);
+        }
+    }
+
+    private static Builder getBuilder(Context context) {
+        if (mBuilder == null) {
+            mBuilder = new Builder(context);
+        }
+        return mBuilder;
+    }
+
+    private static NotificationManager getNotificationManager(Context context) {
+        if (mNotificationManager == null) {
+            mNotificationManager =
+                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        }
+        return mNotificationManager;
     }
 }
