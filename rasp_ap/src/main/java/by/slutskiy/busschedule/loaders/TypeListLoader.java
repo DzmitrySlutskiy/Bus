@@ -1,24 +1,21 @@
 package by.slutskiy.busschedule.loaders;
 
+
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 
-import com.j256.ormlite.stmt.QueryBuilder;
-
-import java.sql.SQLException;
 import java.util.List;
 
-import by.slutskiy.busschedule.data.OrmDBHelper;
-import by.slutskiy.busschedule.data.entities.TimeList;
+import by.slutskiy.busschedule.data.DBReader;
 
 /**
- * TimeListLoader
+ * TypeListLoader
  * Version 1.0
- * 25.08.2014
+ * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class TimeListLoader extends AsyncTaskLoader<List<?>> {
+public class TypeListLoader extends AsyncTaskLoader<List<?>> {
 
     /**
      * background loader
@@ -30,6 +27,7 @@ public class TimeListLoader extends AsyncTaskLoader<List<?>> {
      */
 
     public static final String ATT_ROUT_LIST_ID = "routeListIdLoader";
+
     private int mRouteListIdLoader;
 
     /**
@@ -38,7 +36,7 @@ public class TimeListLoader extends AsyncTaskLoader<List<?>> {
      *
      * @param context used to retrieve the application context.
      */
-    public TimeListLoader(Context context, Bundle args) {
+    public TypeListLoader(Context context, Bundle args) {
         super(context);
 
         if (args != null) {
@@ -48,21 +46,9 @@ public class TimeListLoader extends AsyncTaskLoader<List<?>> {
 
     @Override
     public List<?> loadInBackground() {
-        OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getContext());
+        DBReader dbReader = DBReader.getInstance(getContext());
 
-        if (dbHelper == null) {
-            return null;
-        }
-
-        try {
-
-            QueryBuilder<TimeList, Integer> qbTimeList = dbHelper.getTimeListDao().queryBuilder();
-            qbTimeList.where().eq(TimeList.ROUTE_LIST_ID, mRouteListIdLoader);
-            return qbTimeList.query();
-
-        } catch (SQLException e) {
-            return null;
-        }
+        return dbReader.getTypeListByRouteListId(mRouteListIdLoader);
     }
 
     /**

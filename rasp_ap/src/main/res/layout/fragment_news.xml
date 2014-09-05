@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              tools:context="by.slutskiy.busschedule.ui.fragments.NewsFragment"
+              android:id="@+id/fragment_news"
+              android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/text_view_update_date"
+        android:padding="@dimen/text_view_padding"
+        android:id="@+id/tvUpdateDate"
+        android:singleLine="false"
+        android:textSize="@dimen/text_view_news_text_size"
+        android:textIsSelectable="false"
+        android:textStyle="bold"
+        android:layout_gravity="top|center"/>
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@id/android:list"
+        android:divider="@android:drawable/divider_horizontal_dark"
+        android:choiceMode="none"
+        style="@style/AppTheme"/>
+
+</LinearLayout>

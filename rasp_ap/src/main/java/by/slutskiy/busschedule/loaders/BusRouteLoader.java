@@ -37,5 +37,15 @@ public class BusRouteLoader extends AsyncTaskLoader<List<Routes>> {
         } catch (SQLException e) {
             return null;
         }
+
+    }
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
     }
 }

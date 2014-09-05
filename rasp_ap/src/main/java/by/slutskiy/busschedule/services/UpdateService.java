@@ -1,16 +1,12 @@
 package by.slutskiy.busschedule.services;
 
 import android.app.IntentService;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
@@ -26,10 +22,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.R;
@@ -43,6 +39,8 @@ import by.slutskiy.busschedule.data.entities.StopList;
 import by.slutskiy.busschedule.data.entities.TimeList;
 import by.slutskiy.busschedule.data.entities.TypeList;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
+import by.slutskiy.busschedule.utils.NotificationUtils;
+import by.slutskiy.busschedule.utils.StringUtils;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
@@ -70,21 +68,23 @@ public class UpdateService extends IntentService {
     public static final int MSG_UPDATE_BIFF_ERROR = 22;
     public static final int MSG_APP_ERROR = 23;
 
+    public static final String BUS_NUMBER_PATTERN = "^[0-9]{1,3}(Э|э)?$";
     /*  preferences params  */
     public static final String PREF_LAST_UPDATE = "lastUpdate";
-    public static final String EMPTY_STRING = "";
 
     /*  private fields  */
+
     private static final String LOG_TAG = UpdateService.class.getSimpleName();
 
     /*   constants for update    */
     private static final String BUS_PARK_URL = "http://www.ap1.by/download/";
     private static final String FILE_NAME = "raspisanie_gorod.xls";
 
-
     private static final int MAX_BUFFER = 1024;
     private static final int EOF = - 1;
     private static final String UPDATE_DB_NAME = "apORM_update.db";
+    
+    private static final int NOTIFY_PERCENT = 5;
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
@@ -139,9 +139,8 @@ public class UpdateService extends IntentService {
     private Dao<RouteList, Integer> mRouteListDao;
     private Dao<TimeList, Integer> mTimeListDao;
 
-    private NotificationManager mNotificationManager;
-    private final int mNotificationId = 1;
-    private NotificationCompat.Builder mBuilder;
+    private int mNotificationId;
+
     private Messenger mMessenger;
 
     /*  public constructors */
@@ -182,7 +181,7 @@ public class UpdateService extends IntentService {
             uCon = fURL.openConnection();
             stream = uCon.getInputStream();               //check internet IOException throws
             lastUpdate = new Date(uCon.getLastModified());
-            Log.i(LOG_TAG, "last mod: " + lastUpdate);
+            Log.i(LOG_TAG, "last modified: " + lastUpdate);
         } catch (IOException e) {
             what = MSG_NO_INTERNET;
             lastUpdate = null;
@@ -214,8 +213,10 @@ public class UpdateService extends IntentService {
             return;
         }
 
-        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mBuilder = new NotificationCompat.Builder(this);
+        mNotificationId = NotificationUtils.createNotification(getApplicationContext(),
+                getString(R.string.notification_title_update),
+                getString(R.string.notification_message_try_update),
+                R.drawable.ic_launcher);
 
 //        mDbUpdater = DBUpdater.getInstance(getApplicationContext());
 
@@ -241,26 +242,39 @@ public class UpdateService extends IntentService {
                     throw new ORMDaoException(e.getMessage());
                 }
 
+                NotificationUtils.updateNotification(mNotificationId,
+                        getString(R.string.notification_title_update),
+                        getString(R.string.notification_message_open_file));
+
+                NotificationUtils.showIndeterminateProgress(mNotificationId);
+
                 writeLogDebug("Open xls file");
                 mXlsHelper = new XLSHelper(filePath);               //open xls file
                 writeLogDebug("Xls file opened");
 
+                NotificationUtils.updateNotification(mNotificationId,
+                        getString(R.string.notification_title_update),
+                        getString(R.string.notification_message_update_db));
+
                 extractNews(mXlsHelper);                            //get news from first sheet
 
-                int sheetCount = (BuildConfig.DEBUG) ? 5 : mXlsHelper.getSheetCount();
+
+                int sheetCount;
+                if (BuildConfig.SHEET_COUNT > 1) {
+                    sheetCount = BuildConfig.SHEET_COUNT;
+                } else {
+                    sheetCount = mXlsHelper.getSheetCount();
+                }
 
                 double percent = 0.0;
                 if (sheetCount > 0) {
                     percent = 100.0 / sheetCount;
                 }
 
-                updateNotification(getString(R.string.update_dialog_title),
-                        getString(R.string.update_dialog_fparse));
-
                 for (int i = 0; i < sheetCount; i++) {
                     parseSheet(mXlsHelper.getSheet(i));
-
-                    showProgressNotification(100, (int) (percent * i));//show progress
+                    //show progress - every sheet more than 1 percent
+                    NotificationUtils.showProgress(mNotificationId, 100, (int) (percent * (i + 1)));
                 }
 
                 saveUpdateDate(lastUpdate);
@@ -312,7 +326,7 @@ public class UpdateService extends IntentService {
                     mXlsHelper = null;
                 }
 
-                mNotificationManager.cancel(mNotificationId);
+                NotificationUtils.cancelNotification(mNotificationId);
 
                 delFile(filePath);                       //delete temporary xls file
 
@@ -337,7 +351,9 @@ public class UpdateService extends IntentService {
         XLSHelper.updateMergedCell(sheet);
 
         /*  parsing bus number from sheet name  */
-        String busNumber = XLSHelper.processingString(sheet.getName());
+
+        String busNumber = StringUtils.deleteSubString(sheet.getName(), XLSHelper.DELETING_SUBSTRING);
+
         if (isBusNumber(busNumber)) {
             writeLogDebug("Get new bus:" + busNumber);
 
@@ -399,7 +415,9 @@ public class UpdateService extends IntentService {
         /*   processing stop name   */
         String cellContent = XLSHelper.getCellContent(sheet, mTagAColumnIndex +
                 XLSHelper.STOP_COLUMN_INDEX, rowIndex);
-        String stopName = XLSHelper.processingString(cellContent);
+
+        String stopName = StringUtils.deleteSubString(cellContent, XLSHelper.DELETING_SUBSTRING);
+
         StopList currentStop = checkStop(stopName);
 
         /*   processing route info   */
@@ -433,7 +451,7 @@ public class UpdateService extends IntentService {
 
         for (int hourIndex = 1; hourIndex < mLastHourColumnIndex; hourIndex++) {
             Cell cell = getCell(sheet, hourIndex, rowIndex + 1);
-            int hour = strToInt(cell.getContents().trim());
+            int hour = StringUtils.strToInt(cell.getContents().trim());
             int minuteRowIndex = rowIndex + 4;
             for (ScheduleDayType type : mDayTypes) {
                 String minStr = "";
@@ -454,11 +472,6 @@ public class UpdateService extends IntentService {
                 if (timeList.getmId() < 0) {
                     throw new DBUpdateWorkException("Error add time for stop: " + timeList);
                 }
-
-//                if (mDbUpdater.addTime(mRouteListId, hour, minStr.trim(), type.typeID) < 0) {
-//                    throw new DBUpdateWorkException("Error add time for stop: " +
-//                            stopName + " for route " + routeName);
-//                }
 
                 minuteRowIndex += type.typeRowSize;
             }
@@ -487,7 +500,7 @@ public class UpdateService extends IntentService {
             *  в сравнении с другими остановками. Поля "по вых" как-будто вырваны в сторону.
             *  поэтому если в ячейке типа расписания находим число, читаем данные из правого столбца
             * */
-            if ((strToInt(cellContent, Integer.MAX_VALUE) != Integer.MAX_VALUE) &&
+            if ((StringUtils.strToInt(cellContent, Integer.MAX_VALUE) != Integer.MAX_VALUE) &&
                     (lastColumn + 1 < mSheetColumns)) {
                 cellContent = XLSHelper.getCellContent(sheet, ++ lastColumn, typeIndex, false);
             }
@@ -495,7 +508,7 @@ public class UpdateService extends IntentService {
                     typeIndex, XLSHelper.MergeSearchType.Row);
 
             if (XLSHelper.isBadScheduleType(cellContent)) {
-                if (cellContent.equals(EMPTY_STRING)) {
+                if (cellContent.equals(StringUtils.EMPTY_STRING)) {
                     cellContent = XLSHelper.DEFAULT_SCHEDULE_TYPE;
                 } else {
 
@@ -557,8 +570,11 @@ public class UpdateService extends IntentService {
     private Routes checkRoute(String routeName) throws DBUpdateWorkException, SQLException, ORMDaoException {
 
         /*  split info about stops  */
-        String firstStopName = XLSHelper.processingString(XLSHelper.getFirstStopInRoute(routeName));
-        String lastStopName = XLSHelper.processingString(XLSHelper.getLastStopInRoute(routeName));
+        String firstStopName = StringUtils.getSubStringByIndex(routeName, 0, XLSHelper.TAG_STOP_DIVIDER);
+        firstStopName = StringUtils.deleteSubString(firstStopName, XLSHelper.DELETING_SUBSTRING);
+
+        String lastStopName = StringUtils.getSubStringByIndex(routeName, 1, XLSHelper.TAG_STOP_DIVIDER);
+        lastStopName = StringUtils.deleteSubString(lastStopName, XLSHelper.DELETING_SUBSTRING);
 
         /*   check stops in stop list   */
         StopList firstStop = checkStop(firstStopName);
@@ -602,8 +618,6 @@ public class UpdateService extends IntentService {
         mStopList = null;
         mTypeList = null;
         mRoutesList = null;
-        mNotificationManager = null;
-        mBuilder = null;
         mMessenger = null;
     }
 
@@ -651,8 +665,7 @@ public class UpdateService extends IntentService {
             SharedPreferences preferences = getApplicationContext().
                     getSharedPreferences(BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = preferences.edit();
-            editor.putString(PREF_LAST_UPDATE,
-                    new SimpleDateFormat(USED_DATE_FORMAT).format(updateDate));
+            editor.putLong(PREF_LAST_UPDATE, updateDate.getTime());
             editor.commit();
         }
     }
@@ -729,16 +742,8 @@ public class UpdateService extends IntentService {
      * @return true - true if a valid bus number, false otherwise
      */
     private boolean isBusNumber(String busNumber) {
-        if (busNumber.trim().length() > 0) {
-            try {
-                if (Integer.parseInt(busNumber.substring(0, 1)) > 0) {
-                    return true;
-                }
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }
-        return false;
+        Pattern busNumberPattern = Pattern.compile(BUS_NUMBER_PATTERN);
+        return busNumberPattern.matcher(busNumber.trim()).find();
     }
 
     /**
@@ -755,13 +760,20 @@ public class UpdateService extends IntentService {
 
         /*   download file and save to filePath   */
         if (fileSize > 0) {
-            notifyUser(getString(R.string.update_dialog_fparse),
-                    getString(R.string.update_dialog_fload));
+
+            NotificationUtils.updateNotification(mNotificationId,
+                    getString(R.string.notification_message_update_db),
+                    getString(R.string.notification_message_download_file));
         }
         try {
             File file = new File(filePath);
             inputStream = new BufferedInputStream(inputStream);
             outStream = new BufferedOutputStream(new FileOutputStream(file));
+
+            /*  cycle count for NOTIFY_PERCENT - if read maxCount time - we read more than
+            * NOTIFY_PERCENT % and can notify user*/
+            int maxCount = fileSize / MAX_BUFFER / 100 * NOTIFY_PERCENT;
+            int currentCount = 0;       //current cycle count
 
             byte[] buffer = new byte[MAX_BUFFER];
             int readBytes;
@@ -771,9 +783,16 @@ public class UpdateService extends IntentService {
                 readBytesSum += readBytes;
 
                 /*   send read bytes count to update dialog   */
-                if (fileSize > 0) {
-                    showProgressNotification(fileSize, readBytesSum);
+                if (fileSize > 0 &&
+                        (currentCount++ > maxCount)) {          //if true next NOTIFY_PERCENT % read
+                    currentCount = 0;                           //reset counter
+
+                    NotificationUtils.showProgress(mNotificationId, fileSize, readBytesSum);
                 }
+            }
+
+            if (fileSize > 0) {                                 //show 100% read
+                NotificationUtils.showProgress(mNotificationId, fileSize, readBytesSum);
             }
         } catch (IOException e) {
             writeLogDebug("IOException in saveStreamToFile:" + e);
@@ -800,31 +819,6 @@ public class UpdateService extends IntentService {
         }
         writeLogDebug("Download complete file size: " + fileSize);
         return true;
-    }
-
-    /**
-     * Convert String str to int value, if parse error return default value defaultInt
-     *
-     * @param str        string for convert to int
-     * @param defaultInt default int value if convert failed
-     * @return integer value for str String, or default value defaultInt if str convert failed
-     */
-    private int strToInt(String str, int defaultInt) {
-        try {
-            return Integer.parseInt(str);
-        } catch (NumberFormatException e) {
-            return defaultInt;
-        }
-    }
-
-    /**
-     * Convert String str to int value, if parse error return 0
-     *
-     * @param str string for convert
-     * @return integer value for str String, or 0 if str convert failed
-     */
-    private int strToInt(String str) {
-        return strToInt(str, 0);
     }
 
     private void writeLogDebug(String msg) {
@@ -863,37 +857,6 @@ public class UpdateService extends IntentService {
             Log.i(LOG_TAG, (fl.delete() ? "File deleted:" : "Can't delete file:") +
                     filePath);
         }
-    }
-
-    private void notifyUser(String title, String text) {
-
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, MainActivity.class);
-
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(
-                0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        mBuilder.setContentIntent(resultPendingIntent);
-        updateNotification(title, text);
-    }
-
-    private void showProgressNotification(int max, int progress) {
-        mBuilder.setProgress(max, progress, false);
-        // Displays the progress bar for the first time.
-        mNotificationManager.notify(mNotificationId, mBuilder.build());
-    }
-
-    private void updateNotification(String title, String text) {
-        mBuilder.setSmallIcon(R.drawable.ic_launcher);
-        mBuilder.setContentTitle(title);
-        mBuilder.setContentText(text);
-
-        mNotificationManager.notify(mNotificationId, mBuilder.build());
     }
 
     /**

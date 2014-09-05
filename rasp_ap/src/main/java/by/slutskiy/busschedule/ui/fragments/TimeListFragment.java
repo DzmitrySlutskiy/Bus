@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -18,7 +17,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +27,11 @@ import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.TypeList;
 import by.slutskiy.busschedule.data.entities.TimeList;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
+import by.slutskiy.busschedule.loaders.TypeListLoader;
+import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.ui.viewbinders.TimeListBinder;
+
+import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
 /*
  * TimeListFragment - show bus schedule for selected route and stop
@@ -39,10 +41,10 @@ import by.slutskiy.busschedule.ui.viewbinders.TimeListBinder;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class TimeListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Object> {
+public class TimeListFragment extends Fragment {
 
-    public static final int LOADER_TYPE_ID = 1;
-    private static final int LOADER_TIME_ID = LOADER_TYPE_ID + 1;
+    private static final int LOADER_TYPE_ID = MainActivity.getNextLoaderId();
+    private static final int LOADER_TIME_ID = MainActivity.getNextLoaderId();
 
     private static final String ARG_ROUTE_LIST_ID = "routeListId";
     private static final String ARG_ROUTE_ID = "routeId";
@@ -57,6 +59,8 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
     private View mHeaderView;
 
     private List<TypeList> mTypeList;
+
+    private CallBackImpl mCallBackImpl = null;
 
     /**
      * Use this factory method to create a new instance of
@@ -97,74 +101,70 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
         super.onActivityCreated(savedInstanceState);
 
         Bundle args = new Bundle();
-        args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
-        getLoaderManager().initLoader(LOADER_TYPE_ID, args, this);
-
-        args = new Bundle();
-        args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
-        getLoaderManager().initLoader(LOADER_TIME_ID, args, this);
+        args.putInt(TypeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
+        getLoaderManager().initLoader(LOADER_TYPE_ID, args, getCallBackImpl());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.timelistfragment, container, false);
+        View view = inflater.inflate(R.layout.fragment_time_list, container, false);
 
-        TextView tvRouteName = (TextView) view.findViewById(R.id.tvRouteDetailTimelist);
-        tvRouteName.setText(getResources().getString(R.string.time_list_route) + "\t\t" + mRouteDetail);
+        TextView tvRouteName = (TextView) view.findViewById(R.id.text_view_route_detail_time);
+        tvRouteName.setText(getString(R.string.text_view_route) + "\t\t" + mRouteDetail);
 
-        TextView tvStopDetail = (TextView) view.findViewById(R.id.tvStopDetail);
-        tvStopDetail.setText(getResources().getString(R.string.time_list_stop) + "\t\t" + mStopName);
+        TextView tvStopDetail = (TextView) view.findViewById(R.id.text_view_stop_detail);
+        tvStopDetail.setText(getString(R.string.text_view_stop) + "\t\t" + mStopName);
 
-        mTimeListView = (ListView) view.findViewById(R.id.lvTimeList);
-        mHeaderView = inflater.inflate(R.layout.timelistitem, (ViewGroup) view.findViewById(R.id.lvTimeList), false);
+        mTimeListView = (ListView) view.findViewById(R.id.list_view_time);
+        mHeaderView = inflater.inflate(R.layout.list_item_time, (ViewGroup) view.findViewById(R.id.list_view_time), false);
 
         return view;
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        Loader<Object> loader = getLoaderManager().getLoader(LOADER_TYPE_ID);
-        if (loader != null) {
-            loader.forceLoad();
-        }
-    }
-
     /*  Async data loader callback implementation*/
-    @Override
-    public Loader<Object> onCreateLoader(int id, Bundle args) {
-        return new TimeListLoader(getActivity().getApplicationContext(), args);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void onLoadFinished(Loader<Object> loader, Object data) {
-        if (data != null) {
-            if (loader.getId() == LOADER_TYPE_ID) {
-                initListHeader((List<TypeList>) data);
-
-                //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
-                //т.к. от количества типа времени зависит как будет выводится результат
-                //лоадеры запускаются по цепочке, а не вместе
-                Loader<Object> timeLoader = getLoaderManager().getLoader(LOADER_TIME_ID);
-                if (timeLoader != null) {
-                    timeLoader.forceLoad();
-                }
-            } else if (loader.getId() == LOADER_TIME_ID) {
-                updateData((List<TimeList>) data);
+    private class CallBackImpl implements LoaderCallbacks<List<?>> {
+        @Override
+        public Loader<List<?>> onCreateLoader(int id, Bundle args) {
+            if (id == LOADER_TYPE_ID) {
+                return new TypeListLoader(getActivity().getApplicationContext(), args);
+            } else if (id == LOADER_TIME_ID) {
+                return new TimeListLoader(getActivity().getApplicationContext(), args);
             }
-        } else {
-            Toast.makeText(getActivity().getApplicationContext(),
-                    getString(R.string.db_current_update), Toast.LENGTH_LONG).show();
+            return null;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onLoadFinished(Loader<List<?>> loader, List<?> data) {
+            if (data != null) {
+                if (loader.getId() == LOADER_TYPE_ID) {
+                    initListHeader((List<TypeList>) data);
+
+                    //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
+                    //т.к. от количества типа времени зависит как будет выводится результат
+                    //лоадеры запускаются по цепочке, а не вместе
+                    Bundle args = new Bundle();
+                    args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
+                    getLoaderManager().initLoader(LOADER_TIME_ID, args, getCallBackImpl());
+                } else if (loader.getId() == LOADER_TIME_ID) {
+                    updateData((List<TimeList>) data);
+                }
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<List<?>> loader) {
         }
     }
 
+    private CallBackImpl getCallBackImpl() {
+        if (mCallBackImpl == null) {
+            mCallBackImpl = new CallBackImpl();
+        }
 
-    @Override
-    public void onLoaderReset(Loader<Object> loader) {
+        return mCallBackImpl;
     }
 
     public static TextView getTextView(Context context, String text) {
@@ -173,7 +173,7 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
 
         Resources resources = context.getApplicationContext().getResources();
 
-        int dimPadding = Math.round(resources.getDimension(R.dimen.d5dp));
+        int dimPadding = Math.round(resources.getDimension(R.dimen.text_view_time_list_padding));
 
         tvTemp.setPadding(dimPadding, dimPadding, dimPadding, dimPadding);
         tvTemp.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -196,7 +196,9 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     private void updateData(List<TimeList> timeList) {
-        if (mTypeList == null || timeList == null) return;
+        if (mTypeList == null || timeList == null) {
+            return;
+        }
         // упаковываем данные
         ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(
                 timeList.size());
@@ -216,9 +218,9 @@ public class TimeListFragment extends Fragment implements LoaderManager.LoaderCa
             data.add(map);
         }
         String[] from = {ATT_HOUR, ATT_MIN};
-        int[] to = {R.id.tvHour, R.id.layoutMinutes};
+        int[] to = {R.id.text_view_hour, R.id.layout_minutes};
 
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), data, R.layout.timelistitem,
+        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), data, R.layout.list_item_time,
                 from, to);
         sAdapter.setViewBinder(new TimeListBinder());
 

@@ -6,19 +6,19 @@
     <item
         android:id="@+id/action_settings"
         android:title="@string/action_settings"
-        app:showAsAction="ifRoom|withText"
+        app:showAsAction="never"
         android:icon="@android:drawable/ic_menu_manage"/>
 
     <item
         android:id="@+id/action_check_update"
         android:title="@string/action_settings_check_update"
-        app:showAsAction="ifRoom|withText"
+        app:showAsAction="never"
         android:icon="@android:drawable/ic_popup_sync"/>
 
     <item
         android:id="@+id/action_update"
         android:title="@string/action_settings_update"
-        android:orderInCategory="100"
-        app:showAsAction="ifRoom|withText"
+        app:showAsAction="never"
         android:icon="@android:drawable/ic_menu_revert"/>
+
 </menu>

@@ -8,16 +8,16 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import by.slutskiy.busschedule.BuildConfig;
@@ -25,6 +25,9 @@ import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.News;
 import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.loaders.NewsLoader;
+import by.slutskiy.busschedule.ui.activity.MainActivity;
+
+import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
 /*
  * NewsFragment - show news in list style
@@ -34,10 +37,10 @@ import by.slutskiy.busschedule.loaders.NewsLoader;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class NewsFragment extends ListFragment implements
-        LoaderManager.LoaderCallbacks<List<News>> {
+public class NewsFragment extends ListFragment {
 
-    private static final int LOADER_ID = 1;
+    private static final int LOADER_ID = MainActivity.getNextLoaderId();
+    private NewsCallback mCallBack = null;
 
     /**
      * Use this factory method to create a new instance of
@@ -60,16 +63,19 @@ public class NewsFragment extends ListFragment implements
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
 
-        View fragmentView = inflater.inflate(R.layout.newsfragment, container, false);
-
-        List<News> updateText = new ArrayList<News>();
-        updateText.add(new News(getString(R.string.refresh_data)));
-        updateData(updateText);
+        View fragmentView = inflater.inflate(R.layout.fragment_news, container, false);
+        updateData(null);
 
         SharedPreferences preferences = getActivity().getSharedPreferences(
                 BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
-        String lastUpdateStr = getString(R.string.newsFrgUpdateStr);
-        lastUpdateStr += preferences.getString(UpdateService.PREF_LAST_UPDATE, UpdateService.EMPTY_STRING);
+        String lastUpdateStr = getString(R.string.text_view_update_date);
+
+        Date lastUpdate = new Date(
+                preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
+
+        if (lastUpdate.getTime() > 0) {
+            lastUpdateStr += new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format(lastUpdate);
+        }
 
         TextView tvUpdateDate = (TextView) fragmentView.findViewById(R.id.tvUpdateDate);
         tvUpdateDate.setText(lastUpdateStr);
@@ -78,50 +84,62 @@ public class NewsFragment extends ListFragment implements
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        getLoaderManager().getLoader(LOADER_ID).forceLoad();        //begin load data from DB
-    }
-
-    @Override
     public void onActivityCreated(Bundle savedlnstanceState) {
         super.onActivityCreated(savedlnstanceState);
-        getLoaderManager().initLoader(LOADER_ID, null, this);
+
+        getLoaderManager().initLoader(LOADER_ID, null, getCallBack());
     }
 
     /*  Async data loader callback implementation*/
-    @Override
-    public Loader<List<News>> onCreateLoader(int id, Bundle args) {
-        return new NewsLoader(getActivity().getApplicationContext());
+
+    private class NewsCallback implements LoaderCallbacks<List<News>> {
+
+        @Override
+        public Loader<List<News>> onCreateLoader(int id, Bundle args) {
+            return new NewsLoader(getActivity().getApplicationContext());
+        }
+
+        @Override
+        public void onLoadFinished(Loader<List<News>> loader, List<News> data) {
+            updateData(data);                                           //update data in list
+        }
+
+        @Override
+        public void onLoaderReset(Loader<List<News>> loader) {
+            updateData(null);
+        }
     }
 
-    @Override
-    public void onLoadFinished(Loader<List<News>> loader, List<News> data) {
-        updateData(data);                                           //update data in list
-    }
 
-    @Override
-    public void onLoaderReset(Loader<List<News>> loader) {
+    private NewsCallback getCallBack() {
+        if (mCallBack == null) {
+            mCallBack = new NewsCallback();
+        }
+
+        return mCallBack;
+
     }
 
     /**
      * Update data in fragment list
+     *
      * @param data list with news
      */
+
     private void updateData(List<News> data) {
-        if (data != null) {
-            String[] newsArray = new String[data.size()];
-
-            for (int i = 0; i < data.size(); i++) {
-                newsArray[i] = data.get(i).getmNewsText();
-            }
-
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                    android.R.layout.simple_list_item_1, newsArray);
-            setListAdapter(adapter);
-        } else{
-            Toast.makeText(getActivity().getApplicationContext(),
-                    getString(R.string.db_current_update),Toast.LENGTH_LONG).show();
+        if (data == null) {
+            data = new ArrayList<News>();
+            data.add(new News(getString(R.string.text_view_get_data)));
         }
+
+        String[] newsArray = new String[data.size()];
+
+        for (int i = 0; i < data.size(); i++) {
+            newsArray[i] = data.get(i).getmNewsText();
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, newsArray);
+        setListAdapter(adapter);
     }
 }

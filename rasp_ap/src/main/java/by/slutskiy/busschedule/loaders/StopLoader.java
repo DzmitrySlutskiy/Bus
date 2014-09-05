@@ -11,9 +11,7 @@ import java.util.List;
 
 import by.slutskiy.busschedule.data.OrmDBHelper;
 import by.slutskiy.busschedule.data.entities.RouteList;
-import by.slutskiy.busschedule.data.entities.Routes;
 import by.slutskiy.busschedule.data.entities.StopList;
-import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 
 /**
  * background download task
@@ -21,7 +19,7 @@ import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopLoader extends AsyncTaskLoader<Object> {
+public class StopLoader extends AsyncTaskLoader<List<StopList>> {
     public static final String ATT_ROUT_ID = "routeId";
 
     private int routeId;
@@ -41,7 +39,7 @@ public class StopLoader extends AsyncTaskLoader<Object> {
     }
 
     @Override
-    public Object loadInBackground() {
+    public List<StopList> loadInBackground() {
         OrmDBHelper dbHelper = OrmDBHelper.getReaderInstance(getContext());
 
         if (dbHelper == null) {
@@ -49,35 +47,32 @@ public class StopLoader extends AsyncTaskLoader<Object> {
         }
 
         try {
-            if (getId() == RouteStopFragment.LOADER_ID_STOP_DETAIL) {
+            if (routeId < 0) {
+                return dbHelper.getStopDao().queryForAll();
+            } else {
                 QueryBuilder<RouteList, Integer> qbRouteList = dbHelper.getRouteListDao().queryBuilder();
-                QueryBuilder<Routes, Integer> qbRoutes = dbHelper.getRoutesDao().queryBuilder();
+                QueryBuilder<StopList, Integer> qbStopList = dbHelper.getStopDao().queryBuilder();
+
+                qbStopList.join(qbRouteList);
 
                 qbRouteList.where().eq(RouteList.ROUTE_ID, routeId);
-                qbRoutes.join(qbRouteList);
-                List<Routes> routesList = qbRoutes.query();
-                if (routesList.size() > 0) {
-                    Routes routes = routesList.get(0);
-                    return routes.toString();
-                }
-                return "";
-            } else {
-                if (routeId < 0) {
-                    return dbHelper.getStopDao().queryForAll();
-                } else {
-                    QueryBuilder<RouteList, Integer> qbRouteList = dbHelper.getRouteListDao().queryBuilder();
-                    QueryBuilder<StopList, Integer> qbStopList = dbHelper.getStopDao().queryBuilder();
+                qbRouteList.orderBy(RouteList.STOP_INDEX, true);
 
-                    qbStopList.join(qbRouteList);
-
-                    qbRouteList.where().eq(RouteList.ROUTE_ID, routeId);
-                    qbRouteList.orderBy(RouteList.STOP_INDEX, true);
-
-                    return qbStopList.query();
-                }
+                return qbStopList.query();
             }
+
         } catch (SQLException e) {
             return null;
         }
+    }
+
+    /**
+     * Handles a request to start the Loader.
+     */
+    @Override
+    protected void onStartLoading() {
+        super.onStartLoading();
+
+        forceLoad();                //start a load.
     }
 }

@@ -23,17 +23,18 @@ public class TimeListBinder implements SimpleAdapter.ViewBinder {
 
     private final Calendar rightNow = Calendar.getInstance();
     private final int mHour = rightNow.get(Calendar.HOUR_OF_DAY);
+    private Resources mResources = null;
 
     @Override
     public boolean setViewValue(View view, Object data,
                                 String textRepresentation) {
         int id = view.getId();
-        if (id == R.id.tvHour) {
+        if (id == R.id.text_view_hour) {
             TextView tvTemp = (TextView) view;
             int hourItem = (Integer) data;
             useBoldFont = (hourItem == mHour);
             tvTemp.setText(Integer.toString(hourItem));
-        } else if (id == R.id.layoutMinutes) {
+        } else if (id == R.id.layout_minutes) {
             String[] minArray = (String[]) data;
             LinearLayout minPanel = ((LinearLayout) view);
 
@@ -54,12 +55,11 @@ public class TimeListBinder implements SimpleAdapter.ViewBinder {
             }
         }
 
-        Resources resources = view.getContext().getApplicationContext().getResources();
-
-        if (resources != null) {
-            view.setBackgroundColor(useBoldFont ? resources.getColor(R.color.currenthour) :
-                    resources.getColor(R.color.not_currenthour));
+        if (mResources == null) {
+            mResources = view.getContext().getResources();
         }
+        view.setBackgroundColor(useBoldFont ? mResources.getColor(R.color.text_view_current_hour) :
+                mResources.getColor(R.color.text_view_any_hour));
 
         return true;
     }

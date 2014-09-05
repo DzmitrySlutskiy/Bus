@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="currenthour">#4745baff</color>
-    <color name="not_currenthour">@android:color/transparent</color>
+    <color name="text_view_current_hour">#4745baff</color>
+    <color name="text_view_any_hour">@android:color/transparent</color>
 </resources>

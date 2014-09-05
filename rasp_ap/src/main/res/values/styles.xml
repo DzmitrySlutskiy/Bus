@@ -5,13 +5,4 @@
         <!-- Customize your theme here. -->
     </style>
 
-    <style name="TextViewItem">
-        <item name="android:layout_width">fill_parent</item>
-        <item name="android:layout_height">fill_parent</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:padding">@dimen/d5dp</item>
-        <item name="android:textSize">@dimen/d15sp</item>
-        <item name="android:gravity">center_horizontal</item>
-        <item name="android:background">#ffdcdcdc</item>
-    </style>
 </resources>

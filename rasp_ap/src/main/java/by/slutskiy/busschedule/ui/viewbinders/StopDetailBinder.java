@@ -18,8 +18,8 @@ public class StopDetailBinder implements SimpleAdapter.ViewBinder {
     public boolean setViewValue(View view, Object data,
                                 String textRepresentation) {
         int id = view.getId();
-        if (id == R.id.tvRouteName ||
-                id == R.id.tvNextTime) {
+        if (id == R.id.text_view_route_name ||
+                id == R.id.text_view_next_time) {
             TextView tvTemp = (TextView) view;
             String strData = (String) data;
             tvTemp.setText(strData);

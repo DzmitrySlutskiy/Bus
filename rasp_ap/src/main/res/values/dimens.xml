@@ -1,16 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Default screen margins, per the Android Design guidelines. -->
-    <dimen name="d16dp">16dp</dimen>
-    <dimen name="d5dp">5dp</dimen>
-    <dimen name="d15sp">15sp</dimen>
-    <dimen name="d10dp">10dp</dimen>
-    <dimen name="d30dp">30dp</dimen>
-    <dimen name="d2dp">2dp</dimen>
-    <dimen name="d0dp">0dp</dimen>
-    <dimen name="d20sp">20sp</dimen>
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
+    <!--standart values-->
+    <dimen name="std_padding">2dp</dimen>
+    <dimen name="std_min_width">30dp</dimen>
+    <dimen name="std_text_size">15sp</dimen>
+
+    <!-- padding values-->
+    <dimen name="text_view_padding">@dimen/std_padding</dimen>
+    <dimen name="list_view_padding">@dimen/std_padding</dimen>
+
+    <dimen name="image_button_padding">5dp</dimen>
+
+    <dimen name="text_view_time_list_padding">5dp</dimen>
+
+    <!--min width-->
+    <dimen name="text_view_hour_min_width">@dimen/std_min_width</dimen>
+    <dimen name="text_view_bus_min_width">@dimen/std_min_width</dimen>
+
+    <!--Text size-->
+    <dimen name="text_view_news_text_size">@dimen/std_text_size</dimen>
+    <dimen name="text_view_route_name_text_size">@dimen/std_text_size</dimen>
 
 </resources>
