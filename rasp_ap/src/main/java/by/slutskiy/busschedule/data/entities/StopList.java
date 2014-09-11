@@ -3,6 +3,7 @@ package by.slutskiy.busschedule.data.entities;
 import android.support.annotation.NonNull;
 
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.misc.BaseDaoEnabled;
 import com.j256.ormlite.table.DatabaseTable;
 
 /**
@@ -12,14 +13,13 @@ import com.j256.ormlite.table.DatabaseTable;
  * Created by Dzmitry Slutskiy.
  */
 @DatabaseTable(tableName = "StopList")
-public class StopList implements Comparable{
+public class StopList  extends BaseDaoEnabled implements Comparable {
 
     public static final String ID = "_id";
     public static final String STOP_NAME = "StopName";
 
     /*  private fields  */
-
-    @DatabaseField(generatedId = true, columnName = ID)
+    @DatabaseField(generatedId = true, columnName = ID, index = true)
     private int mId;
 
     @DatabaseField(columnName = STOP_NAME, index = true)

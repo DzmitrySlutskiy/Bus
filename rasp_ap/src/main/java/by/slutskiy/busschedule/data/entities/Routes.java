@@ -1,6 +1,7 @@
 package by.slutskiy.busschedule.data.entities;
 
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.misc.BaseDaoEnabled;
 import com.j256.ormlite.table.DatabaseTable;
 
 
@@ -11,7 +12,7 @@ import com.j256.ormlite.table.DatabaseTable;
  * Created by Dzmitry Slutskiy.
  */
 @DatabaseTable(tableName = "Routes")
-public class Routes {
+public class Routes extends BaseDaoEnabled {
 
     public static final String ID = "_id";
     public static final String BUS_ID = "BusId";

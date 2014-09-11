@@ -2,7 +2,7 @@ package by.slutskiy.busschedule.data.entities;
 
 
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.field.ForeignCollectionField;
+import com.j256.ormlite.misc.BaseDaoEnabled;
 import com.j256.ormlite.table.DatabaseTable;
 
 /**
@@ -12,14 +12,13 @@ import com.j256.ormlite.table.DatabaseTable;
  * Created by Dzmitry Slutskiy.
  */
 @DatabaseTable(tableName = "BusList")
-public class BusList {
+public class BusList extends BaseDaoEnabled {
 
     public static final String ID = "_id";
     public static final String BUS_NUMBER = "BusNumber";
 
 
     /*  private fields  */
-    @ForeignCollectionField
     @DatabaseField(generatedId = true, columnName = ID)
     private int mId;
 

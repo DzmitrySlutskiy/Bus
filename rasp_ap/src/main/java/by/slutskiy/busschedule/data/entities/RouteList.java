@@ -34,8 +34,7 @@ public class RouteList {
     @DatabaseField(columnName = STOP_INDEX)
     private int mStopIndex;
 
-
-    @ForeignCollectionField(eager = false)
+    @ForeignCollectionField(eager = true)
     ForeignCollection<TimeList> mTimeList;
 
 
@@ -49,9 +48,6 @@ public class RouteList {
         return mId;
     }
 
-    public void setmId(int mId) {
-        this.mId = mId;
-    }
 
     public Routes getmRoutes() {
         return mRoutes;
@@ -61,17 +57,10 @@ public class RouteList {
         this.mRoutes = mRoutes;
     }
 
-    public StopList getmStop() {
-        return mStop;
-    }
-
     public void setmStop(StopList mStop) {
         this.mStop = mStop;
     }
 
-    public int getmStopIndex() {
-        return mStopIndex;
-    }
 
     public void setmStopIndex(int mStopIndex) {
         this.mStopIndex = mStopIndex;
@@ -79,10 +68,6 @@ public class RouteList {
 
     public ForeignCollection<TimeList> getmTimeList() {
         return mTimeList;
-    }
-
-    public void setmTimeList(ForeignCollection<TimeList> mTimeList) {
-        this.mTimeList = mTimeList;
     }
 
     /**
