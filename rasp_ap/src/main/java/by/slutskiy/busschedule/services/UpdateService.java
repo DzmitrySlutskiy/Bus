@@ -653,7 +653,7 @@ public class UpdateService extends IntentService {
         return busNumberPattern.matcher(busNumber.trim()).find();
     }
 
-    private static final int NOTIFY_PERCENT = 5;
+    private static final int NOTIFY_PERCENT = 1;
 
     /**
      * saveStreamToFile
