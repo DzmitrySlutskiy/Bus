@@ -14,7 +14,7 @@
         android:baselineAligned="true">
 
         <ImageButton
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/button_news"
             android:src="@drawable/ic_news"
@@ -24,7 +24,7 @@
             android:layout_weight="1"/>
 
         <ImageButton
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/button_route"
             android:src="@drawable/ic_route"
@@ -33,7 +33,7 @@
             android:layout_weight="1"/>
 
         <ImageButton
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/button_stops"
             android:src="@drawable/ic_stop"
