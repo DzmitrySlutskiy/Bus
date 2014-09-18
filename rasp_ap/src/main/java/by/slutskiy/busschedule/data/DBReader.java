@@ -251,23 +251,36 @@ public class DBReader extends DBStructure {
             queryArgs[0] = Integer.toString(routeListId);
 
             Cursor cursor = mDb.rawQuery(DB_SELECT_TIME_LIST_BY_ROUTE_LIST_ID, queryArgs);
-
+            TimeList timeListItem = null;
+            int lastHour = - 1;
             if (cursor.moveToFirst()) {
                 do {
-                    TimeList timeListItem = new TimeList();
+                    int currentHour = - 1;
 
                     int fieldIndex = cursor.getColumnIndex(KEY_HOUR);
                     if (fieldIndex >= 0) {
-                        timeListItem.setHour(cursor.getInt(fieldIndex));
+                        currentHour = cursor.getInt(fieldIndex);
+                    }
+
+                    if (lastHour == - 1 || currentHour != lastHour) {
+                        if (timeListItem != null) {
+                            timeList.add(timeListItem);
+                        }
+
+                        timeListItem = new TimeList();
+                        lastHour = currentHour;
+                        timeListItem.setHour(currentHour);
                     }
 
                     fieldIndex = cursor.getColumnIndex(KEY_MINUTES);
                     if (fieldIndex >= 0) {
-                        timeListItem.setMinutes(cursor.getString(fieldIndex));
+                        timeListItem.addMin(cursor.getString(fieldIndex));
                     }
 
-                    timeList.add(timeListItem);
                 } while (cursor.moveToNext());
+                if (! timeList.contains(timeListItem)) {
+                    timeList.add(timeListItem);
+                }
             }
             cursor.close();
         }

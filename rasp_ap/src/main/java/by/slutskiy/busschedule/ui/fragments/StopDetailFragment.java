@@ -12,21 +12,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.StopDetail;
 import by.slutskiy.busschedule.loaders.StopDetailLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
-import by.slutskiy.busschedule.ui.viewbinders.StopDetailBinder;
+import by.slutskiy.busschedule.ui.adapters.StopDetailAdapter;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 import static android.widget.AdapterView.OnItemClickListener;
@@ -141,15 +138,15 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mStopDetList != null) {
-            if (position >= 0 && position < mStopDetList.size()) {
-                if (mListener != null && mStopDetList.get(position).getRouteId() >= 0) {
-                    StopDetail stopDetail = mStopDetList.get(position);
-                    mListener.onStopDetailSelected(stopDetail.getRouteListId(),
-                            mStopName, stopDetail.getRouteName());
-                }
-            }
+        if (mStopDetList != null &&
+                position >= 0 &&
+                position < mStopDetList.size() &&
+                mListener != null) {
+            mListener.onStopDetailSelected((int) id, mStopName,
+                    mStopDetList.get(position).getRouteName());
         }
+
+
     }
 
     @Override
@@ -222,46 +219,18 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
      * @param data list with StopDetail
      */
     private void updateData(List<StopDetail> data) {
-        mStopDetail.setText(mStopName);
+        if (data !=null) {
+            mStopDetail.setText(mStopName);
+            mStopDetList = data;
 
-        ArrayList<Map<String, Object>> pData = new ArrayList<Map<String, Object>>();
-        mStopDetList = data;
-
-        String ATT_ROUTE_NAME = "routeName";
-        String ATT_MINUTES = "minutes";
-
-        if (data != null) {
-            Map<String, Object> map;
-
-            for (StopDetail stopDetail : mStopDetList) {
-                map = new HashMap<String, Object>();
-                map.put(ATT_ROUTE_NAME, stopDetail.getRouteName());
-                String minutes = "";
-                List<String> minList = stopDetail.getMinuteList();
-                for (String aMinList : minList) {
-                    minutes = minutes + aMinList + "   ";
-                }
-                map.put(ATT_MINUTES, minutes);
-                pData.add(map);
-            }
-        } else {
-            Map<String, Object> map;
-
-            map = new HashMap<String, Object>();
-            map.put(ATT_ROUTE_NAME, getString(R.string.text_view_get_data));
-            map.put(ATT_MINUTES, "");
-            pData.add(map);
+            StopDetailAdapter adapter = new StopDetailAdapter(getActivity(), data);
+            mDetailList.setAdapter(adapter);
+        }else{
+            mDetailList.setAdapter(new ArrayAdapter<String>(getActivity(),
+                    android.R.layout.simple_list_item_1,
+                    new String[]{getString(R.string.text_view_get_data)}));
         }
-        String[] from = {ATT_ROUTE_NAME, ATT_MINUTES};
-        int[] to = {R.id.text_view_route_name, R.id.text_view_next_time};
-
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), pData, R.layout.list_item_stop_detail,
-                from, to);
-        sAdapter.setViewBinder(new StopDetailBinder());
-
-        mDetailList.setAdapter(sAdapter);
     }
-
 
     /**
      * OnStopDetailListener

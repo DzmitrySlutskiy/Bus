@@ -14,18 +14,15 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.BusRouteLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
-import by.slutskiy.busschedule.ui.viewbinders.BusRouteBinder;
+import by.slutskiy.busschedule.ui.adapters.BusRouteAdapter;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 import static android.widget.AdapterView.OnItemClickListener;
@@ -50,6 +47,7 @@ public class RouteFragment extends Fragment implements OnItemClickListener {
 
     /**
      * use this method for create (or get) instance of RouteFragment
+     *
      * @return RouteFragment instance
      */
     public static RouteFragment getInstance() {
@@ -105,12 +103,8 @@ public class RouteFragment extends Fragment implements OnItemClickListener {
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        View itemView = view.findViewById(R.id.list_view_item);
-        if (itemView != null) {
-            String tag = (String) itemView.getTag();
-            if (mListener != null) {
-                mListener.OnRouteSelected(Integer.parseInt(tag));
-            }
+        if (mListener != null) {
+            mListener.OnRouteSelected((int) id);
         }
     }
 
@@ -140,6 +134,7 @@ public class RouteFragment extends Fragment implements OnItemClickListener {
 
     /**
      * instantiate private field for BusRouteCallback class
+     *
      * @return BusRouteCallback instance
      */
     private BusRouteCallback getCallBack() {
@@ -169,37 +164,9 @@ public class RouteFragment extends Fragment implements OnItemClickListener {
      * @param routesList list with route info
      */
     private void updateData(List<BusRoute> routesList) {
-        if (routesList == null) {
-            return;
-        }
-        // упаковываем данные
-        String attBus = "bus";
-        String attBeginStop = "begin_stop";
-        String attEndStop = "end_stop";
-        String attId = "_id";
-
-        ArrayList<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>(
-                routesList.size());
-        Map<String, Object> map;
-        for (BusRoute bRoute : routesList) {
-            map = new HashMap<String, Object>();
-            map.put(attBus, bRoute.getBusNumber());
-            map.put(attBeginStop, bRoute.getBeginStop());
-            map.put(attEndStop, bRoute.getEndStop());
-            map.put(attId, Long.toString(bRoute.getRouteId()));
-            dataList.add(map);
-        }
-
-        String[] from = {attBus, attBeginStop,
-                attEndStop, attId};
-        int[] to = {R.id.text_view_bus_number, R.id.text_view_begin_stop, R.id.text_view_end_stop, R.id.list_view_item};
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), dataList, R.layout.list_item_route,
-                from, to);
-
-        sAdapter.setViewBinder(new BusRouteBinder());
-
-        if (mBusList != null) {
-            mBusList.setAdapter(sAdapter);
+        if (mBusList != null && routesList != null) {
+            BusRouteAdapter adapter = new BusRouteAdapter(getActivity(), routesList);
+            mBusList.setAdapter(adapter);
             mBusList.setOnItemClickListener(this);
         }
     }

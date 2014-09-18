@@ -16,7 +16,6 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -132,18 +131,14 @@ public class NewsFragment extends ListFragment {
      * @param data list with news
      */
     private void updateData(List<String> data) {
+        String[] newsArray;
         if (data == null) {
-            data = new ArrayList<String>();
-            data.add(getString(R.string.text_view_get_data));
+            newsArray = new String[]{getString(R.string.text_view_get_data)};
+        } else {
+            newsArray = data.toArray(new String[data.size()]);
         }
 
-        String[] newsArray = new String[data.size()];
-        for (int i = 0; i < data.size(); i++) {
-            newsArray[i] = data.get(i);
-        }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, newsArray);
-        setListAdapter(adapter);
+        setListAdapter(new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, newsArray));
     }
 }

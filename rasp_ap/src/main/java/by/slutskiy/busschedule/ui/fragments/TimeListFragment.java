@@ -15,20 +15,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.TimeList;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
 import by.slutskiy.busschedule.loaders.TypeListLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
-import by.slutskiy.busschedule.ui.viewbinders.TimeListBinder;
+import by.slutskiy.busschedule.ui.adapters.TimeAdapter;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
@@ -261,31 +257,9 @@ public class TimeListFragment extends Fragment {
         if (mTypeList == null || timeList == null) {
             return;
         }
-        // упаковываем данные
-        ArrayList<Map<String, Object>> data = new ArrayList<Map<String, Object>>(
-                timeList.size());
-        Map<String, Object> map;
-        String ATT_HOUR = "hour";
-        String ATT_MIN = "min";
-        for (int i = 0; i < timeList.size(); i += mTypeList.size()) {
-            TimeList listItem = timeList.get(i);
-            map = new HashMap<String, Object>();
-            map.put(ATT_HOUR, listItem.getHour());
-            String[] minArray = new String[mTypeList.size()];
-            for (int j = 0; j < mTypeList.size(); j++) {
-                listItem = timeList.get(i + j);
-                minArray[j] = listItem.getMinutes();
-            }
-            map.put(ATT_MIN, minArray);
-            data.add(map);
-        }
-        String[] from = {ATT_HOUR, ATT_MIN};
-        int[] to = {R.id.text_view_hour, R.id.layout_minutes};
 
-        SimpleAdapter sAdapter = new SimpleAdapter(getActivity(), data, R.layout.list_item_time,
-                from, to);
-        sAdapter.setViewBinder(new TimeListBinder());
+        TimeAdapter adapter = new TimeAdapter(getActivity(), timeList);
 
-        mTimeListView.setAdapter(sAdapter);
+        mTimeListView.setAdapter(adapter);
     }
 }

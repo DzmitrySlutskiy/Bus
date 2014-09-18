@@ -4,6 +4,9 @@
 
 package by.slutskiy.busschedule.data.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /*
  * TimeList
  * time for bus schedule for current {@code mHour}
@@ -18,8 +21,7 @@ public class TimeList {
 
     /*  private fields  */
     private int mHour;
-    private String mMinutes;
-
+    private List<String> minList = new ArrayList<String>();
     /*  public constructors */
 
     public TimeList() {
@@ -33,13 +35,18 @@ public class TimeList {
         this.mHour = hour;
     }
 
-    public String getMinutes() {
-        return mMinutes;
+    public int getMinSize() {
+        return minList.size();
     }
 
-    public void setMinutes(String minutes) {
-        this.mMinutes = minutes;
+    public String getMin(int position) {
+        if (position >= 0 && position < minList.size()) {
+            return minList.get(position);
+        }
+        return "";
     }
-    /*  private methods */
 
+    public void addMin(String min) {
+        minList.add(min);
+    }
 }
