@@ -42,20 +42,25 @@ import static android.widget.AdapterView.OnItemClickListener;
 public class StopDetailFragment extends Fragment implements OnItemClickListener {
 
     // the fragment initialization parameters
-    private static final String ARG_STOP_ID = "stopId";
-    private static final String ARG_STOP_NAME = "stopName";
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
+    private static final String STOP_ID = "mStopId";
+    private static final String STOP_NAME = "mStopName";
 
     private List<StopDetail> mStopDetList = null;
     private int mStopId;
     private String mStopName;
     private int mCurrentHour;
 
+    private boolean mNeedRestartLoaders = false;
+
     private OnStopDetailListener mListener;
 
     private ListView mDetailList;
+    private TextView mStopDetail;
 
     private StopDetailCallBack mStopDetailCallBack = null;
+
+    private static StopDetailFragment sFragment = null;
 
     /**
      * Use this factory method to create a new instance of
@@ -65,14 +70,14 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
      * @param stopName Parameter 2.
      * @return A new instance of fragment StopDetailFragment.
      */
-    public static StopDetailFragment newInstance(int stopId, String stopName) {
-        StopDetailFragment fragment = new StopDetailFragment();
-        Bundle args = new Bundle();
-        args.putInt(ARG_STOP_ID, stopId);
-        args.putString(ARG_STOP_NAME, stopName);
-        fragment.setArguments(args);
+    public static StopDetailFragment getInstance(int stopId, String stopName) {
+        if (sFragment == null) {
+            sFragment = new StopDetailFragment();
+            sFragment.setRetainInstance(true);
+        }
+        sFragment.setArgs(stopId, stopName);
 
-        return fragment;
+        return sFragment;
     }
 
     public StopDetailFragment() {
@@ -80,23 +85,21 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        Bundle args = new Bundle();
-        args.putInt(StopDetailLoader.ATT_STOP_ID, mStopId);
-        args.putInt(StopDetailLoader.ATT_HOUR, mCurrentHour);
-        getLoaderManager().initLoader(LOADER_ID, args, getStopDetailCallBack());
-    }
-
-    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getArguments() != null) {
-            mStopId = getArguments().getInt(ARG_STOP_ID);
-            mStopName = getArguments().getString(ARG_STOP_NAME);
+        if (savedInstanceState != null) {
+            mStopId = savedInstanceState.getInt(STOP_ID);
+            mStopName = savedInstanceState.getString(STOP_NAME);
         }
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        getLoaderManager().initLoader(LOADER_ID, prepareLoaderArgs(),
+                getStopDetailCallBack());
     }
 
     @Override
@@ -105,8 +108,7 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_stop_detail, container, false);
 
-        TextView tvStopDetail = (TextView) view.findViewById(R.id.text_view_stop_detail);
-        tvStopDetail.setText(mStopName);
+        mStopDetail = (TextView) view.findViewById(R.id.text_view_stop_detail);
 
         Calendar rightNow = Calendar.getInstance();
         mCurrentHour = rightNow.get(Calendar.HOUR_OF_DAY);
@@ -144,9 +146,48 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
                 if (mListener != null && mStopDetList.get(position).getRouteId() >= 0) {
                     StopDetail stopDetail = mStopDetList.get(position);
                     mListener.onStopDetailSelected(stopDetail.getRouteListId(),
-                            stopDetail.getRouteId(), mStopName, stopDetail.getRouteName());
+                            mStopName, stopDetail.getRouteName());
                 }
             }
+        }
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+
+        if (! hidden && mNeedRestartLoaders) {      //if data will be changed after hidden fragment
+            getLoaderManager().restartLoader(LOADER_ID, prepareLoaderArgs(),
+                    getStopDetailCallBack());
+            mNeedRestartLoaders = false;
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt(STOP_ID, mStopId);
+        outState.putString(STOP_NAME, mStopName);
+    }
+
+    private Bundle prepareLoaderArgs() {
+        Bundle args = new Bundle();
+        args.putInt(StopDetailLoader.ATT_STOP_ID, mStopId);
+        args.putInt(StopDetailLoader.ATT_HOUR, mCurrentHour);
+
+        return args;
+    }
+
+    private void setArgs(int stopId, String stopName) {
+        int oldStopId = mStopId;
+        String oldStopName = mStopName;
+
+        mStopId = stopId;
+        mStopName = stopName;
+
+        if (oldStopId != stopId || ! oldStopName.equals(stopName)) {
+            mNeedRestartLoaders = true;
         }
     }
 
@@ -181,6 +222,8 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
      * @param data list with StopDetail
      */
     private void updateData(List<StopDetail> data) {
+        mStopDetail.setText(mStopName);
+
         ArrayList<Map<String, Object>> pData = new ArrayList<Map<String, Object>>();
         mStopDetList = data;
 
@@ -224,7 +267,7 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
      * OnStopDetailListener
      */
     public interface OnStopDetailListener {
-        public void onStopDetailSelected(int routeListId, int routeId, String stopName, String stopDetail);
+        public void onStopDetailSelected(int routeListId, String stopName, String stopDetail);
     }
 
 }

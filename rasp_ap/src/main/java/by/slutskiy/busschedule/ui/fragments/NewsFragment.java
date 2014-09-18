@@ -41,14 +41,22 @@ public class NewsFragment extends ListFragment {
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
     private NewsCallback mCallBack = null;
 
+    private static NewsFragment sFragment = null;
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
      * @return A new instance of fragment NewsFragment.
      */
-    public static NewsFragment newInstance() {
-        return new NewsFragment();
+    public static NewsFragment getInstance() {
+        if (sFragment == null) {
+            sFragment = new NewsFragment();
+            //sad activity to save this instance when configuration changed
+            sFragment.setRetainInstance(true);
+        }
+
+        return sFragment;
     }
 
     public NewsFragment() {

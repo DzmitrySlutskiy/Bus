@@ -5,8 +5,6 @@
 package by.slutskiy.busschedule.ui.fragments;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.Loader;
@@ -43,12 +41,12 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
     private static final int LOADER_ID_STOP_DETAIL = MainActivity.getNextLoaderId();
     private static final int LOADER_ID_STOP_LIST = MainActivity.getNextLoaderId();
 
-    private static final String ARG_ROUTE_ID = "routeId";
+    private static final String ROUTE_ID = "mRouteId";
+    private static final String STOP_DETAIL = "mStopDetail";
 
-    private static final String PREF_NAME = "RouteStopFragment";
-    private static final String SAVE_SCROLL_POS = "scrollPos";
+    private int mRouteId = Integer.MIN_VALUE;
+    private boolean mNeedRestartLoaders = false;
 
-    private int mRouteId;
     private List<Stop> mStopList;
     private OnRouteStopSelectedListener mListener;
     private String mStopDetail = "";
@@ -60,6 +58,8 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
     private StringCallback mStringCallBack = null;
     private ListStopCallBack mListStopCallBack = null;
 
+    private static RouteStopFragment sFragment = null;
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -67,13 +67,14 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
      * @param routeId Parameter 1.
      * @return A new instance of fragment RouteStopFragment.
      */
-    public static RouteStopFragment newInstance(int routeId) {
-        RouteStopFragment fragment = new RouteStopFragment();
-        Bundle args = new Bundle();
-        args.putInt(ARG_ROUTE_ID, routeId);
-        fragment.setArguments(args);
+    public static RouteStopFragment getInstance(int routeId) {
+        if (sFragment == null) {
+            sFragment = new RouteStopFragment();
+            sFragment.setRetainInstance(true);
+        }
+        sFragment.setRouteId(routeId);
 
-        return fragment;
+        return sFragment;
     }
 
     public RouteStopFragment() {
@@ -84,9 +85,9 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle args = getArguments();
-        if (args != null) {
-            mRouteId = args.getInt(ARG_ROUTE_ID);
+        if (savedInstanceState != null) {
+            mRouteId = savedInstanceState.getInt(ROUTE_ID, Integer.MIN_VALUE);
+            mStopDetail = savedInstanceState.getString(STOP_DETAIL, "");
         }
     }
 
@@ -94,16 +95,7 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Bundle args = new Bundle();
-        args.putInt(StopLoader.ATT_ROUT_ID, mRouteId);
-        getLoaderManager().initLoader(LOADER_ID_STOP_LIST, args, getListStopCallBack());
-
-        //если загружаем конкретный маршрут запускаем дополнительный лоадер для инфо по маршруту
-        if (mRouteId >= 0) {
-            args = new Bundle();
-            args.putInt(RouteDetailLoader.ATT_ROUT_ID, mRouteId);
-            getLoaderManager().initLoader(LOADER_ID_STOP_DETAIL, args, getStringCallback());
-        }
+        initLoader(false);
     }
 
     @Override
@@ -115,32 +107,30 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
         mRouteNameView = (TextView) view.findViewById(R.id.text_view_route_detail);
         mStopListView = (ListView) view.findViewById(R.id.list_view_stop);
 
-        String[] newsArr;
-        newsArr = new String[1];
-        newsArr[0] = getString(R.string.text_view_get_data);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, newsArr);
-        mStopListView.setAdapter(adapter);
-        if (mRouteId < 0) {
-            mRouteNameView.setText(getString(R.string.text_view_stop_list));
-        }
+        resetUI();
 
         return view;
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt(ROUTE_ID, mRouteId);
+        outState.putString(STOP_DETAIL, mStopDetail);
+    }
+
+    @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (mStopList != null && position >= 0 && position < mStopList.size()) {
-            if (mRouteId >= 0) {
-                int routeListId = mStopList.get(position).getKey();
-                String stopName = mStopList.get(position).getStopName();
-                if (mListener != null && routeListId >= 0)
-                    mListener.OnRouteStopSelected(routeListId, mRouteId, stopName, mStopDetail);
-            } else {
-                int stopId = mStopList.get(position).getKey();
-                String stopName = mStopList.get(position).getStopName();
-                if (mListener != null) {
-                    mListener.OnStopSelected(stopId, stopName);
+            String stopName = mStopList.get(position).getStopName();
+            int key = mStopList.get(position).getKey();
+
+            if (mListener != null) {
+                if (mRouteId >= 0) {
+                    mListener.OnRouteStopSelected(key, stopName, mStopDetail);
+                } else {
+                    mListener.OnStopSelected(key, stopName);
                 }
             }
         }
@@ -164,45 +154,70 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
         mListener = null;
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        //set position to 0
-        saveListPosition(0);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-
-        if (mRouteId < 0) {
-            saveListPosition(mStopListView.getFirstVisiblePosition());
-        }
-    }
-
     /*  private methods */
 
     /**
-     * save list position in shared preference (if user return back, him show last position in list)
-     *
-     * @param position position in list
+     * reset UI elements to default values
      */
-    private void saveListPosition(int position) {
-        SharedPreferences.Editor editor = getActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit();
-        editor.putInt(SAVE_SCROLL_POS, position);
-        editor.commit();
+    private void resetUI() {
+        //clear list and set text "get data"
+        String[] newsArr;
+        newsArr = new String[1];
+        newsArr[0] = getString(R.string.text_view_get_data);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, newsArr);
+        mStopListView.setAdapter(adapter);
+
+        //reset text in textView to "get data"
+        mRouteNameView.setText(getString(R.string.text_view_get_data));
     }
 
-    /**
-     * restore saved scroll position
-     *
-     * @return int position
-     */
-    private int restoreListPosition() {
-        SharedPreferences prefs = getActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+    private void initLoader(boolean needRestart) {
+        Bundle args = new Bundle();
+        args.putInt(StopLoader.ATT_ROUT_ID, mRouteId);
 
-        return prefs.getInt(SAVE_SCROLL_POS, 0);
+        initLoader(args, LOADER_ID_STOP_LIST, getListStopCallBack(), needRestart);
+
+        //если загружаем конкретный маршрут запускаем дополнительный лоадер для инфо по маршруту
+        if (mRouteId >= 0) {
+            args = new Bundle();
+            args.putInt(RouteDetailLoader.ATT_ROUT_ID, mRouteId);
+
+            initLoader(args, LOADER_ID_STOP_DETAIL, getStringCallback(), needRestart);
+        }
+    }
+
+    private void initLoader(Bundle args, int loaderId,
+                            LoaderCallbacks loaderCallbacks, boolean needRestart) {
+        if (needRestart) {
+            getLoaderManager().restartLoader(loaderId, args, loaderCallbacks);
+        } else {
+            getLoaderManager().initLoader(loaderId, args, loaderCallbacks);
+        }
+    }
+
+    private void setRouteId(int newId) {
+        int oldRouteId = mRouteId;
+        mRouteId = newId;
+
+        //at this point fragment may be not attached to activity.
+        //set flag to true - it's indicate what routeId was change and need restart data
+        //loaders will be restarted when onHiddenChanged call
+        //oldRouteId != Integer.MIN_VALUE = true if not first fragment use
+        if (oldRouteId != newId && oldRouteId != Integer.MIN_VALUE) {
+            mNeedRestartLoaders = true;
+        }
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+
+        if (! hidden && mNeedRestartLoaders) {      //if data will be changed after hidden fragment
+            resetUI();                              //reset UI because new data load need
+            initLoader(true);                       //restart loaders
+            mNeedRestartLoaders = false;            //reset flag
+        }
     }
 
     /**
@@ -229,9 +244,8 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
                     android.R.layout.simple_list_item_1, newsArr);
             mStopListView.setAdapter(adapter);
             mStopListView.setOnItemClickListener(this);
-            if (mRouteId < 0) {
-                mStopListView.setSelection(restoreListPosition());
-            }
+
+            updateStopDetailText();
         }
     }
 
@@ -239,7 +253,7 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
      * OnRouteStopSelectedListener
      */
     public interface OnRouteStopSelectedListener {
-        void OnRouteStopSelected(int _id, int routeId, String stopName, String stopDetail);
+        void OnRouteStopSelected(int _id, String stopName, String stopDetail);
 
         void OnStopSelected(int stopId, String stopName);
     }
@@ -261,6 +275,14 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
         return mListStopCallBack;
     }
 
+    private void updateStopDetailText() {
+        if (mRouteId < 0) {
+            mRouteNameView.setText(getString(R.string.text_view_stop_list));
+        } else {
+            mRouteNameView.setText(getString(R.string.text_view_route) + "\t\t" + mStopDetail);
+        }
+    }
+
     /*  Async data loader callback implementation
     * for loader return String object*/
     private class StringCallback implements LoaderCallbacks<String> {
@@ -272,17 +294,15 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
         @Override
         public void onLoadFinished(Loader<String> stringLoader, String data) {
             mStopDetail = data;
-            mRouteNameView.setText(getString(R.string.text_view_route) + "\t\t" + mStopDetail);
+            updateStopDetailText();
         }
 
         @Override
         public void onLoaderReset(Loader<String> stringLoader) {
         }
     }
-    /*  Async data loader callback implementation for loader return List<Stop> object
-    * uses inner class because can't create more than one
-    * callback implementation in one fragment class or in generic type LoaderCallbacks need
-    * set Object type class*/
+
+    /*  Async data loader callback implementation for loader return List<Stop> object*/
 
     private class ListStopCallBack implements LoaderCallbacks<List<Stop>> {
 

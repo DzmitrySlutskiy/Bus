@@ -45,21 +45,21 @@ public class TimeListFragment extends Fragment {
     private static final int LOADER_TYPE_ID = MainActivity.getNextLoaderId();
     private static final int LOADER_TIME_ID = MainActivity.getNextLoaderId();
 
-    private static final String ARG_ROUTE_LIST_ID = "routeListId";
-    private static final String ARG_ROUTE_ID = "routeId";
-    private static final String ARG_STOP_NAME = "stopName";
-    private static final String ARG_ROUTE_DETAIL = "routeDetail";
-
     private int mRouteListId;
     private String mStopName = "";
     private String mRouteDetail = "";
+    private boolean mNeedRestartLoaders = false;
 
     private ListView mTimeListView;
     private View mHeaderView;
+    private TextView mRouteName;
+    private TextView mStopDetail;
 
     private List<String> mTypeList;
 
     private CallBackImpl mCallBackImpl = null;
+
+    private static TimeListFragment sFragment = null;
 
     /**
      * Use this factory method to create a new instance of
@@ -68,16 +68,15 @@ public class TimeListFragment extends Fragment {
      * @param routeListId Parameter 1.
      * @return A new instance of fragment TimeListFragment.
      */
-    public static TimeListFragment newInstance(int routeListId, int routeId, String stopStr, String stopDetail) {
-        TimeListFragment fragment = new TimeListFragment();
-        Bundle args = new Bundle();
-        args.putInt(ARG_ROUTE_LIST_ID, routeListId);
-        args.putInt(ARG_ROUTE_ID, routeId);
-        args.putString(ARG_STOP_NAME, stopStr);
-        args.putString(ARG_ROUTE_DETAIL, stopDetail);
-        fragment.setArguments(args);
+    public static TimeListFragment getInstance(int routeListId, String stopStr, String stopDetail) {
+        if (sFragment == null) {
+            sFragment = new TimeListFragment();
+            sFragment.setRetainInstance(true);
+        }
 
-        return fragment;
+        sFragment.setArgs(routeListId, stopStr, stopDetail);
+
+        return sFragment;
     }
 
     public TimeListFragment() {
@@ -88,10 +87,10 @@ public class TimeListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getArguments() != null) {
-            mRouteListId = getArguments().getInt(ARG_ROUTE_LIST_ID);
-            mStopName = getArguments().getString(ARG_STOP_NAME);
-            mRouteDetail = getArguments().getString(ARG_ROUTE_DETAIL);
+        if (savedInstanceState != null) {
+            mRouteListId = savedInstanceState.getInt("mRouteListId");
+            mStopName = savedInstanceState.getString("mStopName");
+            mRouteDetail = savedInstanceState.getString("mRouteDetail");
         }
     }
 
@@ -99,9 +98,7 @@ public class TimeListFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Bundle args = new Bundle();
-        args.putInt(TypeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
-        getLoaderManager().initLoader(LOADER_TYPE_ID, args, getCallBackImpl());
+        initLoader();
     }
 
     @Override
@@ -110,16 +107,46 @@ public class TimeListFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_time_list, container, false);
 
-        TextView tvRouteName = (TextView) view.findViewById(R.id.text_view_route_detail_time);
-        tvRouteName.setText(getString(R.string.text_view_route) + "\t\t" + mRouteDetail);
+        mRouteName = (TextView) view.findViewById(R.id.text_view_route_detail_time);
+        mStopDetail = (TextView) view.findViewById(R.id.text_view_stop_detail);
 
-        TextView tvStopDetail = (TextView) view.findViewById(R.id.text_view_stop_detail);
-        tvStopDetail.setText(getString(R.string.text_view_stop) + "\t\t" + mStopName);
+        updateTextView();
 
         mTimeListView = (ListView) view.findViewById(R.id.list_view_time);
         mHeaderView = inflater.inflate(R.layout.list_item_time, (ViewGroup) view.findViewById(R.id.list_view_time), false);
 
+
         return view;
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+
+        if (! hidden && mNeedRestartLoaders) {      //if data will be changed after hidden fragment
+            updateTextView();
+            initLoader();
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt("mRouteListId", mRouteListId);
+        outState.putString("mStopName", mStopName);
+        outState.putString("mRouteDetail", mRouteDetail);
+    }
+
+    private void initLoader() {
+        Bundle args = new Bundle();
+        args.putInt(TypeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
+
+        if (mNeedRestartLoaders) {
+            getLoaderManager().restartLoader(LOADER_TYPE_ID, args, getCallBackImpl());
+        } else {
+            getLoaderManager().initLoader(LOADER_TYPE_ID, args, getCallBackImpl());
+        }
     }
 
     /*  Async data loader callback implementation*/
@@ -146,7 +173,12 @@ public class TimeListFragment extends Fragment {
                     //лоадеры запускаются по цепочке, а не вместе
                     Bundle args = new Bundle();
                     args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
-                    getLoaderManager().initLoader(LOADER_TIME_ID, args, getCallBackImpl());
+                    if (mNeedRestartLoaders) {
+                        mNeedRestartLoaders = false;
+                        getLoaderManager().restartLoader(LOADER_TIME_ID, args, getCallBackImpl());
+                    } else {
+                        getLoaderManager().initLoader(LOADER_TIME_ID, args, getCallBackImpl());
+                    }
                 } else if (loader.getId() == LOADER_TIME_ID) {
                     updateData((List<TimeList>) data);
                 }
@@ -156,14 +188,6 @@ public class TimeListFragment extends Fragment {
         @Override
         public void onLoaderReset(Loader<List<?>> loader) {
         }
-    }
-
-    private CallBackImpl getCallBackImpl() {
-        if (mCallBackImpl == null) {
-            mCallBackImpl = new CallBackImpl();
-        }
-
-        return mCallBackImpl;
     }
 
     public static TextView getTextView(Context context, String text) {
@@ -183,10 +207,49 @@ public class TimeListFragment extends Fragment {
     }
 
     /*  private methods */
+    private CallBackImpl getCallBackImpl() {
+        if (mCallBackImpl == null) {
+            mCallBackImpl = new CallBackImpl();
+        }
+
+        return mCallBackImpl;
+    }
+
+    private void setArgs(int routeListId, String stopStr, String stopDetail) {
+        int oldRouteListId = mRouteListId;
+
+        mRouteListId = routeListId;
+        mStopName = stopStr;
+        mRouteDetail = stopDetail;
+
+        if (oldRouteListId != routeListId) {
+            mNeedRestartLoaders = true;
+        }
+    }
+
+    private void updateTextView() {
+        mRouteName.setText(getString(R.string.text_view_route) + "\t\t" + mRouteDetail);
+        mStopDetail.setText(getString(R.string.text_view_stop) + "\t\t" + mStopName);
+    }
+
     private void initListHeader(List<String> listHeader) {
+        //delete old header, if exists
+        if (mTimeListView.getHeaderViewsCount() > 0 && mHeaderView != null) {
+            mTimeListView.removeHeaderView(mHeaderView);        //remove header from list view
+        }
+
+        //need check for adapter state because exception handled
+        // java.lang.IllegalStateException: Cannot add header view to
+        // list -- setAdapter has already been called.
+        if (mTimeListView.getAdapter() != null) {
+            mTimeListView.setAdapter(null);                     //delete adapter
+        }
+
         if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
             mTypeList = listHeader;
+
             LinearLayout layoutMinutes = (LinearLayout) mHeaderView.findViewById(R.id.layout_minutes);
+            layoutMinutes.removeAllViews();
             for (String minute : mTypeList) {
                 layoutMinutes.addView(getTextView(mHeaderView.getContext(), minute));
             }

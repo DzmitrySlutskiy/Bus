@@ -46,14 +46,19 @@ public class RouteFragment extends Fragment implements OnItemClickListener {
 
     private ListView mBusList;
 
+    private static RouteFragment sFragment = null;
+
     /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment RouteFragment.
+     * use this method for create (or get) instance of RouteFragment
+     * @return RouteFragment instance
      */
-    public static RouteFragment newInstance() {
-        return new RouteFragment();
+    public static RouteFragment getInstance() {
+        if (sFragment == null) {
+            sFragment = new RouteFragment();
+            sFragment.setRetainInstance(true);
+        }
+
+        return sFragment;
     }
 
     public RouteFragment() {

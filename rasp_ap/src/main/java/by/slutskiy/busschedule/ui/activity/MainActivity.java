@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.services.UpdateService;
@@ -43,10 +44,11 @@ import by.slutskiy.busschedule.data.DBReader;
  */
 
 public class MainActivity extends ActionBarActivity implements Handler.Callback,
-        RouteFragment.OnRouteSelectedListener,
-        View.OnClickListener, RouteStopFragment.OnRouteStopSelectedListener,
+        View.OnClickListener, RouteFragment.OnRouteSelectedListener,
+        RouteStopFragment.OnRouteStopSelectedListener,
         StopDetailFragment.OnStopDetailListener {
 
+    private static final String LAST_SHOW_FRAGMENT = "LAST_SHOW_FRAGMENT";
     private volatile static int LOADER_ID = 0;
 
     public synchronized static int getNextLoaderId() {
@@ -59,9 +61,17 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
+            Fragment fragment = NewsFragment.getInstance();
+
             FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.replace(R.id.fragment_main, NewsFragment.newInstance());
+            fragmentTransaction.add(R.id.fragment_main, fragment);
             fragmentTransaction.commit();
+        } else {
+            //recovery last shown fragment (has been saved in onSaveInstanceState)
+            String className = savedInstanceState.getString(LAST_SHOW_FRAGMENT,
+                    NewsFragment.class.getSimpleName());
+
+            recoverFragmentState(className);
         }
 
         ImageButton iBtnRoute = (ImageButton) findViewById(R.id.button_route);
@@ -78,8 +88,182 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.activity_menu_main, menu);
+
         return true;
     }
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        DBReader dbReader = DBReader.getInstance(this);
+        if (dbReader != null) {
+            dbReader.closeDB();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        //save class name visible fragment
+        //when application's activity has restarted (screen rotate etc)
+        //in Bundle savedInstanceState was stored last visible fragment class name
+        //and we can hide all fragments except saved class name
+        FragmentManager fManager = getSupportFragmentManager();
+        List<Fragment> fragmentList = fManager.getFragments();
+
+        for (Fragment item : fragmentList) {
+            if (item != null && item.isVisible()) {
+                outState.putString(LAST_SHOW_FRAGMENT, ((Object) item).getClass().getSimpleName());
+            }
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+
+                return true;
+
+            case R.id.action_check_update:
+                startService(getServiceIntent(true));
+                return true;
+
+            case R.id.action_update:
+                startService(getServiceIntent(false));
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    /**
+     * create and init intent for UpdateService. if isCheckUpdate set true - service only check
+     * for update availability
+     *
+     * @param isCheckUpdate flag for check update
+     * @return intent instance
+     */
+    private Intent getServiceIntent(boolean isCheckUpdate) {
+        Intent serviceIntent = new Intent(this, UpdateService.class);
+        Messenger messenger = new Messenger(new Handler(this));
+        serviceIntent.putExtra(UpdateService.MESSENGER, messenger);
+        serviceIntent.putExtra(UpdateService.CHECK_UPDATE, isCheckUpdate);
+
+        return serviceIntent;
+    }
+
+    /**
+     * get last update field from shared preference
+     *
+     * @param context context for getting shared preference
+     * @return Date saved on shared preference, or 0
+     */
+    public static Date getLastUpdateDate(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(BuildConfig.PACKAGE_NAME,
+                Context.MODE_PRIVATE);
+        return new Date(preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
+    }
+
+    /*  methods work with fragments */
+
+    /**
+     * add fragment to manager
+     *
+     * @param fragment fragment for adding
+     */
+    private void addFragmentToManager(Fragment fragment) {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.add(R.id.fragment_main, fragment);
+        fragmentTransaction.hide(fragment);
+        fragmentTransaction.commit();
+    }
+
+    /**
+     * Show specified fragment
+     *
+     * @param fragment fragment for showing
+     */
+    private void showFragment(Fragment fragment) {
+        FragmentManager fManager = getSupportFragmentManager();
+
+        List<Fragment> fragmentList = fManager.getFragments();
+        if (fragmentList != null && ! fragmentList.contains(fragment)) {
+            addFragmentToManager(fragment);
+        }
+
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+
+        //hide all fragments in fragment manager
+
+        if (fragmentList != null) {
+            for (Fragment item : fragmentList) {
+                if (item != null && item.isVisible()) {
+                    fragmentTransaction.hide(item);
+                }
+            }
+        }
+
+        //show current fragment
+        fragmentTransaction.show(fragment);
+
+        //add this operation to back stack (if this operation allowed
+        if (fragmentTransaction.isAddToBackStackAllowed()) {
+            fragmentTransaction.addToBackStack(((Object) fragment).getClass().getSimpleName());
+        }
+
+        fragmentTransaction.commit();
+    }
+
+    /**
+     * show fragment with className class and hide another
+     *
+     * @param className name class for showing (used when activity restarted at config changed)
+     */
+    private void recoverFragmentState(String className) {
+
+        FragmentManager fManager = getSupportFragmentManager();
+
+        //begin transaction: we hide all fragments except fragment with className class
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+
+        //hide all fragments in fragment manager
+        List<Fragment> fragmentList = fManager.getFragments();
+
+        if (fragmentList != null) {
+            for (Fragment item : fragmentList) {
+                if ((className != null) &&
+                        (((Object) item).getClass().getSimpleName().equals(className))) {
+                    fragmentTransaction.show(item);
+                } else {
+                    fragmentTransaction.hide(item);
+                }
+            }
+        }
+
+        fragmentTransaction.commit();
+    }
+
+    /**
+     * clear back stack, save only top element
+     */
+    private void clearBackStack() {
+        FragmentManager fManager = getSupportFragmentManager();
+
+        //null - only the top state is popped
+        fManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+    }
+
+    /*      interface implementations   */
 
     /**
      * Handler.Callback - interface implementation
@@ -135,73 +319,25 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         return true;
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        DBReader dbReader = DBReader.getInstance(this);
-        if (dbReader != null) {
-            dbReader.closeDB();
-        }
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-
-                return true;
-
-            case R.id.action_check_update:
-                startService(getServiceIntent(true));
-                return true;
-
-            case R.id.action_update:
-                startService(getServiceIntent(false));
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-    private Intent getServiceIntent(boolean isCheckUpdate) {
-        Intent serviceIntent = new Intent(this, UpdateService.class);
-        Messenger messenger = new Messenger(new Handler(this));
-        serviceIntent.putExtra(UpdateService.MESSENGER, messenger);
-        serviceIntent.putExtra(UpdateService.CHECK_UPDATE, isCheckUpdate);
-        return serviceIntent;
-    }
-
-    public static Date getLastUpdateDate(Context context) {
-        SharedPreferences preferences = context.getSharedPreferences(BuildConfig.PACKAGE_NAME,
-                Context.MODE_PRIVATE);
-        return new Date(preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
-    }
-
+    //View.OnClickListener
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
 
             case R.id.button_route:
                 clearBackStack();
-                replaceFragment(RouteFragment.newInstance());
+                showFragment(RouteFragment.getInstance());
                 break;
 
             case R.id.button_news:
                 clearBackStack();
 
                 //in the top of back stack saved NewsFragment (method onCreate in this Activity)
-                //replaceFragment(NewsFragment.newInstance());
                 break;
 
             case R.id.button_stops:
                 clearBackStack();
-                replaceFragment(RouteStopFragment.newInstance(- 1));
+                showFragment(RouteStopFragment.getInstance(- 1));
                 break;
 
             default:
@@ -209,40 +345,24 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         }
     }
 
+    //fragment interaction interface implementations
     @Override
     public void OnRouteSelected(int _id) {
-        replaceFragment(RouteStopFragment.newInstance(_id));
+        showFragment(RouteStopFragment.getInstance(_id));
     }
 
     @Override
-    public void OnRouteStopSelected(int _id, int routeId, String stopName, String stopDetail) {
-        replaceFragment(TimeListFragment.newInstance(_id, routeId, stopName, stopDetail));
+    public void OnRouteStopSelected(int _id, String stopName, String stopDetail) {
+        showFragment(TimeListFragment.getInstance(_id, stopName, stopDetail));
+    }
+
+    @Override
+    public void onStopDetailSelected(int routeListId, String stopName, String stopDetail) {
+        showFragment(TimeListFragment.getInstance(routeListId, stopName, stopDetail));
     }
 
     @Override
     public void OnStopSelected(int stopId, String stopName) {
-        replaceFragment(StopDetailFragment.newInstance(stopId, stopName));
-    }
-
-    private void clearBackStack() {
-        FragmentManager fManager = getSupportFragmentManager();
-
-        //null - only the top state is popped
-        fManager.popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-    }
-
-    private void replaceFragment(Fragment fragment) {
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_main, fragment);
-        //fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-        if (fragmentTransaction.isAddToBackStackAllowed()) {
-            fragmentTransaction.addToBackStack(((Object) fragment).getClass().getSimpleName());
-        }
-        fragmentTransaction.commit();
-    }
-
-    @Override
-    public void onStopDetailSelected(int routeListId, int routeId, String stopName, String stopDetail) {
-        replaceFragment(TimeListFragment.newInstance(routeListId, routeId, stopName, stopDetail));
+        showFragment(StopDetailFragment.getInstance(stopId, stopName));
     }
 }
