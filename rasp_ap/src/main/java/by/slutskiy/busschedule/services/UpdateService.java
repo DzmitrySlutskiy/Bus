@@ -126,14 +126,14 @@ public class UpdateService extends IntentService {
     private Messenger mMessenger;
 
     /*  observers   */
-    private static final UpdateObservable sObservable = new UpdateObservable();
+    private static final UpdateObservable UPDATE_OBSERVABLE = new UpdateObservable();
 
     public static void addObserver(Observer observer) {
-        UpdateService.sObservable.addObserver(observer);
+        UpdateService.UPDATE_OBSERVABLE.addObserver(observer);
     }
 
     public static void deleteObserver(Observer observer) {
-        UpdateService.sObservable.deleteObserver(observer);
+        UpdateService.UPDATE_OBSERVABLE.deleteObserver(observer);
     }
     /*  public constructors */
 
@@ -302,7 +302,7 @@ public class UpdateService extends IntentService {
 
                 sendMessage(MSG_UPDATE_FINISH);
 
-                UpdateService.sObservable.notifyUpdFinish();
+                UpdateService.UPDATE_OBSERVABLE.notifyUpdFinish();
 
                 clearReference();
             }
