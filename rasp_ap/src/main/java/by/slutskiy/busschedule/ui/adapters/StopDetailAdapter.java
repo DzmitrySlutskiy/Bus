@@ -87,33 +87,31 @@ public class StopDetailAdapter extends BaseAdapter {
         View v;
 
         StopDetail stopDetail = mStopDetailList.get(position);
+        ViewHolder holder;
 
         if (convertView == null) {
             v = mInflater.inflate(R.layout.list_item_stop_detail, parent, false);
 
-            ViewHolder viewHolder = new ViewHolder();
+            holder = new ViewHolder();
 
-            viewHolder.mRouteName = (TextView) v.findViewById(R.id.text_view_route_name);
-            viewHolder.mTime = (TextView) v.findViewById(R.id.text_view_next_time);
+            holder.mRouteName = (TextView) v.findViewById(R.id.text_view_route_name);
+            holder.mTime = (TextView) v.findViewById(R.id.text_view_next_time);
 
-            String minutes = "";
-
-            List<String> minList = stopDetail.getMinuteList();
-            for (String aMinList : minList) {
-                minutes = minutes + aMinList + "   ";
-            }
-
-            viewHolder.mTimeString = minutes;
-
-            v.setTag(viewHolder);
+            v.setTag(holder);
         } else {
             v = convertView;
+            holder = (ViewHolder) v.getTag();
         }
 
-        ViewHolder holder = (ViewHolder) v.getTag();
+        String minutes = "";
+
+        List<String> minList = stopDetail.getMinuteList();
+        for (String aMinList : minList) {
+            minutes = minutes + aMinList + "   ";
+        }
 
         holder.mRouteName.setText(stopDetail.getRouteName());
-        holder.mTime.setText(holder.mTimeString);
+        holder.mTime.setText(minutes);
 
         return v;
     }
@@ -121,6 +119,5 @@ public class StopDetailAdapter extends BaseAdapter {
     private static class ViewHolder {
         public TextView mRouteName;
         public TextView mTime;
-        public String mTimeString;
     }
 }
