@@ -2,7 +2,6 @@ package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopDetailLoader extends AsyncTaskLoader<List<StopDetail>> {
+public class StopDetailLoader extends BaseLoader<List<StopDetail>> {
 
     public static final String ATT_STOP_ID = "stopId";
     public static final String ATT_HOUR = "currentHour";

@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:text="@string/text_view_update_date"
         android:padding="@dimen/text_view_padding"
-        android:id="@+id/tvUpdateDate"
+        android:id="@+id/text_view_update_date"
         android:singleLine="false"
         android:textSize="@dimen/text_view_news_text_size"
         android:textIsSelectable="false"

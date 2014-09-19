@@ -2,7 +2,6 @@ package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ import by.slutskiy.busschedule.data.entities.Stop;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopLoader extends AsyncTaskLoader<List<Stop>> {
+public class StopLoader extends BaseLoader<List<Stop>> {
     public static final String ATT_ROUT_ID = "routeId";
 
     private int routeId;

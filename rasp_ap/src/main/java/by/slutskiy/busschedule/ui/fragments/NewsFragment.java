@@ -42,6 +42,9 @@ public class NewsFragment extends ListFragment {
 
     private static NewsFragment sFragment = null;
 
+    /*   UI   */
+    private TextView mUpdateDate;
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -70,22 +73,9 @@ public class NewsFragment extends ListFragment {
         // Inflate the layout for this fragment
 
         View fragmentView = inflater.inflate(R.layout.fragment_news, container, false);
+        mUpdateDate = (TextView) fragmentView.findViewById(R.id.text_view_update_date);
 
         updateData(null);
-
-        SharedPreferences preferences = getActivity().getSharedPreferences(
-                BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
-        String lastUpdateStr = getString(R.string.text_view_update_date);
-
-        Date lastUpdate = new Date(
-                preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
-
-        if (lastUpdate.getTime() > 0) {
-            lastUpdateStr += new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format(lastUpdate);
-        }
-
-        TextView tvUpdateDate = (TextView) fragmentView.findViewById(R.id.tvUpdateDate);
-        tvUpdateDate.setText(lastUpdateStr);
 
         return fragmentView;
     }
@@ -138,7 +128,27 @@ public class NewsFragment extends ListFragment {
             newsArray = data.toArray(new String[data.size()]);
         }
 
+        updateTextView();
+
         setListAdapter(new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, newsArray));
+    }
+
+    /**
+     * Update string in TextView with id R.id.text_view_update_date
+     */
+    private void updateTextView() {
+        SharedPreferences preferences = getActivity().getSharedPreferences(
+                BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
+        String lastUpdateStr = getString(R.string.text_view_update_date);
+
+        Date lastUpdate = new Date(
+                preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
+
+        if (lastUpdate.getTime() > 0) {
+            lastUpdateStr += new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format(lastUpdate);
+        }
+
+        mUpdateDate.setText(lastUpdateStr);
     }
 }

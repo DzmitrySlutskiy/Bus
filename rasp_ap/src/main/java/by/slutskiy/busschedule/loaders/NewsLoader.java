@@ -1,9 +1,9 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.List;
+import java.util.Observer;
 
 import by.slutskiy.busschedule.data.DBReader;
 
@@ -13,7 +13,9 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class NewsLoader extends AsyncTaskLoader<List<String>> {
+public class NewsLoader extends BaseLoader<List<String>> implements Observer {
+
+    private List<String> mNews = null;
 
     /**
      * @param context used to retrieve the application context.
@@ -26,7 +28,7 @@ public class NewsLoader extends AsyncTaskLoader<List<String>> {
     public List<String> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getNews();
+        return mNews = dbReader.getNews();
     }
 
     /**
@@ -36,6 +38,10 @@ public class NewsLoader extends AsyncTaskLoader<List<String>> {
     protected void onStartLoading() {
         super.onStartLoading();
 
-        forceLoad();                //start a load.
+        if (mNews == null) {
+            forceLoad();
+        } else {
+            deliverResult(mNews);
+        }
     }
 }

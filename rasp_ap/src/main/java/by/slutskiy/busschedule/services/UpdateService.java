@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.regex.Pattern;
 
 import by.slutskiy.busschedule.BuildConfig;
@@ -122,6 +124,13 @@ public class UpdateService extends IntentService {
     private int mNotificationId;
 
     private Messenger mMessenger;
+
+    /*  observers   */
+    private static final UpdateObservable sObservable = new UpdateObservable();
+
+    public static void addObserver(Observer observer){
+        UpdateService.sObservable.addObserver(observer);
+    }
 
     /*  public constructors */
 
@@ -289,6 +298,8 @@ public class UpdateService extends IntentService {
                 delFile(filePath);                       //delete temporary xls file
 
                 sendMessage(MSG_UPDATE_FINISH);
+
+                UpdateService.sObservable.notifyUpdFinish();
 
                 clearReference();
             }
@@ -821,5 +832,12 @@ public class UpdateService extends IntentService {
 
     private void sendMessage(int type) {
         sendMessage(type, null);
+    }
+
+    private static class UpdateObservable extends Observable{
+        public void notifyUpdFinish(){
+            setChanged();
+            notifyObservers();
+        }
     }
 }

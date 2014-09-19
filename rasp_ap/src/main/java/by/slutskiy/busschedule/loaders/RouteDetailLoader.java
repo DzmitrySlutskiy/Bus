@@ -2,7 +2,6 @@ package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.content.AsyncTaskLoader;
 
 import by.slutskiy.busschedule.data.DBReader;
 
@@ -12,7 +11,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class RouteDetailLoader extends AsyncTaskLoader<String> {
+public class RouteDetailLoader extends BaseLoader<String> {
 
     public static final String ATT_ROUT_ID = "routeId";
 

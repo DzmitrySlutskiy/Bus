@@ -1,7 +1,6 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.support.v4.content.AsyncTaskLoader;
 
 import java.util.List;
 
@@ -14,7 +13,9 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class BusRouteLoader extends AsyncTaskLoader<List<BusRoute>> {
+public class BusRouteLoader extends BaseLoader<List<BusRoute>> {
+
+    private List<BusRoute> mBusRoute = null;
 
     /**
      * @param context used to retrieve the application context.
@@ -27,7 +28,7 @@ public class BusRouteLoader extends AsyncTaskLoader<List<BusRoute>> {
     public List<BusRoute> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getRoutesList();
+        return mBusRoute = dbReader.getRoutesList();
     }
 
     /**
@@ -37,6 +38,10 @@ public class BusRouteLoader extends AsyncTaskLoader<List<BusRoute>> {
     protected void onStartLoading() {
         super.onStartLoading();
 
-        forceLoad();                //start a load.
+        if (mBusRoute == null) {
+            forceLoad();
+        } else {
+            deliverResult(mBusRoute);
+        }
     }
 }
