@@ -33,4 +33,10 @@ abstract class BaseLoader<T> extends AsyncTaskLoader<T> implements Observer {
     public void update(Observable observable, Object data) {
         forceLoad();                //start a load.
     }
+
+    @Override
+    protected void onReset() {
+        super.onReset();
+        UpdateService.deleteObserver(this);
+    }
 }

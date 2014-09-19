@@ -128,10 +128,13 @@ public class UpdateService extends IntentService {
     /*  observers   */
     private static final UpdateObservable sObservable = new UpdateObservable();
 
-    public static void addObserver(Observer observer){
+    public static void addObserver(Observer observer) {
         UpdateService.sObservable.addObserver(observer);
     }
 
+    public static void deleteObserver(Observer observer) {
+        UpdateService.sObservable.deleteObserver(observer);
+    }
     /*  public constructors */
 
     public UpdateService() {
@@ -834,8 +837,8 @@ public class UpdateService extends IntentService {
         sendMessage(type, null);
     }
 
-    private static class UpdateObservable extends Observable{
-        public void notifyUpdFinish(){
+    private static class UpdateObservable extends Observable {
+        public void notifyUpdFinish() {
             setChanged();
             notifyObservers();
         }
