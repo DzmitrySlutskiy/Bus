@@ -13,7 +13,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class TimeListLoader extends BaseLoader<List<?>> {
+public class TimeListLoader extends CacheLoader<List<?>> {
 
     public static final String ATT_ROUT_LIST_ID = "routeListIdLoader";
     private int mRouteListIdLoader;
@@ -36,16 +36,6 @@ public class TimeListLoader extends BaseLoader<List<?>> {
     public List<?> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getTimeListByRouteListId(mRouteListIdLoader);
-    }
-
-    /**
-     * Handles a request to start the Loader.
-     */
-    @Override
-    protected void onStartLoading() {
-        super.onStartLoading();
-
-        forceLoad();                //start a load.
+        return setCacheData(dbReader.getTimeListByRouteListId(mRouteListIdLoader));
     }
 }

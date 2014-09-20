@@ -13,9 +13,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class NewsLoader extends BaseLoader<List<String>> implements Observer {
-
-    private List<String> mNews = null;
+public class NewsLoader extends CacheLoader<List<String>> implements Observer {
 
     /**
      * @param context used to retrieve the application context.
@@ -28,20 +26,6 @@ public class NewsLoader extends BaseLoader<List<String>> implements Observer {
     public List<String> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return mNews = dbReader.getNews();
-    }
-
-    /**
-     * Handles a request to start the Loader.
-     */
-    @Override
-    protected void onStartLoading() {
-        super.onStartLoading();
-
-        if (mNews == null) {
-            forceLoad();
-        } else {
-            deliverResult(mNews);
-        }
+        return setCacheData(dbReader.getNews());
     }
 }

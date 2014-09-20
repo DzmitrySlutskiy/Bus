@@ -14,7 +14,7 @@ import by.slutskiy.busschedule.data.entities.Stop;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopLoader extends BaseLoader<List<Stop>> {
+public class StopLoader extends CacheLoader<List<Stop>> {
     public static final String ATT_ROUT_ID = "routeId";
 
     private int routeId;
@@ -37,16 +37,6 @@ public class StopLoader extends BaseLoader<List<Stop>> {
     public List<Stop> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getRouteStopsList(routeId);
-    }
-
-    /**
-     * Handles a request to start the Loader.
-     */
-    @Override
-    protected void onStartLoading() {
-        super.onStartLoading();
-
-        forceLoad();                //start a load.
+        return setCacheData(dbReader.getRouteStopsList(routeId));
     }
 }

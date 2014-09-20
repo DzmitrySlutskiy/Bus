@@ -14,7 +14,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopDetailLoader extends BaseLoader<List<StopDetail>> {
+public class StopDetailLoader extends CacheLoader<List<StopDetail>> {
 
     public static final String ATT_STOP_ID = "stopId";
     public static final String ATT_HOUR = "currentHour";
@@ -38,18 +38,8 @@ public class StopDetailLoader extends BaseLoader<List<StopDetail>> {
 
     @Override
     public List<StopDetail> loadInBackground() {
-        DBReader dbReader1 = DBReader.getInstance(getContext());
+        DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader1.getStopDetail(mStopIdLoader, mCurrentHourLoader);
-    }
-
-    /**
-     * Handles a request to start the Loader.
-     */
-    @Override
-    protected void onStartLoading() {
-        super.onStartLoading();
-
-        forceLoad();                //start a load.
+        return setCacheData(dbReader.getStopDetail(mStopIdLoader, mCurrentHourLoader));
     }
 }

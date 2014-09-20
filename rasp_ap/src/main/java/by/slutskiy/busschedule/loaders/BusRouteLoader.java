@@ -13,9 +13,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class BusRouteLoader extends BaseLoader<List<BusRoute>> {
-
-    private List<BusRoute> mBusRoute = null;
+public class BusRouteLoader extends CacheLoader<List<BusRoute>> {
 
     /**
      * @param context used to retrieve the application context.
@@ -28,20 +26,6 @@ public class BusRouteLoader extends BaseLoader<List<BusRoute>> {
     public List<BusRoute> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return mBusRoute = dbReader.getRoutesList();
-    }
-
-    /**
-     * Handles a request to start the Loader.
-     */
-    @Override
-    protected void onStartLoading() {
-        super.onStartLoading();
-
-        if (mBusRoute == null) {
-            forceLoad();
-        } else {
-            deliverResult(mBusRoute);
-        }
+        return setCacheData(dbReader.getRoutesList());
     }
 }

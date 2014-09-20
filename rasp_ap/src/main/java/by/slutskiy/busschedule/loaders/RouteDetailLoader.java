@@ -11,7 +11,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class RouteDetailLoader extends BaseLoader<String> {
+public class RouteDetailLoader extends CacheLoader<String> {
 
     public static final String ATT_ROUT_ID = "routeId";
 
@@ -35,16 +35,6 @@ public class RouteDetailLoader extends BaseLoader<String> {
     public String loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getRouteDetail(routeId);
-    }
-
-    /**
-     * Handles a request to start the Loader.
-     */
-    @Override
-    protected void onStartLoading() {
-        super.onStartLoading();
-
-        forceLoad();                //start a load.
+        return setCacheData(dbReader.getRouteDetail(routeId));
     }
 }
