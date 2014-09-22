@@ -6,7 +6,6 @@ package by.slutskiy.busschedule.ui.fragments;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,7 +34,8 @@ import static android.widget.AdapterView.OnItemClickListener;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class RouteFragment extends Fragment implements OnItemClickListener {
+public class RouteFragment extends BaseFragment implements OnItemClickListener {
+    public static final String TAG = RouteFragment.class.getSimpleName();
 
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
     private OnRouteSelectedListener mListener;
@@ -43,23 +43,12 @@ public class RouteFragment extends Fragment implements OnItemClickListener {
 
     private ListView mBusList;
 
-    private static RouteFragment sFragment = null;
-
-    /**
-     * use this method for create (or get) instance of RouteFragment
-     *
-     * @return RouteFragment instance
-     */
-    public static RouteFragment getInstance() {
-        if (sFragment == null) {
-            sFragment = new RouteFragment();
-            sFragment.setRetainInstance(true);
-        }
-
-        return sFragment;
+    public RouteFragment() {
     }
 
-    public RouteFragment() {
+    @Override
+    public void changeArguments(Bundle args) {
+        //not needed - no arguments
     }
 
     /*  public methods   */

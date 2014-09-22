@@ -22,7 +22,7 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@id/android:list"
+        android:id="@+id/list_view_news"
         android:divider="@android:drawable/divider_horizontal_dark"
         android:choiceMode="none"
         style="@style/AppTheme"/>

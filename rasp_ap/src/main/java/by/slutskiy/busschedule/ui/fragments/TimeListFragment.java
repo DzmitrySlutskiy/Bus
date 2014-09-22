@@ -7,7 +7,6 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.Loader;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -36,7 +35,12 @@ import static android.support.v4.app.LoaderManager.LoaderCallbacks;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class TimeListFragment extends Fragment {
+public class TimeListFragment extends BaseFragment {
+
+    public static final String TAG = TimeListFragment.class.getSimpleName();
+    public static final String ROUTE_LIST_ID = "routeListId";
+    public static final String STOP_NAME = "stopStr";
+    public static final String STOP_DETAIL = "stopDetail";
 
     private static final int LOADER_TYPE_ID = MainActivity.getNextLoaderId();
     private static final int LOADER_TIME_ID = MainActivity.getNextLoaderId();
@@ -55,28 +59,23 @@ public class TimeListFragment extends Fragment {
 
     private CallBackImpl mCallBackImpl = null;
 
-    private static TimeListFragment sFragment = null;
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param routeListId Parameter 1.
-     * @return A new instance of fragment TimeListFragment.
-     */
-    public static TimeListFragment getInstance(int routeListId, String stopStr, String stopDetail) {
-        if (sFragment == null) {
-            sFragment = new TimeListFragment();
-            sFragment.setRetainInstance(true);
-        }
-
-        sFragment.setArgs(routeListId, stopStr, stopDetail);
-
-        return sFragment;
-    }
-
     public TimeListFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void changeArguments(Bundle args) {
+        if (args != null) {
+            int oldRouteListId = mRouteListId;
+
+            mRouteListId = args.getInt(ROUTE_LIST_ID);
+            mStopName = args.getString(STOP_NAME);
+            mRouteDetail = args.getString(STOP_DETAIL);
+
+            if (oldRouteListId != mRouteListId) {
+                mNeedRestartLoaders = true;
+            }
+        }
     }
 
     @Override
@@ -209,18 +208,6 @@ public class TimeListFragment extends Fragment {
         }
 
         return mCallBackImpl;
-    }
-
-    private void setArgs(int routeListId, String stopStr, String stopDetail) {
-        int oldRouteListId = mRouteListId;
-
-        mRouteListId = routeListId;
-        mStopName = stopStr;
-        mRouteDetail = stopDetail;
-
-        if (oldRouteListId != routeListId) {
-            mNeedRestartLoaders = true;
-        }
     }
 
     private void updateTextView() {

@@ -6,7 +6,6 @@ package by.slutskiy.busschedule.ui.fragments;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,12 +35,14 @@ import static android.widget.AdapterView.OnItemClickListener;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class StopDetailFragment extends Fragment implements OnItemClickListener {
+public class StopDetailFragment extends BaseFragment implements OnItemClickListener {
+
+    public static final String TAG = StopDetailFragment.class.getSimpleName();
 
     // the fragment initialization parameters
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
-    private static final String STOP_ID = "mStopId";
-    private static final String STOP_NAME = "mStopName";
+    public static final String STOP_ID = "mStopId";
+    public static final String STOP_NAME = "mStopName";
 
     private List<StopDetail> mStopDetList = null;
     private int mStopId;
@@ -57,28 +58,23 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
 
     private StopDetailCallBack mStopDetailCallBack = null;
 
-    private static StopDetailFragment sFragment = null;
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param stopId   Parameter 1.
-     * @param stopName Parameter 2.
-     * @return A new instance of fragment StopDetailFragment.
-     */
-    public static StopDetailFragment getInstance(int stopId, String stopName) {
-        if (sFragment == null) {
-            sFragment = new StopDetailFragment();
-            sFragment.setRetainInstance(true);
-        }
-        sFragment.setArgs(stopId, stopName);
-
-        return sFragment;
-    }
-
     public StopDetailFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void changeArguments(Bundle args) {
+        if (args != null) {
+            int oldStopId = mStopId;
+            String oldStopName = mStopName;
+
+            mStopId = args.getInt(STOP_ID);
+            mStopName = args.getString(STOP_NAME);
+
+            if (oldStopId != mStopId || ! oldStopName.equals(mStopName)) {
+                mNeedRestartLoaders = true;
+            }
+        }
     }
 
     @Override
@@ -176,18 +172,6 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
         return args;
     }
 
-    private void setArgs(int stopId, String stopName) {
-        int oldStopId = mStopId;
-        String oldStopName = mStopName;
-
-        mStopId = stopId;
-        mStopName = stopName;
-
-        if (oldStopId != stopId || ! oldStopName.equals(stopName)) {
-            mNeedRestartLoaders = true;
-        }
-    }
-
     private StopDetailCallBack getStopDetailCallBack() {
         if (mStopDetailCallBack == null) {
             mStopDetailCallBack = new StopDetailCallBack();
@@ -219,13 +203,13 @@ public class StopDetailFragment extends Fragment implements OnItemClickListener 
      * @param data list with StopDetail
      */
     private void updateData(List<StopDetail> data) {
-        if (data !=null) {
+        if (data != null) {
             mStopDetail.setText(mStopName);
             mStopDetList = data;
 
             StopDetailAdapter adapter = new StopDetailAdapter(getActivity(), data);
             mDetailList.setAdapter(adapter);
-        }else{
+        } else {
             mDetailList.setAdapter(new ArrayAdapter<String>(getActivity(),
                     android.R.layout.simple_list_item_1,
                     new String[]{getString(R.string.text_view_get_data)}));

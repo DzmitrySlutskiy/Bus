@@ -7,12 +7,12 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -35,34 +35,23 @@ import static android.support.v4.app.LoaderManager.LoaderCallbacks;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class NewsFragment extends ListFragment {
+public class NewsFragment extends BaseFragment {
+    public static final String TAG = NewsFragment.class.getSimpleName();
 
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
     private NewsCallback mCallBack = null;
 
-    private static NewsFragment sFragment = null;
-
     /*   UI   */
     private TextView mUpdateDate;
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment NewsFragment.
-     */
-    public static NewsFragment getInstance() {
-        if (sFragment == null) {
-            sFragment = new NewsFragment();
-            //sad activity to save this instance when configuration changed
-            sFragment.setRetainInstance(true);
-        }
-
-        return sFragment;
-    }
+    private ListView mNewsList;
 
     public NewsFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void changeArguments(Bundle args) {
+        //not needed - no arguments
     }
 
     /*  public methods */
@@ -74,6 +63,7 @@ public class NewsFragment extends ListFragment {
 
         View fragmentView = inflater.inflate(R.layout.fragment_news, container, false);
         mUpdateDate = (TextView) fragmentView.findViewById(R.id.text_view_update_date);
+        mNewsList = (ListView) fragmentView.findViewById(R.id.list_view_news);
 
         updateData(null);
 
@@ -130,7 +120,7 @@ public class NewsFragment extends ListFragment {
 
         updateTextView();
 
-        setListAdapter(new ArrayAdapter<String>(getActivity(),
+        mNewsList.setAdapter(new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, newsArray));
     }
 

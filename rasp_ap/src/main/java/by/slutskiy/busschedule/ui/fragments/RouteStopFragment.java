@@ -6,7 +6,6 @@ package by.slutskiy.busschedule.ui.fragments;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,12 +35,14 @@ import static android.widget.AdapterView.OnItemClickListener;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class RouteStopFragment extends Fragment implements OnItemClickListener {
+public class RouteStopFragment extends BaseFragment implements OnItemClickListener {
+
+    public static final String TAG = RouteStopFragment.class.getSimpleName();
 
     private static final int LOADER_ID_STOP_DETAIL = MainActivity.getNextLoaderId();
     private static final int LOADER_ID_STOP_LIST = MainActivity.getNextLoaderId();
 
-    private static final String ROUTE_ID = "mRouteId";
+    public static final String ROUTE_ID = "mRouteId";
     private static final String STOP_DETAIL = "mStopDetail";
 
     private int mRouteId = Integer.MIN_VALUE;
@@ -58,27 +59,20 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
     private StringCallback mStringCallBack = null;
     private ListStopCallBack mListStopCallBack = null;
 
-    private static RouteStopFragment sFragment = null;
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param routeId Parameter 1.
-     * @return A new instance of fragment RouteStopFragment.
-     */
-    public static RouteStopFragment getInstance(int routeId) {
-        if (sFragment == null) {
-            sFragment = new RouteStopFragment();
-            sFragment.setRetainInstance(true);
-        }
-        sFragment.setRouteId(routeId);
-
-        return sFragment;
-    }
-
     public RouteStopFragment() {
         mStopList = null;
+    }
+
+    @Override
+    public void changeArguments(Bundle args) {
+        if (args != null) {
+            int oldRouteId = mRouteId;
+            mRouteId = args.getInt(ROUTE_ID);
+
+            if (oldRouteId != mRouteId && oldRouteId != Integer.MIN_VALUE) {
+                mNeedRestartLoaders = true;
+            }
+        }
     }
 
     @Override
@@ -193,19 +187,6 @@ public class RouteStopFragment extends Fragment implements OnItemClickListener {
             getLoaderManager().restartLoader(loaderId, args, loaderCallbacks);
         } else {
             getLoaderManager().initLoader(loaderId, args, loaderCallbacks);
-        }
-    }
-
-    private void setRouteId(int newId) {
-        int oldRouteId = mRouteId;
-        mRouteId = newId;
-
-        //at this point fragment may be not attached to activity.
-        //set flag to true - it's indicate what routeId was change and need restart data
-        //loaders will be restarted when onHiddenChanged call
-        //oldRouteId != Integer.MIN_VALUE = true if not first fragment use
-        if (oldRouteId != newId && oldRouteId != Integer.MIN_VALUE) {
-            mNeedRestartLoaders = true;
         }
     }
 

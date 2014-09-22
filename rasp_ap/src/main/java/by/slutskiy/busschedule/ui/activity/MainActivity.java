@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +28,7 @@ import java.util.List;
 
 import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.services.UpdateService;
+import by.slutskiy.busschedule.ui.fragments.BaseFragment;
 import by.slutskiy.busschedule.ui.fragments.NewsFragment;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.ui.fragments.RouteFragment;
@@ -48,6 +50,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         RouteStopFragment.OnRouteStopSelectedListener,
         StopDetailFragment.OnStopDetailListener {
 
+    private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String LAST_SHOW_FRAGMENT = "LAST_SHOW_FRAGMENT";
     private volatile static int LOADER_ID = 0;
 
@@ -61,15 +64,10 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState == null) {
-            Fragment fragment = NewsFragment.getInstance();
-
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.add(R.id.fragment_main, fragment);
-            fragmentTransaction.commit();
+            addFragmentToManager(new NewsFragment(), NewsFragment.TAG, false);
         } else {
             //recovery last shown fragment (has been saved in onSaveInstanceState)
-            String className = savedInstanceState.getString(LAST_SHOW_FRAGMENT,
-                    NewsFragment.class.getSimpleName());
+            String className = savedInstanceState.getString(LAST_SHOW_FRAGMENT, NewsFragment.TAG);
 
             recoverFragmentState(className);
         }
@@ -107,18 +105,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        //save class name visible fragment
-        //when application's activity has restarted (screen rotate etc)
-        //in Bundle savedInstanceState was stored last visible fragment class name
-        //and we can hide all fragments except saved class name
-        FragmentManager fManager = getSupportFragmentManager();
-        List<Fragment> fragmentList = fManager.getFragments();
-
-        for (Fragment item : fragmentList) {
-            if (item != null && item.isVisible()) {
-                outState.putString(LAST_SHOW_FRAGMENT, ((Object) item).getClass().getSimpleName());
-            }
-        }
+        outState.putString(LAST_SHOW_FRAGMENT, getCurrentFragmentTag());
     }
 
     @Override
@@ -181,44 +168,66 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
      *
      * @param fragment fragment for adding
      */
-    private void addFragmentToManager(Fragment fragment) {
+    private void addFragmentToManager(Fragment fragment, String tag, boolean needHide) {
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.fragment_main, fragment);
-        fragmentTransaction.hide(fragment);
+        fragmentTransaction.add(R.id.fragment_main, fragment, tag);
+        if (needHide) {
+            fragmentTransaction.hide(fragment);
+        }
         fragmentTransaction.commit();
+    }
+
+    private String getCurrentFragmentTag() {
+        FragmentManager fManager = getSupportFragmentManager();
+        int count = fManager.getBackStackEntryCount();
+        FragmentManager.BackStackEntry entry = null;
+        if (count > 0) {
+            entry = fManager.getBackStackEntryAt(count - 1);
+        }
+        if (entry == null) {
+            return NewsFragment.TAG;
+        } else {
+            return entry.getName();
+        }
     }
 
     /**
      * Show specified fragment
      *
-     * @param fragment fragment for showing
+     * @param fragmentTag fragment for showing
      */
-    private void showFragment(Fragment fragment) {
+    private void showFragment(Class<? extends BaseFragment> cls, String fragmentTag, Bundle args) {
         FragmentManager fManager = getSupportFragmentManager();
 
-        List<Fragment> fragmentList = fManager.getFragments();
-        if (fragmentList != null && ! fragmentList.contains(fragment)) {
-            addFragmentToManager(fragment);
-        }
+        BaseFragment currentFragment =
+                (BaseFragment) fManager.findFragmentByTag(getCurrentFragmentTag());
 
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        BaseFragment showingFragment = (BaseFragment) fManager.findFragmentByTag(fragmentTag);
+        if (showingFragment == null) {
 
-        //hide all fragments in fragment manager
-
-        if (fragmentList != null) {
-            for (Fragment item : fragmentList) {
-                if (item != null && item.isVisible()) {
-                    fragmentTransaction.hide(item);
-                }
+            try {
+                showingFragment = cls.newInstance();
+            } catch (ReflectiveOperationException e) {
+                Log.e(LOG_TAG, e.getMessage());
+                showingFragment = new NewsFragment();
             }
+
+            addFragmentToManager(showingFragment, fragmentTag, true);
+        }
+        showingFragment.changeArguments(args);          //set new arguments
+
+        FragmentTransaction fragmentTransaction = fManager.beginTransaction();
+
+        if (currentFragment != null) {
+            fragmentTransaction.hide(currentFragment);
         }
 
         //show current fragment
-        fragmentTransaction.show(fragment);
+        fragmentTransaction.show(showingFragment);
 
         //add this operation to back stack (if this operation allowed
         if (fragmentTransaction.isAddToBackStackAllowed()) {
-            fragmentTransaction.addToBackStack(((Object) fragment).getClass().getSimpleName());
+            fragmentTransaction.addToBackStack(fragmentTag);
         }
 
         fragmentTransaction.commit();
@@ -326,7 +335,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
             case R.id.button_route:
                 clearBackStack();
-                showFragment(RouteFragment.getInstance());
+                showFragment(RouteFragment.class, RouteFragment.TAG, null);
                 break;
 
             case R.id.button_news:
@@ -337,7 +346,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
             case R.id.button_stops:
                 clearBackStack();
-                showFragment(RouteStopFragment.getInstance(- 1));
+                showRouteStopFragment(- 1);
                 break;
 
             default:
@@ -345,24 +354,45 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         }
     }
 
+
+    private void showTimeListFragment(int id, String stopName, String stopDetail) {
+        Bundle args = new Bundle();
+        args.putInt(TimeListFragment.ROUTE_LIST_ID, id);
+        args.putString(TimeListFragment.STOP_NAME, stopName);
+        args.putString(TimeListFragment.STOP_DETAIL, stopDetail);
+
+        showFragment(TimeListFragment.class, TimeListFragment.TAG, args);
+    }
+
+    private void showRouteStopFragment(int routeId) {
+        Bundle args = new Bundle();
+        args.putInt(RouteStopFragment.ROUTE_ID, routeId);
+
+        showFragment(RouteStopFragment.class, RouteStopFragment.TAG, args);
+    }
+
     //fragment interaction interface implementations
     @Override
-    public void OnRouteSelected(int _id) {
-        showFragment(RouteStopFragment.getInstance(_id));
+    public void OnRouteSelected(int id) {
+        showRouteStopFragment(id);
     }
 
     @Override
-    public void OnRouteStopSelected(int _id, String stopName, String stopDetail) {
-        showFragment(TimeListFragment.getInstance(_id, stopName, stopDetail));
+    public void OnRouteStopSelected(int id, String stopName, String stopDetail) {
+        showTimeListFragment(id, stopName, stopDetail);
     }
 
     @Override
     public void onStopDetailSelected(int routeListId, String stopName, String stopDetail) {
-        showFragment(TimeListFragment.getInstance(routeListId, stopName, stopDetail));
+        showTimeListFragment(routeListId, stopName, stopDetail);
     }
 
     @Override
     public void OnStopSelected(int stopId, String stopName) {
-        showFragment(StopDetailFragment.getInstance(stopId, stopName));
+        Bundle args = new Bundle();
+        args.putInt(StopDetailFragment.STOP_ID, stopId);
+        args.putString(StopDetailFragment.STOP_NAME, stopName);
+
+        showFragment(StopDetailFragment.class, StopDetailFragment.TAG, args);
     }
 }
