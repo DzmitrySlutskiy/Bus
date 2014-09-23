@@ -4,15 +4,11 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
-import android.content.Context;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -24,6 +20,7 @@ import by.slutskiy.busschedule.loaders.TimeListLoader;
 import by.slutskiy.busschedule.loaders.TypeListLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.ui.adapters.TimeAdapter;
+import by.slutskiy.busschedule.ui.views.TimeView;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
@@ -185,22 +182,6 @@ public class TimeListFragment extends BaseFragment {
         }
     }
 
-    public static TextView getTextView(Context context, String text) {
-        TextView tvTemp = new TextView(context);
-        LinearLayout.LayoutParams linLayoutParam = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT, 1);
-
-        Resources resources = context.getApplicationContext().getResources();
-
-        int dimPadding = Math.round(resources.getDimension(R.dimen.text_view_time_list_padding));
-
-        tvTemp.setPadding(dimPadding, dimPadding, dimPadding, dimPadding);
-        tvTemp.setGravity(Gravity.CENTER_HORIZONTAL);
-        tvTemp.setLayoutParams(linLayoutParam);
-        tvTemp.setText(text);
-
-        return tvTemp;
-    }
-
     /*  private methods */
     private CallBackImpl getCallBackImpl() {
         if (mCallBackImpl == null) {
@@ -231,11 +212,8 @@ public class TimeListFragment extends BaseFragment {
         if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
             mTypeList = listHeader;
 
-            LinearLayout layoutMinutes = (LinearLayout) mHeaderView.findViewById(R.id.layout_minutes);
-            layoutMinutes.removeAllViews();
-            for (String minute : mTypeList) {
-                layoutMinutes.addView(getTextView(mHeaderView.getContext(), minute));
-            }
+            TimeView timeView = (TimeView) mHeaderView.findViewById(R.id.time_view);
+            timeView.setMinList(mTypeList);
             mTimeListView.addHeaderView(mHeaderView);
         }
     }

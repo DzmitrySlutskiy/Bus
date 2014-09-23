@@ -1,19 +1,19 @@
 package by.slutskiy.busschedule.ui.adapters;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.entities.TimeList;
-import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
+import by.slutskiy.busschedule.ui.views.TimeView;
 
 /**
  * TimeAdapter
@@ -27,11 +27,18 @@ public class TimeAdapter extends BaseAdapter {
     private final LayoutInflater mInflater;
     private final List<TimeList> mTimeList;
 
+    private final Calendar rightNow = Calendar.getInstance();
+    private int mHour;
+    private Resources mResources;
+
     /*  public constructors */
 
     public TimeAdapter(Context context, List<TimeList> timeList) {
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mTimeList = timeList;
+
+        mHour = rightNow.get(Calendar.HOUR_OF_DAY);
+        mResources = context.getResources();
     }
 
     /**
@@ -89,41 +96,17 @@ public class TimeAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View v;
 
-        int typeSize = mTimeList.get(0).getMinSize();
-
         if (convertView == null) {
             v = mInflater.inflate(R.layout.list_item_time, parent, false);
 
             ViewHolder viewHolder = new ViewHolder();
 
             viewHolder.mHour = (TextView) v.findViewById(R.id.text_view_hour);
-            LinearLayout minPanel = (LinearLayout) v.findViewById(R.id.layout_minutes);
-
-            viewHolder.mMinutePanel = minPanel;
-
-            //add TextView to min panel
-            for (int i = 0; i < typeSize; i++) {
-                TextView textView = TimeListFragment.getTextView(v.getContext(), "");
-                viewHolder.mMinutes.add(textView);
-
-                minPanel.addView(textView);
-            }
+            viewHolder.mView = (TimeView) v.findViewById(R.id.time_view);
 
             v.setTag(viewHolder);
         } else {
             v = convertView;
-
-            ViewHolder holder = (ViewHolder) v.getTag();
-
-            //check for view count in minute panel
-            if (holder.mMinutePanel.getChildCount() < typeSize) {
-                int childNeeded = typeSize - holder.mMinutePanel.getChildCount();
-                for (int i = 0; i < childNeeded; i++) {
-                    TextView textView = TimeListFragment.getTextView(v.getContext(), "");
-                    holder.mMinutePanel.addView(textView);
-                    holder.mMinutes.add(textView);
-                }
-            }
         }
 
         ViewHolder holder = (ViewHolder) v.getTag();
@@ -131,18 +114,19 @@ public class TimeAdapter extends BaseAdapter {
         TimeList timeList = mTimeList.get(position);
 
         holder.mHour.setText("" + timeList.getHour());
+        holder.mView.setMinList(timeList.getMin());
 
-        for (int i = 0; i < timeList.getMinSize(); i++) {
-            holder.mMinutes.get(i).setText(timeList.getMin(i));
-        }
+        v.setBackgroundColor(
+                (timeList.getHour() == mHour) ?
+                        mResources.getColor(R.color.text_view_current_hour) :
+                        mResources.getColor(R.color.text_view_any_hour));
 
         return v;
     }
 
     private static class ViewHolder {
         public TextView mHour;
-        public LinearLayout mMinutePanel;
-        public List<TextView> mMinutes = new ArrayList<TextView>();
+        public TimeView mView;
     }
 
 }

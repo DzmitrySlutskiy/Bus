@@ -15,7 +15,7 @@
     <dimen name="text_view_time_list_padding">5dp</dimen>
 
     <!--min width-->
-    <dimen name="text_view_hour_min_width">@dimen/std_min_width</dimen>
+    <dimen name="text_view_hour_min_width">40dp</dimen>
     <dimen name="text_view_bus_min_width">@dimen/std_min_width</dimen>
 
     <!--Text size-->

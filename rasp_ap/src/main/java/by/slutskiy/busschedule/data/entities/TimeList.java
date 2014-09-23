@@ -49,4 +49,8 @@ public class TimeList {
     public void addMin(String min) {
         minList.add(min);
     }
+
+    public List<String> getMin(){
+        return minList;
+    }
 }
