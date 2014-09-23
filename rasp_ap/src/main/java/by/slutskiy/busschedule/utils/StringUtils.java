@@ -56,7 +56,7 @@ public class StringUtils {
      */
     public static String getSubStringByIndex(String source, int index, String divider) {
         String[] result = TextUtils.split(source, divider);
-        if (index > 0 && index < result.length) {
+        if (index >= 0 && index < result.length) {
             return result[index];
         } else {
             return EMPTY_STRING;
