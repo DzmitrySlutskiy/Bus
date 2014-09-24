@@ -26,17 +26,14 @@ abstract class CacheLoader<T> extends BaseLoader<T> {
         if (mCacheData == null) {
             forceLoad();
         } else {
-            deliverResult(mCacheData);
+            super.deliverResult(mCacheData);
         }
     }
 
-    /**
-     * set new data to cache
-     *
-     * @param data data for set
-     * @return new data in cache
-     */
-    protected T setCacheData(T data) {
-        return mCacheData = data;
+    @Override
+    public void deliverResult(T data) {
+        super.deliverResult(data);
+
+        mCacheData = data;
     }
 }

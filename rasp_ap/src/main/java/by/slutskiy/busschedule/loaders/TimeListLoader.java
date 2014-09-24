@@ -36,6 +36,6 @@ public class TimeListLoader extends CacheLoader<List<?>> {
     public List<?> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return setCacheData(dbReader.getTimeListByRouteListId(mRouteListIdLoader));
+        return dbReader.getTimeListByRouteListId(mRouteListIdLoader);
     }
 }

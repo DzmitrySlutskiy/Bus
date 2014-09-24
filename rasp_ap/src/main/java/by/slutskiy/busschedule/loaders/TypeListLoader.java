@@ -38,6 +38,6 @@ public class TypeListLoader extends CacheLoader<List<?>> {
     public List<?> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return setCacheData(dbReader.getTypeListByRouteListId(mRouteListIdLoader));
+        return dbReader.getTypeListByRouteListId(mRouteListIdLoader);
     }
 }

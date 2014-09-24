@@ -26,6 +26,6 @@ public class BusRouteLoader extends CacheLoader<List<BusRoute>> {
     public List<BusRoute> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return setCacheData(dbReader.getRoutesList());
+        return dbReader.getRoutesList();
     }
 }

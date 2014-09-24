@@ -26,6 +26,6 @@ public class NewsLoader extends CacheLoader<List<String>> implements Observer {
     public List<String> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return setCacheData(dbReader.getNews());
+        return dbReader.getNews();
     }
 }

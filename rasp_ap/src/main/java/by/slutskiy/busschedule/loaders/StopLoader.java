@@ -37,6 +37,6 @@ public class StopLoader extends CacheLoader<List<Stop>> {
     public List<Stop> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return setCacheData(dbReader.getRouteStopsList(routeId));
+        return dbReader.getRouteStopsList(routeId);
     }
 }

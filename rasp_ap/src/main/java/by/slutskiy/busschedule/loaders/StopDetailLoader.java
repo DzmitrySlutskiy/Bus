@@ -40,6 +40,6 @@ public class StopDetailLoader extends CacheLoader<List<StopDetail>> {
     public List<StopDetail> loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return setCacheData(dbReader.getStopDetail(mStopIdLoader, mCurrentHourLoader));
+        return dbReader.getStopDetail(mStopIdLoader, mCurrentHourLoader);
     }
 }

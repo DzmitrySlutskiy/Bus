@@ -35,6 +35,6 @@ public class RouteDetailLoader extends CacheLoader<String> {
     public String loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return setCacheData(dbReader.getRouteDetail(routeId));
+        return dbReader.getRouteDetail(routeId);
     }
 }
