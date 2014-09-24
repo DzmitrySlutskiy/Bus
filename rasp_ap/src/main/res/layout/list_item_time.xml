@@ -22,10 +22,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/time_view"
+        android:gravity="center"
         custom:textSize="15sp"
         custom:textColor="@android:color/black"
-        custom:textAlign="center"
-        custom:verticalAlign="center"
         android:padding="@dimen/text_view_time_list_padding"/>
 
 </LinearLayout>
