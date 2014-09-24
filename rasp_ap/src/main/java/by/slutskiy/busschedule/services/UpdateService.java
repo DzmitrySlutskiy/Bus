@@ -16,9 +16,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -161,7 +161,7 @@ public class UpdateService extends IntentService {
 
         URL fURL = getUrl(BUS_PARK_URL + FILE_NAME);
 
-        URLConnection uCon = null;
+        HttpURLConnection uCon = null;
         InputStream stream = null;
 
         int what = MSG_LAST_UPDATE;
@@ -170,7 +170,7 @@ public class UpdateService extends IntentService {
 
         /*   try open internet connection to remote host  */
         try {
-            uCon = fURL.openConnection();
+            uCon = (HttpURLConnection) fURL.openConnection();
             stream = uCon.getInputStream();               //check internet IOException throws
             lastUpdate = new Date(uCon.getLastModified());
             Log.i(LOG_TAG, "last modified: " + lastUpdate);
@@ -189,6 +189,13 @@ public class UpdateService extends IntentService {
                 } else {
                     sendMessage(what, lastUpdate);
                 }
+                //close stream and connection
+                try {
+                    stream.close();
+                    uCon.disconnect();
+                } catch (IOException e) {
+                    Log.e(LOG_TAG, "Error while closing stream: " + e.getMessage());
+                }
             } else {
                 sendMessage(what);
             }
@@ -202,6 +209,7 @@ public class UpdateService extends IntentService {
 
         if ((dbUpdateDate != null) && ! dbUpdateDate.before(lastUpdate)) {
             sendMessage(MSG_UPDATE_NOT_NEED);
+            uCon.disconnect();
             return;
         }
 
@@ -307,6 +315,7 @@ public class UpdateService extends IntentService {
                 clearReference();
             }
         }
+        uCon.disconnect();
     }
 
     /**
