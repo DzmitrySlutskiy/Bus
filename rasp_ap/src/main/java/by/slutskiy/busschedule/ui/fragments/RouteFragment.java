@@ -4,7 +4,6 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
@@ -17,8 +16,8 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
-import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.loaders.BusRouteLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.ui.adapters.BusRouteAdapter;
@@ -38,8 +37,6 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
     public static final String TAG = RouteFragment.class.getSimpleName();
 
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
-    private OnRouteSelectedListener mListener;
-    private BusRouteCallback mCallBack = null;
 
     private ListView mBusList;
 
@@ -51,13 +48,9 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
         //not needed - no arguments
     }
 
-    /*  public methods   */
-
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        getLoaderManager().initLoader(LOADER_ID, null, getCallBack());
+    protected void initLoader() {
+        initLoader(null, LOADER_ID, getCallBack(), false);
     }
 
     @Override
@@ -73,65 +66,15 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-
-        if (activity instanceof OnRouteSelectedListener) {
-            mListener = (OnRouteSelectedListener) activity;
-        } else {
-            mListener = null;
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-
-        mListener = null;
-    }
-
-    @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mListener != null) {
-            mListener.OnRouteSelected((int) id);
+        if (mListener != null && mListener instanceof OnRouteSelectedListener) {
+            ((OnRouteSelectedListener) mListener).OnRouteSelected((int) id);
         }
     }
 
-
-    /*  implementation LoaderManager.LoaderCallbacks<List<String>>*/
-    private class BusRouteCallback implements LoaderCallbacks<List<BusRoute>> {
-
-        @Override
-        public Loader<List<BusRoute>> onCreateLoader(int id, Bundle args) {
-            return new BusRouteLoader(getActivity().getApplicationContext());
-        }
-
-        @Override
-        public void onLoadFinished(Loader<List<BusRoute>> loader, List<BusRoute> data) {
-            updateData(data);
-        }
-
-        @Override
-        public void onLoaderReset(Loader<List<BusRoute>> loader) {
-            if (mBusList != null) {
-                mBusList.setOnItemClickListener(null);
-            }
-
-            clearList();
-        }
-    }
-
-    /**
-     * instantiate private field for BusRouteCallback class
-     *
-     * @return BusRouteCallback instance
-     */
-    private BusRouteCallback getCallBack() {
-        if (mCallBack == null) {
-            mCallBack = new BusRouteCallback();
-        }
-
-        return mCallBack;
+    @Override
+    protected LoaderCallbacks initCallBack() {
+        return new BusRouteCallback();
     }
 
     /**
@@ -164,7 +107,30 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
      * interface for interaction with activity
      */
 
-    public interface OnRouteSelectedListener {
+    public interface OnRouteSelectedListener extends BaseInteraction {
         public void OnRouteSelected(int _id);
+    }
+
+    /*  implementation LoaderManager.LoaderCallbacks<List<String>>*/
+    private class BusRouteCallback implements LoaderCallbacks<List<BusRoute>> {
+
+        @Override
+        public Loader<List<BusRoute>> onCreateLoader(int id, Bundle args) {
+            return new BusRouteLoader(getActivity().getApplicationContext());
+        }
+
+        @Override
+        public void onLoadFinished(Loader<List<BusRoute>> loader, List<BusRoute> data) {
+            updateData(data);
+        }
+
+        @Override
+        public void onLoaderReset(Loader<List<BusRoute>> loader) {
+            if (mBusList != null) {
+                mBusList.setOnItemClickListener(null);
+            }
+
+            clearList();
+        }
     }
 }

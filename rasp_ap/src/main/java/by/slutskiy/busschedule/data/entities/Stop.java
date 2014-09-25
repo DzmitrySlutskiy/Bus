@@ -49,4 +49,9 @@ public class Stop implements Comparable {
                 ? mStopName.compareTo(((Stop) another).getStopName())
                 : 0;
     }
+
+    @Override
+    public String toString() {
+        return mStopName;
+    }
 }

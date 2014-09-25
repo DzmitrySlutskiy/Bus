@@ -45,7 +45,6 @@ public class TimeListFragment extends BaseFragment {
     private int mRouteListId;
     private String mStopName = "";
     private String mRouteDetail = "";
-    private boolean mNeedRestartLoaders = false;
 
     private ListView mTimeListView;
     private View mHeaderView;
@@ -53,8 +52,6 @@ public class TimeListFragment extends BaseFragment {
     private TextView mStopDetail;
 
     private List<String> mTypeList;
-
-    private CallBackImpl mCallBackImpl = null;
 
     public TimeListFragment() {
         // Required empty public constructor
@@ -84,13 +81,6 @@ public class TimeListFragment extends BaseFragment {
             mStopName = savedInstanceState.getString("mStopName");
             mRouteDetail = savedInstanceState.getString("mRouteDetail");
         }
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        initLoader();
     }
 
     @Override
@@ -130,65 +120,17 @@ public class TimeListFragment extends BaseFragment {
         outState.putString("mRouteDetail", mRouteDetail);
     }
 
-    private void initLoader() {
+    @Override
+    protected void initLoader() {
         Bundle args = new Bundle();
         args.putInt(TypeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
 
-        if (mNeedRestartLoaders) {
-            getLoaderManager().restartLoader(LOADER_TYPE_ID, args, getCallBackImpl());
-        } else {
-            getLoaderManager().initLoader(LOADER_TYPE_ID, args, getCallBackImpl());
-        }
+        initLoader(args, LOADER_TYPE_ID, getCallBack(), mNeedRestartLoaders);
     }
 
-    /*  Async data loader callback implementation*/
-    private class CallBackImpl implements LoaderCallbacks<List<?>> {
-        @Override
-        public Loader<List<?>> onCreateLoader(int id, Bundle args) {
-            if (id == LOADER_TYPE_ID) {
-                return new TypeListLoader(getActivity().getApplicationContext(), args);
-            } else if (id == LOADER_TIME_ID) {
-                return new TimeListLoader(getActivity().getApplicationContext(), args);
-            }
-            return null;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public void onLoadFinished(Loader<List<?>> loader, List<?> data) {
-            if (data != null) {
-                if (loader.getId() == LOADER_TYPE_ID) {
-                    initListHeader((List<String>) data);
-
-                    //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
-                    //т.к. от количества типа времени зависит как будет выводится результат
-                    //лоадеры запускаются по цепочке, а не вместе
-                    Bundle args = new Bundle();
-                    args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
-                    if (mNeedRestartLoaders) {
-                        mNeedRestartLoaders = false;
-                        getLoaderManager().restartLoader(LOADER_TIME_ID, args, getCallBackImpl());
-                    } else {
-                        getLoaderManager().initLoader(LOADER_TIME_ID, args, getCallBackImpl());
-                    }
-                } else if (loader.getId() == LOADER_TIME_ID) {
-                    updateData((List<TimeList>) data);
-                }
-            }
-        }
-
-        @Override
-        public void onLoaderReset(Loader<List<?>> loader) {
-        }
-    }
-
-    /*  private methods */
-    private CallBackImpl getCallBackImpl() {
-        if (mCallBackImpl == null) {
-            mCallBackImpl = new CallBackImpl();
-        }
-
-        return mCallBackImpl;
+    @Override
+    protected LoaderCallbacks initCallBack() {
+        return new CallBackImpl();
     }
 
     private void updateTextView() {
@@ -226,5 +168,43 @@ public class TimeListFragment extends BaseFragment {
         TimeAdapter adapter = new TimeAdapter(getActivity(), timeList);
 
         mTimeListView.setAdapter(adapter);
+    }
+
+    /*  Async data loader callback implementation*/
+    private class CallBackImpl implements LoaderCallbacks<List<?>> {
+        @Override
+        public Loader<List<?>> onCreateLoader(int id, Bundle args) {
+            if (id == LOADER_TYPE_ID) {
+                return new TypeListLoader(getActivity().getApplicationContext(), args);
+            } else if (id == LOADER_TIME_ID) {
+                return new TimeListLoader(getActivity().getApplicationContext(), args);
+            }
+            return null;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void onLoadFinished(Loader<List<?>> loader, List<?> data) {
+            if (data != null) {
+                if (loader.getId() == LOADER_TYPE_ID) {
+                    initListHeader((List<String>) data);
+
+                    //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
+                    //т.к. от количества типа времени зависит как будет выводится результат
+                    //лоадеры запускаются по цепочке, а не вместе
+                    Bundle args = new Bundle();
+                    args.putInt(TimeListLoader.ATT_ROUT_LIST_ID, mRouteListId);
+
+                    initLoader(args, LOADER_TIME_ID, getCallBack(), mNeedRestartLoaders);
+                    mNeedRestartLoaders = false;
+                } else if (loader.getId() == LOADER_TIME_ID) {
+                    updateData((List<TimeList>) data);
+                }
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<List<?>> loader) {
+        }
     }
 }

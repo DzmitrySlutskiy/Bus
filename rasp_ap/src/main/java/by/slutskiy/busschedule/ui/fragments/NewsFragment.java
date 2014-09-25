@@ -16,13 +16,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.loaders.NewsLoader;
+import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -39,7 +40,6 @@ public class NewsFragment extends BaseFragment {
     public static final String TAG = NewsFragment.class.getSimpleName();
 
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
-    private NewsCallback mCallBack = null;
 
     /*   UI   */
     private TextView mUpdateDate;
@@ -53,8 +53,6 @@ public class NewsFragment extends BaseFragment {
     public void changeArguments(Bundle args) {
         //not needed - no arguments
     }
-
-    /*  public methods */
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -71,38 +69,13 @@ public class NewsFragment extends BaseFragment {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedlnstanceState) {
-        super.onActivityCreated(savedlnstanceState);
-
-        getLoaderManager().initLoader(LOADER_ID, null, getCallBack());
+    protected void initLoader() {
+        initLoader(null, LOADER_ID, getCallBack(), false);
     }
 
-    /*  Async data loader callback implementation*/
-    private class NewsCallback implements LoaderCallbacks<List<String>> {
-
-        @Override
-        public Loader<List<String>> onCreateLoader(int id, Bundle args) {
-            return new NewsLoader(getActivity().getApplicationContext());
-        }
-
-        @Override
-        public void onLoadFinished(Loader<List<String>> loader, List<String> data) {
-            updateData(data);                                           //update data in list
-        }
-
-        @Override
-        public void onLoaderReset(Loader<List<String>> loader) {
-            updateData(null);
-        }
-    }
-
-
-    private NewsCallback getCallBack() {
-        if (mCallBack == null) {
-            mCallBack = new NewsCallback();
-        }
-
-        return mCallBack;
+    @Override
+    protected LoaderCallbacks initCallBack() {
+        return new NewsCallback();
     }
 
     /**
@@ -111,17 +84,15 @@ public class NewsFragment extends BaseFragment {
      * @param data list with news
      */
     private void updateData(List<String> data) {
-        String[] newsArray;
+
         if (data == null) {
-            newsArray = new String[]{getString(R.string.text_view_get_data)};
-        } else {
-            newsArray = data.toArray(new String[data.size()]);
+            data = new ArrayList<String>();
+            data.add(getString(R.string.text_view_get_data));
         }
 
         updateTextView();
-
         mNewsList.setAdapter(new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, newsArray));
+                android.R.layout.simple_list_item_1, data));
     }
 
     /**
@@ -140,5 +111,25 @@ public class NewsFragment extends BaseFragment {
         }
 
         mUpdateDate.setText(lastUpdateStr);
+    }
+
+    /*  Async data loader callback implementation*/
+    private class NewsCallback implements LoaderCallbacks<List<String>> {
+
+        @Override
+        public Loader<List<String>> onCreateLoader(int id, Bundle args) {
+
+            return new NewsLoader(getActivity().getApplicationContext());
+        }
+
+        @Override
+        public void onLoadFinished(Loader<List<String>> loader, List<String> data) {
+            updateData(data);                                           //update data in list
+        }
+
+        @Override
+        public void onLoaderReset(Loader<List<String>> loader) {
+            updateData(null);
+        }
     }
 }

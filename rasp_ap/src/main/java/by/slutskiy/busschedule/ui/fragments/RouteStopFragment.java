@@ -4,7 +4,6 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
@@ -38,18 +37,14 @@ import static android.widget.AdapterView.OnItemClickListener;
 public class RouteStopFragment extends BaseFragment implements OnItemClickListener {
 
     public static final String TAG = RouteStopFragment.class.getSimpleName();
-
+    public static final String ROUTE_ID = "mRouteId";
     private static final int LOADER_ID_STOP_DETAIL = MainActivity.getNextLoaderId();
     private static final int LOADER_ID_STOP_LIST = MainActivity.getNextLoaderId();
-
-    public static final String ROUTE_ID = "mRouteId";
     private static final String STOP_DETAIL = "mStopDetail";
 
     private int mRouteId = Integer.MIN_VALUE;
-    private boolean mNeedRestartLoaders = false;
 
     private List<Stop> mStopList;
-    private OnRouteStopSelectedListener mListener;
     private String mStopDetail = "";
 
     private ListView mStopListView;
@@ -57,7 +52,6 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     /*  call backs  */
     private StringCallback mStringCallBack = null;
-    private ListStopCallBack mListStopCallBack = null;
 
     public RouteStopFragment() {
         mStopList = null;
@@ -83,13 +77,6 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
             mRouteId = savedInstanceState.getInt(ROUTE_ID, Integer.MIN_VALUE);
             mStopDetail = savedInstanceState.getString(STOP_DETAIL, "");
         }
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        initLoader(false);
     }
 
     @Override
@@ -120,35 +107,16 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
             String stopName = mStopList.get(position).getStopName();
             int key = mStopList.get(position).getKey();
 
-            if (mListener != null) {
+            if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
+                OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
                 if (mRouteId >= 0) {
-                    mListener.OnRouteStopSelected(key, stopName, mStopDetail);
+                    listener.OnRouteStopSelected(key, stopName, mStopDetail);
                 } else {
-                    mListener.OnStopSelected(key, stopName);
+                    listener.OnStopSelected(key, stopName);
                 }
             }
         }
     }
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-
-        if (activity instanceof OnRouteStopSelectedListener) {
-            mListener = (OnRouteStopSelectedListener) activity;
-        } else {
-            mListener = null;
-        }
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-
-        mListener = null;
-    }
-
-    /*  private methods */
 
     /**
      * reset UI elements to default values
@@ -166,27 +134,19 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
         mRouteNameView.setText(getString(R.string.text_view_get_data));
     }
 
-    private void initLoader(boolean needRestart) {
+    @Override
+    protected void initLoader() {
         Bundle args = new Bundle();
         args.putInt(StopLoader.ATT_ROUT_ID, mRouteId);
 
-        initLoader(args, LOADER_ID_STOP_LIST, getListStopCallBack(), needRestart);
+        initLoader(args, LOADER_ID_STOP_LIST, getCallBack(), mNeedRestartLoaders);
 
         //если загружаем конкретный маршрут запускаем дополнительный лоадер для инфо по маршруту
         if (mRouteId >= 0) {
             args = new Bundle();
             args.putInt(RouteDetailLoader.ATT_ROUT_ID, mRouteId);
 
-            initLoader(args, LOADER_ID_STOP_DETAIL, getStringCallback(), needRestart);
-        }
-    }
-
-    private void initLoader(Bundle args, int loaderId,
-                            LoaderCallbacks loaderCallbacks, boolean needRestart) {
-        if (needRestart) {
-            getLoaderManager().restartLoader(loaderId, args, loaderCallbacks);
-        } else {
-            getLoaderManager().initLoader(loaderId, args, loaderCallbacks);
+            initLoader(args, LOADER_ID_STOP_DETAIL, getStringCallback(), mNeedRestartLoaders);
         }
     }
 
@@ -196,9 +156,14 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
         if (! hidden && mNeedRestartLoaders) {      //if data will be changed after hidden fragment
             resetUI();                              //reset UI because new data load need
-            initLoader(true);                       //restart loaders
+            initLoader();                       //restart loaders
             mNeedRestartLoaders = false;            //reset flag
         }
+    }
+
+    @Override
+    protected LoaderCallbacks initCallBack() {
+        return new ListStopCallBack();
     }
 
     /**
@@ -208,7 +173,6 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
      */
     private void updateData(List<Stop> data) {
         if (data != null) {
-            String[] newsArr;
 
             mStopList = data;
 
@@ -217,12 +181,8 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
                 Collections.sort(mStopList);
             }
 
-            newsArr = new String[mStopList.size()];
-            for (int i = 0; i < mStopList.size(); i++) {
-                newsArr[i] = mStopList.get(i).getStopName();
-            }
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                    android.R.layout.simple_list_item_1, newsArr);
+            ArrayAdapter<Stop> adapter = new ArrayAdapter<Stop>(getActivity(),
+                    android.R.layout.simple_list_item_1, mStopList);
             mStopListView.setAdapter(adapter);
             mStopListView.setOnItemClickListener(this);
 
@@ -230,30 +190,12 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
         }
     }
 
-    /**
-     * OnRouteStopSelectedListener
-     */
-    public interface OnRouteStopSelectedListener {
-        void OnRouteStopSelected(int _id, String stopName, String stopDetail);
-
-        void OnStopSelected(int stopId, String stopName);
-    }
-
-
-    private StringCallback getStringCallback() {
+    private LoaderCallbacks getStringCallback() {
         if (mStringCallBack == null) {
             mStringCallBack = new StringCallback();
         }
 
         return mStringCallBack;
-    }
-
-    private ListStopCallBack getListStopCallBack() {
-        if (mListStopCallBack == null) {
-            mListStopCallBack = new ListStopCallBack();
-        }
-
-        return mListStopCallBack;
     }
 
     private void updateStopDetailText() {
@@ -262,6 +204,15 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
         } else {
             mRouteNameView.setText(getString(R.string.text_view_route) + "\t\t" + mStopDetail);
         }
+    }
+
+    /**
+     * OnRouteStopSelectedListener
+     */
+    public interface OnRouteStopSelectedListener extends BaseInteraction {
+        void OnRouteStopSelected(int _id, String stopName, String stopDetail);
+
+        void OnStopSelected(int stopId, String stopName);
     }
 
     /*  Async data loader callback implementation
