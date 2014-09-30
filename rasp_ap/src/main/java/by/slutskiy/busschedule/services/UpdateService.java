@@ -3,7 +3,6 @@ package by.slutskiy.busschedule.services;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -34,7 +33,9 @@ import by.slutskiy.busschedule.data.DBUpdater;
 import by.slutskiy.busschedule.data.XLSHelper;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.utils.NotificationUtils;
+import by.slutskiy.busschedule.utils.PreferenceUtils;
 import by.slutskiy.busschedule.utils.StringUtils;
+import by.slutskiy.busschedule.utils.UpdateUtils;
 import jxl.Cell;
 import jxl.Sheet;
 import jxl.read.biff.BiffException;
@@ -69,6 +70,7 @@ public class UpdateService extends IntentService {
     private static final String FILE_NAME = "raspisanie_gorod.xls";
     /*  preferences params  */
     public static final String PREF_LAST_UPDATE = "lastUpdate";
+
     public static final String BUS_NUMBER_PATTERN = "^[0-9]{1,3}(Э|э)?$";
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
@@ -115,7 +117,7 @@ public class UpdateService extends IntentService {
      * default tag "A" in the sheet at column index = 0, but not always
      */
     private int mTagAColumnIndex;
-
+    private static final int NOTIFY_PERCENT = 1;
     private static final int MAX_BUFFER = 1024;
     private static final int EOF = - 1;
 
@@ -157,6 +159,12 @@ public class UpdateService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         initLists();
 
+        boolean isCheckUpdate = intent.getBooleanExtra(CHECK_UPDATE, false);
+
+        if (isCheckUpdate && ! UpdateUtils.canCheck(getApplicationContext())) {//if disable update
+            return;
+        }
+
         mMessenger = (Messenger) intent.getExtras().get(MESSENGER);
 
         URL fURL = getUrl(BUS_PARK_URL + FILE_NAME);
@@ -182,12 +190,14 @@ public class UpdateService extends IntentService {
         Date dbUpdateDate = MainActivity.getLastUpdateDate(getApplicationContext());
 
         //  if need only check file modification date
-        if (intent.getBooleanExtra(CHECK_UPDATE, false)) {
+        if (isCheckUpdate) {
             if (what != MSG_NO_INTERNET) {
                 if ((dbUpdateDate != null) && ! dbUpdateDate.before(lastUpdate)) {
                     sendMessage(MSG_UPDATE_NOT_NEED);
                 } else {
                     sendMessage(what, lastUpdate);
+
+                    setUpdateState(true);
                 }
                 //close stream and connection
                 try {
@@ -313,6 +323,8 @@ public class UpdateService extends IntentService {
                 UpdateService.UPDATE_OBSERVABLE.notifyUpdFinish();
 
                 clearReference();
+
+                setUpdateState(false);
             }
         }
         uCon.disconnect();
@@ -589,6 +601,20 @@ public class UpdateService extends IntentService {
     }
 
     /**
+     * Set update state to state (save to shared prefs).
+     * In MainActivity this flag used for show or hide button
+     * for run update service
+     *
+     * @param state state for saving
+     */
+    private void setUpdateState(boolean state) {
+        PreferenceUtils.putBoolean(getApplicationContext(),
+                MainActivity.UPDATE_BUTTON_STATE, state);
+        PreferenceUtils.putLong(getApplicationContext(),
+                getString(R.string.preference_key_last_check), System.currentTimeMillis());
+    }
+
+    /**
      * add news to database from first sheet
      *
      * @param xlsHelper XLSHelper instance
@@ -610,11 +636,8 @@ public class UpdateService extends IntentService {
      */
     private void saveUpdateDate(Date updateDate) {
         if (updateDate != null) {
-            SharedPreferences preferences = getApplicationContext().
-                    getSharedPreferences(BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putLong(PREF_LAST_UPDATE, updateDate.getTime());
-            editor.commit();
+            PreferenceUtils.putLong(getApplicationContext(),
+                    PREF_LAST_UPDATE, updateDate.getTime());
         }
     }
 
@@ -675,8 +698,6 @@ public class UpdateService extends IntentService {
         Pattern busNumberPattern = Pattern.compile(BUS_NUMBER_PATTERN);
         return busNumberPattern.matcher(busNumber.trim()).find();
     }
-
-    private static final int NOTIFY_PERCENT = 1;
 
     /**
      * saveStreamToFile

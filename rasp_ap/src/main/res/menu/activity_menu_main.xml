@@ -4,21 +4,16 @@
       tools:context=".MainActivity">
 
     <item
-        android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        app:showAsAction="never"
-        android:icon="@android:drawable/ic_menu_manage"/>
-
-    <item
-        android:id="@+id/action_check_update"
-        android:title="@string/action_settings_check_update"
-        app:showAsAction="never"
-        android:icon="@android:drawable/ic_popup_sync"/>
-
-    <item
         android:id="@+id/action_update"
         android:title="@string/action_settings_update"
-        app:showAsAction="never"
-        android:icon="@android:drawable/ic_menu_revert"/>
+        app:showAsAction="ifRoom"
+        android:icon="@android:drawable/ic_popup_sync"
+        android:visible="false"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        app:showAsAction="ifRoom"
+        android:icon="@android:drawable/ic_menu_manage"/>
 
 </menu>

@@ -43,4 +43,19 @@
     <string name="button_route">Маршруты</string>
     <string name="button_stops">Остановки</string>
 
+    <!-- preferences -->
+    <string name="preference_activity_title">Настройки</string>
+    <string name="preference_update_category_title">Обновления</string>
+    <string name="preference_allow_update_title">Разрешить обновления</string>
+    <string name="preference_update_freq_title">Частота обновления</string>
+    <string name="preference_update_freq_summary">С какой частотой проверять обновления</string>
+
+    <!-- update frequency -->
+    <string name="preference_update_freq_time_per_day">Раз в день</string>
+    <string name="preference_update_freq_time_per_week">Раз в неделю</string>
+    <string name="preference_update_freq_time_per_month">Раз в месяц</string>
+    <string name="preference_update_freq_manual">В ручную</string>
+
+    <string name="preference_update_use_mobile_net">Использовать мобильный интернет</string>
+    <string name="preference_update_use_mobile_net_summary">Может взиматься плата за передачу данных</string>
 </resources>

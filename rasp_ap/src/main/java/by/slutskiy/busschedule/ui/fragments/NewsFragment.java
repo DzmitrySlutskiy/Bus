@@ -4,8 +4,6 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
@@ -20,11 +18,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.NewsLoader;
 import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
+import by.slutskiy.busschedule.utils.PreferenceUtils;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
@@ -99,12 +97,10 @@ public class NewsFragment extends BaseFragment {
      * Update string in TextView with id R.id.text_view_update_date
      */
     private void updateTextView() {
-        SharedPreferences preferences = getActivity().getSharedPreferences(
-                BuildConfig.PACKAGE_NAME, Context.MODE_PRIVATE);
         String lastUpdateStr = getString(R.string.text_view_update_date);
 
         Date lastUpdate = new Date(
-                preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
+                PreferenceUtils.getLong(getActivity(), UpdateService.PREF_LAST_UPDATE, 0L));
 
         if (lastUpdate.getTime() > 0) {
             lastUpdateStr += new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format(lastUpdate);

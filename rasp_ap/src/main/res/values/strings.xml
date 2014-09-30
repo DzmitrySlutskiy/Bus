@@ -2,12 +2,12 @@
 <resources>
 
     <string name="app_name">BusSchedule</string>
-    <!--menu action-->
+    <!-- menu action -->
     <string name="action_settings">Settings</string>
     <string name="action_settings_check_update">Check update</string>
     <string name="action_settings_update">Update</string>
 
-    <!--Toast strings-->
+    <!-- Toast strings -->
     <string name="toast_update_available">New update available</string>
     <string name="toast_update_not_available">No update available</string>
     <string name="toast_no_internet">Can not update schedule. No internet connection!</string>
@@ -17,18 +17,16 @@
     <string name="toast_io_error">File input/output error. </string>
     <string name="toast_biff_error">Error work with xls file. </string>
     <string name="toast_app_error">Internal application error. Please, reinstall or update application. </string>
-
     <string name="toast_extract_db_error">Error extracting database archive. Update bus schedule manual.</string>
 
-    <!--Notification strings-->
+    <!-- Notification strings -->
     <string name="notification_title_update">Update bus schedule</string>
-
     <string name="notification_message_try_update">Trying to update bus schedule from web-site rasp.ap1.by</string>
     <string name="notification_message_download_file">Download file</string>
     <string name="notification_message_open_file">Opening file</string>
     <string name="notification_message_update_db">Update the database</string>
 
-    <!--TextView strings-->
+    <!-- TextView strings -->
     <string name="text_view_hour">Hour</string>
     <string name="text_view_route">Route:  </string>
     <string name="text_view_stop">Stop:  </string>
@@ -37,9 +35,30 @@
     <string name="text_view_get_data">get data</string>
     <string name="text_view_update_date">Update date:</string>
 
-    <!--buttons-->
+    <!-- buttons -->
     <string name="button_news">News</string>
     <string name="button_route">Routes</string>
     <string name="button_stops">Stops</string>
 
+    <!-- preferences -->
+    <string name="preference_activity_title">Settings</string>
+    <string name="preference_update_category_title">Updates</string>
+    <string name="preference_allow_update_title">Allow update</string>
+    <string name="preference_update_freq_title">Check update frequency</string>
+    <string name="preference_update_freq_summary">How often check for update</string>
+
+    <!-- update frequency -->
+    <string name="preference_update_freq_time_per_day">Time per day</string>
+    <string name="preference_update_freq_time_per_week">Time per week</string>
+    <string name="preference_update_freq_time_per_month">Time per month</string>
+    <string name="preference_update_freq_manual">Manual</string>
+
+    <string name="preference_update_use_mobile_net">Use mobile network</string>
+    <string name="preference_update_use_mobile_net_summary">Data charges may apply</string>
+
+    <!-- preference key -->
+    <string name="preference_key_allow_update">allow_update</string>
+    <string name="preference_key_update_freq">update_freq</string>
+    <string name="preference_key_use_mobile">use_mobile</string>
+    <string name="preference_key_last_check">preference_key_last_check</string>
 </resources>

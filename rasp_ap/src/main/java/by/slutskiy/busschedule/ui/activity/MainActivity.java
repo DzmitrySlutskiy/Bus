@@ -6,15 +6,14 @@ package by.slutskiy.busschedule.ui.activity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,16 +25,16 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import by.slutskiy.busschedule.BuildConfig;
+import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.fragments.BaseFragment;
 import by.slutskiy.busschedule.ui.fragments.NewsFragment;
-import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.ui.fragments.RouteFragment;
 import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 import by.slutskiy.busschedule.ui.fragments.StopDetailFragment;
 import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.utils.PreferenceUtils;
 
 /*
  * main application activity
@@ -50,9 +49,16 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         RouteStopFragment.OnRouteStopSelectedListener,
         StopDetailFragment.OnStopDetailListener {
 
+    public static final String UPDATE_BUTTON_STATE = "UpdateButtonState";
+    public static final String UPDATE_AVAIL_RECEIVER =
+            "by.slutskiy.busschedule.ui.activity.MainActivity.UpdateAvailReceiver";
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String LAST_SHOW_FRAGMENT = "LAST_SHOW_FRAGMENT";
     private volatile static int LOADER_ID = 0;
+
+//    private UpdateAvailReceiver mUpdateReceiver;
+
+    private View mUpdateMenuItem = null;
 
     public synchronized static int getNextLoaderId() {
         return LOADER_ID++;
@@ -62,6 +68,8 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        PreferenceUtils.initDefaultPreference(this);            //initialize default preferences
 
         if (savedInstanceState == null) {
             addFragmentToManager(new NewsFragment(), NewsFragment.TAG, false);
@@ -80,6 +88,8 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
         ImageButton iBtnStops = (ImageButton) findViewById(R.id.button_stops);
         iBtnStops.setOnClickListener(this);
+
+//        mUpdateReceiver = new UpdateAvailReceiver();
     }
 
     @Override
@@ -90,6 +100,17 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         return true;
     }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+
+        MenuItem item = menu.findItem(R.id.action_update);
+        if (item != null) {
+            item.setVisible(PreferenceUtils.getBoolean(this, UPDATE_BUTTON_STATE, false));
+        }
+
+        return true;
+    }
 
     @Override
     protected void onDestroy() {
@@ -117,11 +138,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
         switch (item.getItemId()) {
             case R.id.action_settings:
-
-                return true;
-
-            case R.id.action_check_update:
-                startService(getServiceIntent(true));
+                startActivity(new Intent(this, PrefActivity.class));
                 return true;
 
             case R.id.action_update:
@@ -156,9 +173,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
      * @return Date saved on shared preference, or 0
      */
     public static Date getLastUpdateDate(Context context) {
-        SharedPreferences preferences = context.getSharedPreferences(BuildConfig.PACKAGE_NAME,
-                Context.MODE_PRIVATE);
-        return new Date(preferences.getLong(UpdateService.PREF_LAST_UPDATE, 0));
+        return new Date(PreferenceUtils.getLong(context, UpdateService.PREF_LAST_UPDATE, 0L));
     }
 
     /*  methods work with fragments */
@@ -284,6 +299,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
             case UpdateService.MSG_UPDATE_FINISH:
                 messageStr = getString(R.string.toast_update_finish);
+                invalidateOptionsMenu();
                 break;
 
             case UpdateService.MSG_NO_INTERNET:
@@ -317,6 +333,7 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
             case UpdateService.MSG_LAST_UPDATE:
                 messageStr = getString(R.string.toast_update_available) + " " +
                         new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format((Date) msg.obj);
+                invalidateOptionsMenu();
                 break;
 
             default:

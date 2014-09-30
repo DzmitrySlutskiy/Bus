@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="update_freq_values">
+        <item>1</item>
+        <item>7</item>
+        <item>30</item>
+        <item>0</item>
+    </string-array>
+    <string-array
+        name="update_freq_title">
+        <item>@string/preference_update_freq_time_per_day</item>
+        <item>@string/preference_update_freq_time_per_week</item>
+        <item>@string/preference_update_freq_time_per_month</item>
+        <item>@string/preference_update_freq_manual</item>
+    </string-array>
+</resources>
