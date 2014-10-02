@@ -3,21 +3,11 @@ package by.slutskiy.busschedule.services;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,6 +22,7 @@ import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.data.DBUpdater;
 import by.slutskiy.busschedule.data.XLSHelper;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
+import by.slutskiy.busschedule.utils.IOUtils;
 import by.slutskiy.busschedule.utils.NotificationUtils;
 import by.slutskiy.busschedule.utils.PreferenceUtils;
 import by.slutskiy.busschedule.utils.StringUtils;
@@ -46,12 +37,9 @@ import jxl.read.biff.BiffException;
  * 27.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class UpdateService extends IntentService {
+public class UpdateService extends IntentService implements IOUtils.LoadProgressListener {
 
     public static final String CHECK_UPDATE = "CHECK_UPDATE";
-    public static final String MESSENGER = "MESSENGER";
-
-    public static final String USED_DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
 
     public static final int MSG_UPDATE_NOT_NEED = 0;
     public static final int MSG_LAST_UPDATE = 3;
@@ -68,10 +56,10 @@ public class UpdateService extends IntentService {
     /*   constants for update    */
     private static final String BUS_PARK_URL = "http://www.ap1.by/download/";
     private static final String FILE_NAME = "raspisanie_gorod.xls";
-    /*  preferences params  */
-    public static final String PREF_LAST_UPDATE = "lastUpdate";
 
     public static final String BUS_NUMBER_PATTERN = "^[0-9]{1,3}(Э|э)?$";
+    public static final String TYPE = "TYPE";
+    public static final String MESSAGE = "MESSAGE";
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
@@ -117,15 +105,12 @@ public class UpdateService extends IntentService {
      * default tag "A" in the sheet at column index = 0, but not always
      */
     private int mTagAColumnIndex;
-    private static final int NOTIFY_PERCENT = 1;
-    private static final int MAX_BUFFER = 1024;
-    private static final int EOF = - 1;
 
     private DBUpdater mDbUpdater;
 
     private int mNotificationId;
 
-    private Messenger mMessenger;
+    private LocalBroadcastManager mBroadcastManager;
 
     /*  observers   */
     private static final UpdateObservable UPDATE_OBSERVABLE = new UpdateObservable();
@@ -161,50 +146,34 @@ public class UpdateService extends IntentService {
 
         boolean isCheckUpdate = intent.getBooleanExtra(CHECK_UPDATE, false);
 
-        if (isCheckUpdate && ! UpdateUtils.canCheck(getApplicationContext())) {//if disable update
+        //if we check update but earlier update has been found - not need to check
+        if (isCheckUpdate && PreferenceUtils.isUpdateFound(getApplicationContext())) {
             return;
         }
 
-        mMessenger = (Messenger) intent.getExtras().get(MESSENGER);
-
-        URL fURL = getUrl(BUS_PARK_URL + FILE_NAME);
-
-        HttpURLConnection uCon = null;
-        InputStream stream = null;
-
+        mBroadcastManager = LocalBroadcastManager.getInstance(this);
         int what = MSG_LAST_UPDATE;
+        Date lastUpdate = IOUtils.getLastModifiedDate(BUS_PARK_URL + FILE_NAME);
 
-        Date lastUpdate;
-
-        /*   try open internet connection to remote host  */
-        try {
-            uCon = (HttpURLConnection) fURL.openConnection();
-            stream = uCon.getInputStream();               //check internet IOException throws
-            lastUpdate = new Date(uCon.getLastModified());
-            Log.i(LOG_TAG, "last modified: " + lastUpdate);
-        } catch (IOException e) {
+        if (lastUpdate == null) {
             what = MSG_NO_INTERNET;
-            lastUpdate = null;
         }
 
-        Date dbUpdateDate = MainActivity.getLastUpdateDate(getApplicationContext());
+        Date dbUpdateDate = PreferenceUtils.getLastUpdateDate(getApplicationContext());
 
         //  if need only check file modification date
         if (isCheckUpdate) {
             if (what != MSG_NO_INTERNET) {
-                if ((dbUpdateDate != null) && ! dbUpdateDate.before(lastUpdate)) {
-                    sendMessage(MSG_UPDATE_NOT_NEED);
-                } else {
-                    sendMessage(what, lastUpdate);
+                if (dbUpdateDate.before(lastUpdate)) {
+                    NotificationUtils.createNotification(getApplicationContext(),
+                            getString(R.string.notification_title_update_avail),
+                            getString(R.string.notification_message_update_avail) +
+                                    StringUtils.formatDate(lastUpdate), R.drawable.ic_launcher);
 
-                    setUpdateState(true);
-                }
-                //close stream and connection
-                try {
-                    stream.close();
-                    uCon.disconnect();
-                } catch (IOException e) {
-                    Log.e(LOG_TAG, "Error while closing stream: " + e.getMessage());
+                    sendMessage(what, StringUtils.formatDate(lastUpdate));
+                    PreferenceUtils.setUpdateState(getApplicationContext(), true);
+                } else {
+                    PreferenceUtils.setLastCheckDate(getApplicationContext());
                 }
             } else {
                 sendMessage(what);
@@ -219,7 +188,6 @@ public class UpdateService extends IntentService {
 
         if ((dbUpdateDate != null) && ! dbUpdateDate.before(lastUpdate)) {
             sendMessage(MSG_UPDATE_NOT_NEED);
-            uCon.disconnect();
             return;
         }
 
@@ -231,8 +199,7 @@ public class UpdateService extends IntentService {
         mDbUpdater = DBUpdater.getInstance(getApplicationContext());
         String filePath = getApplicationContext().getFilesDir().getPath() + "/" + FILE_NAME;
 
-
-        if (saveStreamToFile(stream, filePath, uCon.getContentLength())) {
+        if (IOUtils.saveUrlToFile(BUS_PARK_URL + FILE_NAME, filePath, this)) {
             try {
                 writeLogDebug("Begin transaction");
                 mDbUpdater.beginTran();                              //begin transaction
@@ -272,7 +239,7 @@ public class UpdateService extends IntentService {
                     NotificationUtils.showProgress(mNotificationId, 100, (int) (percent * (i + 1)));
                 }
 
-                saveUpdateDate(lastUpdate);
+                PreferenceUtils.setUpdateDate(getApplicationContext(), lastUpdate);
 
                 mDbUpdater.setTranSuccessful();          //commit transaction
             } catch (IOException e) {
@@ -298,7 +265,7 @@ public class UpdateService extends IntentService {
                 dbReader.close();                     //close main database connection
 
                 Log.d(LOG_TAG, "Delete main DB file");
-                delFile(getApplicationContext().getDatabasePath(DBReader.DEFAULT_DB_NAME).getPath());
+                IOUtils.delFile(getApplicationContext().getDatabasePath(DBReader.DEFAULT_DB_NAME).getPath());
 
                 File sourceFile = new File(
                         getApplicationContext().getDatabasePath(DBUpdater.DB_NAME).getPath());
@@ -316,7 +283,7 @@ public class UpdateService extends IntentService {
                 }
                 NotificationUtils.cancelNotification(mNotificationId);
 
-                delFile(filePath);                       //delete temporary xls file
+                IOUtils.delFile(filePath);                       //delete temporary xls file
 
                 sendMessage(MSG_UPDATE_FINISH);
 
@@ -324,10 +291,9 @@ public class UpdateService extends IntentService {
 
                 clearReference();
 
-                setUpdateState(false);
+                PreferenceUtils.setUpdateState(getApplicationContext(), false);
             }
         }
-        uCon.disconnect();
     }
 
     /**
@@ -582,37 +548,9 @@ public class UpdateService extends IntentService {
         mStopList = null;
         mTypeList = null;
         mRouteList = null;
-        mMessenger = null;
+        mBroadcastManager = null;
     }
 
-    /**
-     * generate URL for fileURL string
-     *
-     * @param fileURL string for URL
-     * @return instance URL
-     */
-    private URL getUrl(String fileURL) {
-        try {
-            return new URL(fileURL);
-        } catch (MalformedURLException e) {
-            Log.e(LOG_TAG, "Bad URL string: " + fileURL);
-        }
-        return null;
-    }
-
-    /**
-     * Set update state to state (save to shared prefs).
-     * In MainActivity this flag used for show or hide button
-     * for run update service
-     *
-     * @param state state for saving
-     */
-    private void setUpdateState(boolean state) {
-        PreferenceUtils.putBoolean(getApplicationContext(),
-                MainActivity.UPDATE_BUTTON_STATE, state);
-        PreferenceUtils.putLong(getApplicationContext(),
-                getString(R.string.preference_key_last_check), System.currentTimeMillis());
-    }
 
     /**
      * add news to database from first sheet
@@ -626,18 +564,6 @@ public class UpdateService extends IntentService {
             if (mDbUpdater.addNews(news) < 0) {
                 throw new DBUpdateWorkException("Error add news: " + news);
             }
-        }
-    }
-
-    /**
-     * Save update date
-     *
-     * @param updateDate update date
-     */
-    private void saveUpdateDate(Date updateDate) {
-        if (updateDate != null) {
-            PreferenceUtils.putLong(getApplicationContext(),
-                    PREF_LAST_UPDATE, updateDate.getTime());
         }
     }
 
@@ -699,80 +625,6 @@ public class UpdateService extends IntentService {
         return busNumberPattern.matcher(busNumber.trim()).find();
     }
 
-    /**
-     * saveStreamToFile
-     *
-     * @param inputStream stream for saving
-     * @param filePath    path for saving
-     * @param fileSize    file size
-     * @return true - true If stream has been downloaded and saved, false otherwise
-     */
-    private boolean saveStreamToFile(InputStream inputStream, String filePath, int fileSize) {
-
-        OutputStream outStream = null;
-
-        /*   download file and save to filePath   */
-        if (fileSize > 0) {
-
-            NotificationUtils.updateNotification(mNotificationId,
-                    getString(R.string.notification_message_update_db),
-                    getString(R.string.notification_message_download_file));
-        }
-        try {
-            File file = new File(filePath);
-            inputStream = new BufferedInputStream(inputStream);
-            outStream = new BufferedOutputStream(new FileOutputStream(file));
-
-            /*  cycle count for NOTIFY_PERCENT - if read maxCount time - we read more than
-            * NOTIFY_PERCENT % and can notify user*/
-            int maxCount = fileSize / MAX_BUFFER / 100 * NOTIFY_PERCENT;
-            int currentCount = 0;       //current cycle count
-
-            byte[] buffer = new byte[MAX_BUFFER];
-            int readBytes;
-            int readBytesSum = 0;
-            while ((readBytes = inputStream.read(buffer)) != EOF) {
-                outStream.write(buffer, 0, readBytes);
-                readBytesSum += readBytes;
-
-                /*   send read bytes count to update dialog   */
-                if (fileSize > 0 &&
-                        (currentCount++ > maxCount)) {          //if true next NOTIFY_PERCENT % read
-                    currentCount = 0;                           //reset counter
-
-                    NotificationUtils.showProgress(mNotificationId, fileSize, readBytesSum);
-                }
-            }
-
-            if (fileSize > 0) {                                 //show 100% read
-                NotificationUtils.showProgress(mNotificationId, fileSize, readBytesSum);
-            }
-        } catch (IOException e) {
-            writeLogDebug("IOException in saveStreamToFile:" + e);
-            sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
-            return false;
-        } finally {
-            try {
-                if (outStream != null) {
-                    outStream.close();
-                }
-            } catch (IOException e) {
-                writeLogDebug("IOException in saveStreamToFile while close out stream:" + e);
-                sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
-            }
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-            } catch (IOException e) {
-                writeLogDebug("IOException in saveStreamToFile while close input stream:" + e);
-                sendMessage(MSG_IO_ERROR, e.getLocalizedMessage());
-            }
-        }
-        writeLogDebug("Download complete file size: " + fileSize);
-        return true;
-    }
-
     private void writeLogDebug(String msg) {
         if (BuildConfig.DEBUG) {
             Log.d(LOG_TAG, msg);
@@ -797,19 +649,27 @@ public class UpdateService extends IntentService {
         }
     }
 
-    /**
-     * delete file in @code filePath}
-     *
-     * @param filePath file path
-     */
-    private static void delFile(String filePath) {
-        File fl = new File(filePath);
-        Log.i(LOG_TAG, "Try delete file:" + filePath);
-        if (fl.exists()) {
-            Log.i(LOG_TAG, (fl.delete() ? "File deleted:" : "Can't delete file:") +
-                    filePath);
+
+    /*      interface IOUtils.LoadProgressListener      */
+    @Override
+    public void onStartLoad(int fileSize) {
+        if (fileSize > 0) {
+            NotificationUtils.updateNotification(mNotificationId,
+                    getString(R.string.notification_message_update_db),
+                    getString(R.string.notification_message_download_file));
         }
     }
+
+    @Override
+    public void onProgressLoad(int current, int total) {
+        NotificationUtils.showProgress(mNotificationId, total, current);
+    }
+
+    @Override
+    public void onFinishLoad() {
+        //empty body
+    }
+
     /*   private classes   */
 
     private class ScheduleDayType {         //class using like data structure without behavior
@@ -842,24 +702,15 @@ public class UpdateService extends IntentService {
      * Send message to main thread using mHandler (show update process information)
      *
      * @param type message type, this type define in
-     * @param obj  used for send String value
+     * @param msg  used for send String value
      */
-    private void sendMessage(int type, Object obj) {
-        if (mMessenger != null) {
-            Message msg = new Message();
-            msg.what = type;
+    private void sendMessage(int type, String msg) {
+        if (mBroadcastManager != null) {
+            Intent intent = new Intent(MainActivity.UPDATE_AVAIL_RECEIVER);
+            intent.putExtra(TYPE, type);
+            intent.putExtra(MESSAGE, msg);
 
-            if (obj != null) {
-                msg.obj = obj;
-            }
-
-            try {
-                mMessenger.send(msg);
-            } catch (RemoteException e) {
-                //if the target Handler no longer exists - Handler - Activity (if closed)
-                //do nothing
-                Log.e(LOG_TAG, "send message error: " + e.getMessage());
-            }
+            mBroadcastManager.sendBroadcast(intent);
         }
     }
 
@@ -872,5 +723,37 @@ public class UpdateService extends IntentService {
             setChanged();
             notifyObservers();
         }
+    }
+
+    public static void runCheckUpdateServiceImmediately(Context context) {
+        runCheckUpdateService(context, true);
+    }
+
+    public static void runCheckUpdateService(Context context) {
+        runCheckUpdateService(context, false);
+    }
+
+    public static void runUpdateService(Context context) {
+        context.startService(getServiceIntent(context, false));
+    }
+
+    private static void runCheckUpdateService(Context context, boolean immediately) {
+        if (immediately || UpdateUtils.canCheck(context)) {
+            context.startService(getServiceIntent(context, true));
+        }
+    }
+
+    /**
+     * create and init intent for UpdateService. if isCheckUpdate set true - service only check
+     * for update availability
+     *
+     * @param isCheckUpdate flag for check update
+     * @return intent instance
+     */
+    private static Intent getServiceIntent(Context context, boolean isCheckUpdate) {
+        Intent serviceIntent = new Intent(context, UpdateService.class);
+        serviceIntent.putExtra(CHECK_UPDATE, isCheckUpdate);
+
+        return serviceIntent;
     }
 }

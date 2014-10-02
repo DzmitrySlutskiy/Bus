@@ -17,17 +17,16 @@
     <string name="toast_io_error">Ошибка работы с файлом. </string>
     <string name="toast_biff_error">Ошибка работы с xls файлом. </string>
     <string name="toast_app_error">Внутренняя ошибка приложения. Пожалуйста, обновите или переустановите приложение.</string>
-
     <string name="toast_extract_db_error">Ошибка извлечения базы данных с архива. Обновите расписание в ручную.</string>
 
     <!--Notification strings-->
     <string name="notification_title_update">Обновление расписания</string>
-
     <string name="notification_message_try_update">Попытка обновить расписание автобусов с сайта rasp.ap1.by</string>
     <string name="notification_message_download_file">Загрузка файла обновления…</string>
     <string name="notification_message_open_file">Открытие файла</string>
     <string name="notification_message_update_db">Обновление базы данных…</string>
-
+    <string name="notification_title_update_avail">Доступно обновление</string>
+    <string name="notification_message_update_avail">Доступная версия: </string>
 
     <!--TextView strings-->
     <string name="text_view_hour">Часы</string>
@@ -58,4 +57,16 @@
 
     <string name="preference_update_use_mobile_net">Использовать мобильный интернет</string>
     <string name="preference_update_use_mobile_net_summary">Может взиматься плата за передачу данных</string>
+
+    <!-- preference key -->
+    <string name="preference_key_allow_update">allow_update</string>
+    <string name="preference_key_update_freq">update_freq</string>
+    <string name="preference_key_use_mobile">use_mobile</string>
+    <string name="preference_key_last_check">preference_key_last_check</string>
+
+    <!-- dialog string -->
+    <string name="dialog_run_update_message">Доступно обновление. Обновить?</string>
+    <string name="dialog_run_update_button_positive">@android:string/yes</string>
+    <string name="dialog_run_update_button_negative">@android:string/no</string>
+
 </resources>

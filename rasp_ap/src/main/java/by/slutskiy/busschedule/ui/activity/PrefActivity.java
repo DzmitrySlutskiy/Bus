@@ -32,15 +32,16 @@ public class PrefActivity extends PreferenceActivity
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
                                           String key) {
         if (key.equals(getString(R.string.preference_key_update_freq))) {
-            long freq = Integer.parseInt(sharedPreferences.getString(key, "0"));
+            long freq = Integer.parseInt(sharedPreferences.getString(key, "1"));
             if (freq != 0) {
-                UpdateUtils.setRepeating(getApplicationContext());  //set new alarm
+                UpdateUtils.setRepeatingAlarm(getApplicationContext());  //set new alarm
             } else {
                 UpdateUtils.cancelAlarm(getApplicationContext());
             }
         } else if (key.equals(getString(R.string.preference_key_allow_update))) {
-            if (UpdateUtils.isUpdateAllowed(getApplicationContext())) {
-                UpdateUtils.setRepeating(getApplicationContext());  //set new alarm
+            if (sharedPreferences.getBoolean(
+                    getString(R.string.preference_key_allow_update), true)) {
+                UpdateUtils.setRepeatingAlarm(getApplicationContext());  //set new alarm
             } else {
                 UpdateUtils.cancelAlarm(getApplicationContext());   //cancel old alarm
             }

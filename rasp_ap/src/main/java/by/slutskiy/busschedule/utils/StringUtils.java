@@ -2,6 +2,9 @@ package by.slutskiy.busschedule.utils;
 
 import android.text.TextUtils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * StringUtils
  * Version 1.0
@@ -10,6 +13,9 @@ import android.text.TextUtils;
  */
 public class StringUtils {
     public static final String EMPTY_STRING = "";
+    public static final String USED_DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
+
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat(USED_DATE_FORMAT);
 
     /*  private fields  */
 
@@ -86,5 +92,14 @@ public class StringUtils {
      */
     public static int strToInt(String str) {
         return strToInt(str, 0);
+    }
+
+    /**
+     * Convert Date to String with {@code USED_DATE_FORMAT} format
+     * @param date date for converting
+     * @return date as String
+     */
+    public static String formatDate(Date date){
+        return dateFormat.format(date);
     }
 }

@@ -13,16 +13,15 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.NewsLoader;
-import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.utils.PreferenceUtils;
+import by.slutskiy.busschedule.utils.StringUtils;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
@@ -99,11 +98,10 @@ public class NewsFragment extends BaseFragment {
     private void updateTextView() {
         String lastUpdateStr = getString(R.string.text_view_update_date);
 
-        Date lastUpdate = new Date(
-                PreferenceUtils.getLong(getActivity(), UpdateService.PREF_LAST_UPDATE, 0L));
+        Date lastUpdate = PreferenceUtils.getLastUpdateDate(getActivity());
 
         if (lastUpdate.getTime() > 0) {
-            lastUpdateStr += new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format(lastUpdate);
+            lastUpdateStr += StringUtils.formatDate(lastUpdate);
         }
 
         mUpdateDate.setText(lastUpdateStr);

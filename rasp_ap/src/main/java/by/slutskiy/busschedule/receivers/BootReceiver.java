@@ -15,8 +15,8 @@ public class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("BootReceiver", "onReceive: " + intent);
+        Log.d("BootReceiver", "onReceive. Start up alarm.");
 
-        UpdateUtils.setRepeating(context);
+        UpdateUtils.setRepeatingAlarm(context);
     }
 }

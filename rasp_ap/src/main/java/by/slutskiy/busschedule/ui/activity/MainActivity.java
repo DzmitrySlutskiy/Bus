@@ -4,25 +4,22 @@
 
 package by.slutskiy.busschedule.ui.activity;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Messenger;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
@@ -32,9 +29,11 @@ import by.slutskiy.busschedule.ui.fragments.BaseFragment;
 import by.slutskiy.busschedule.ui.fragments.NewsFragment;
 import by.slutskiy.busschedule.ui.fragments.RouteFragment;
 import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
+import by.slutskiy.busschedule.ui.fragments.RunUpdateDialogFragment;
 import by.slutskiy.busschedule.ui.fragments.StopDetailFragment;
 import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
 import by.slutskiy.busschedule.utils.PreferenceUtils;
+import by.slutskiy.busschedule.utils.UpdateUtils;
 
 /*
  * main application activity
@@ -44,21 +43,19 @@ import by.slutskiy.busschedule.utils.PreferenceUtils;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class MainActivity extends ActionBarActivity implements Handler.Callback,
+public class MainActivity extends ActionBarActivity implements
         View.OnClickListener, RouteFragment.OnRouteSelectedListener,
         RouteStopFragment.OnRouteStopSelectedListener,
         StopDetailFragment.OnStopDetailListener {
 
-    public static final String UPDATE_BUTTON_STATE = "UpdateButtonState";
     public static final String UPDATE_AVAIL_RECEIVER =
             "by.slutskiy.busschedule.ui.activity.MainActivity.UpdateAvailReceiver";
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String LAST_SHOW_FRAGMENT = "LAST_SHOW_FRAGMENT";
+
+    private UpdateAvailReceiver mUpdateReceiver = null;
+    private LocalBroadcastManager mManager = null;
     private volatile static int LOADER_ID = 0;
-
-//    private UpdateAvailReceiver mUpdateReceiver;
-
-    private View mUpdateMenuItem = null;
 
     public synchronized static int getNextLoaderId() {
         return LOADER_ID++;
@@ -89,7 +86,34 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         ImageButton iBtnStops = (ImageButton) findViewById(R.id.button_stops);
         iBtnStops.setOnClickListener(this);
 
-//        mUpdateReceiver = new UpdateAvailReceiver();
+        mUpdateReceiver = new UpdateAvailReceiver();
+        mManager = LocalBroadcastManager.getInstance(this);
+
+        if (! PreferenceUtils.isManualUpdate(this)) {
+            UpdateService.runCheckUpdateService(this);
+
+            /*if update allowed and not found and update not set to "manual"*/
+
+            if (PreferenceUtils.isUpdateAllowed(this) &&
+                    ! PreferenceUtils.isUpdateFound(this)) {
+                UpdateUtils.cancelAlarm(this);                           //delete old alarm
+                UpdateUtils.setRepeatingAlarm(getApplicationContext());  //set new alarm
+            }
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        mManager.registerReceiver(mUpdateReceiver, new IntentFilter(UPDATE_AVAIL_RECEIVER));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        mManager.unregisterReceiver(mUpdateReceiver);
     }
 
     @Override
@@ -106,7 +130,10 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
         MenuItem item = menu.findItem(R.id.action_update);
         if (item != null) {
-            item.setVisible(PreferenceUtils.getBoolean(this, UPDATE_BUTTON_STATE, false));
+            //schedule time in millisecond = 0 when user set manual update
+            //PREF_UPDATE_BUTTON_STATE set in true when update found earlier
+            item.setVisible(PreferenceUtils.isManualUpdate(this) ||
+                    PreferenceUtils.isUpdateFound(this));
         }
 
         return true;
@@ -142,38 +169,16 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
                 return true;
 
             case R.id.action_update:
-                startService(getServiceIntent(false));
+                if (PreferenceUtils.isUpdateFound(this)) {
+                    UpdateService.runUpdateService(this);
+                } else if (PreferenceUtils.isManualUpdate(this)) {
+                    UpdateService.runCheckUpdateServiceImmediately(this);
+                }
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    /**
-     * create and init intent for UpdateService. if isCheckUpdate set true - service only check
-     * for update availability
-     *
-     * @param isCheckUpdate flag for check update
-     * @return intent instance
-     */
-    private Intent getServiceIntent(boolean isCheckUpdate) {
-        Intent serviceIntent = new Intent(this, UpdateService.class);
-        Messenger messenger = new Messenger(new Handler(this));
-        serviceIntent.putExtra(UpdateService.MESSENGER, messenger);
-        serviceIntent.putExtra(UpdateService.CHECK_UPDATE, isCheckUpdate);
-
-        return serviceIntent;
-    }
-
-    /**
-     * get last update field from shared preference
-     *
-     * @param context context for getting shared preference
-     * @return Date saved on shared preference, or 0
-     */
-    public static Date getLastUpdateDate(Context context) {
-        return new Date(PreferenceUtils.getLong(context, UpdateService.PREF_LAST_UPDATE, 0L));
     }
 
     /*  methods work with fragments */
@@ -289,62 +294,6 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
 
     /*      interface implementations   */
 
-    /**
-     * Handler.Callback - interface implementation
-     * Get message from MyAsyncTask thread and show update progress information
-     */
-    public boolean handleMessage(Message msg) {
-        String messageStr = "";
-        switch (msg.what) {
-
-            case UpdateService.MSG_UPDATE_FINISH:
-                messageStr = getString(R.string.toast_update_finish);
-                invalidateOptionsMenu();
-                break;
-
-            case UpdateService.MSG_NO_INTERNET:
-                messageStr = getString(R.string.toast_no_internet);
-                break;
-
-            case UpdateService.MSG_UPDATE_FILE_STRUCTURE_ERROR:
-                messageStr = getString(R.string.toast_file_struct_error);
-                break;
-
-            case UpdateService.MSG_UPDATE_DB_WORK_ERROR:
-                messageStr = getString(R.string.toast_db_update_error);
-                break;
-
-            case UpdateService.MSG_IO_ERROR:
-                messageStr = getString(R.string.toast_io_error) + " " + msg.obj;
-                break;
-
-            case UpdateService.MSG_UPDATE_BIFF_ERROR:
-                messageStr = getString(R.string.toast_biff_error) + " " + msg.obj;
-                break;
-
-            case UpdateService.MSG_APP_ERROR:
-                messageStr = getString(R.string.toast_app_error) + " " + msg.obj;
-                break;
-
-            case UpdateService.MSG_UPDATE_NOT_NEED:
-                messageStr = getString(R.string.toast_update_not_available);
-                break;
-
-            case UpdateService.MSG_LAST_UPDATE:
-                messageStr = getString(R.string.toast_update_available) + " " +
-                        new SimpleDateFormat(UpdateService.USED_DATE_FORMAT).format((Date) msg.obj);
-                invalidateOptionsMenu();
-                break;
-
-            default:
-                break;
-        }
-        if (! messageStr.equals("")) {
-            Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
-        }
-        return true;
-    }
-
     //View.OnClickListener
     @Override
     public void onClick(View v) {
@@ -411,5 +360,68 @@ public class MainActivity extends ActionBarActivity implements Handler.Callback,
         args.putString(StopDetailFragment.STOP_NAME, stopName);
 
         showFragment(StopDetailFragment.class, StopDetailFragment.TAG, args);
+    }
+
+    class UpdateAvailReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+//            String messageStr = "";
+            switch (intent.getIntExtra(UpdateService.TYPE, 0)) {
+
+                case UpdateService.MSG_UPDATE_FINISH:
+//                    messageStr = getString(R.string.toast_update_finish);
+                    invalidateOptionsMenu();
+                    break;
+
+                case UpdateService.MSG_NO_INTERNET:
+//                    messageStr = getString(R.string.toast_no_internet);
+                    break;
+
+                case UpdateService.MSG_UPDATE_FILE_STRUCTURE_ERROR:
+//                    messageStr = getString(R.string.toast_file_struct_error);
+                    break;
+
+                case UpdateService.MSG_UPDATE_DB_WORK_ERROR:
+//                    messageStr = getString(R.string.toast_db_update_error);
+                    break;
+
+                case UpdateService.MSG_IO_ERROR:
+//                    messageStr = getString(R.string.toast_io_error) + " " +
+//                            intent.getStringExtra(UpdateService.MESSAGE);
+                    break;
+
+                case UpdateService.MSG_UPDATE_BIFF_ERROR:
+//                    messageStr = getString(R.string.toast_biff_error) + " " +
+//                            intent.getStringExtra(UpdateService.MESSAGE);
+                    break;
+
+                case UpdateService.MSG_APP_ERROR:
+//                    messageStr = getString(R.string.toast_app_error) + " " +
+//                            intent.getStringExtra(UpdateService.MESSAGE);
+                    break;
+
+                case UpdateService.MSG_UPDATE_NOT_NEED:
+//                    messageStr = getString(R.string.toast_update_not_available);
+                    break;
+
+                case UpdateService.MSG_LAST_UPDATE:
+//                    messageStr = getString(R.string.toast_update_available) + " " +
+//                            intent.getStringExtra(UpdateService.MESSAGE);
+                    invalidateOptionsMenu();
+                    if (PreferenceUtils.isManualUpdate(getApplicationContext())) {
+                        new RunUpdateDialogFragment().show(getSupportFragmentManager(),
+                                RunUpdateDialogFragment.class.getSimpleName());
+
+                        //UpdateService.runCheckUpdateServiceImmediately(this);
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+            /*if (! messageStr.equals("")) {
+                Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
+            }*/
+        }
     }
 }
