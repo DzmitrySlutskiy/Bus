@@ -8,8 +8,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.utils.PreferenceUtils;
+import by.slutskiy.busschedule.utils.UpdateUtils;
 
 /**
  * A simple {@link DialogFragment } subclass.
@@ -29,7 +29,7 @@ public class RunUpdateDialogFragment extends DialogFragment {
                 .setPositiveButton(R.string.dialog_run_update_button_positive,
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
-                                UpdateService.runUpdateService(getActivity());
+                                UpdateUtils.runUpdateService(getActivity());
                             }
                         })
                 .setNegativeButton(R.string.dialog_run_update_button_negative,

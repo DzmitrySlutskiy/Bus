@@ -21,7 +21,8 @@
             android:padding="@dimen/image_button_padding"
             android:adjustViewBounds="false"
             android:contentDescription="@string/button_news"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:onClick="onClickNews"/>
 
         <ImageButton
             android:layout_width="0dp"
@@ -30,7 +31,8 @@
             android:src="@drawable/ic_route"
             android:padding="@dimen/image_button_padding"
             android:contentDescription="@string/button_route"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:onClick="onClickRoute"/>
 
         <ImageButton
             android:layout_width="0dp"
@@ -39,7 +41,8 @@
             android:src="@drawable/ic_stop"
             android:padding="@dimen/image_button_padding"
             android:contentDescription="@string/button_stops"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:onClick="onClickStops"/>
 
     </LinearLayout>
 

@@ -27,6 +27,7 @@
             android:label="@string/preference_activity_title" />
 
         <service android:name="by.slutskiy.busschedule.services.UpdateService" />
+        <service android:name="by.slutskiy.busschedule.services.CheckUpdateService" />
 
         <receiver
             android:name="by.slutskiy.busschedule.receivers.BootReceiver"

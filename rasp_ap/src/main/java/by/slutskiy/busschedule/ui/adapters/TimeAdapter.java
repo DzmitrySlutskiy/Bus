@@ -27,7 +27,7 @@ public class TimeAdapter extends BaseAdapter {
     private final LayoutInflater mInflater;
     private final List<TimeList> mTimeList;
 
-    private final Calendar rightNow = Calendar.getInstance();
+    private final Calendar mRightNow = Calendar.getInstance();
     private int mHour;
     private Resources mResources;
 
@@ -37,7 +37,7 @@ public class TimeAdapter extends BaseAdapter {
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mTimeList = timeList;
 
-        mHour = rightNow.get(Calendar.HOUR_OF_DAY);
+        mHour = mRightNow.get(Calendar.HOUR_OF_DAY);
         mResources = context.getResources();
     }
 

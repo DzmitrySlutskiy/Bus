@@ -7,24 +7,20 @@ package by.slutskiy.busschedule.ui.activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageButton;
+import android.widget.Toast;
 
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.DBReader;
-import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.fragments.BaseFragment;
 import by.slutskiy.busschedule.ui.fragments.NewsFragment;
 import by.slutskiy.busschedule.ui.fragments.RouteFragment;
@@ -32,6 +28,7 @@ import by.slutskiy.busschedule.ui.fragments.RouteStopFragment;
 import by.slutskiy.busschedule.ui.fragments.RunUpdateDialogFragment;
 import by.slutskiy.busschedule.ui.fragments.StopDetailFragment;
 import by.slutskiy.busschedule.ui.fragments.TimeListFragment;
+import by.slutskiy.busschedule.utils.BroadcastUtils;
 import by.slutskiy.busschedule.utils.PreferenceUtils;
 import by.slutskiy.busschedule.utils.UpdateUtils;
 
@@ -44,7 +41,7 @@ import by.slutskiy.busschedule.utils.UpdateUtils;
  */
 
 public class MainActivity extends ActionBarActivity implements
-        View.OnClickListener, RouteFragment.OnRouteSelectedListener,
+        RouteFragment.OnRouteSelectedListener,
         RouteStopFragment.OnRouteStopSelectedListener,
         StopDetailFragment.OnStopDetailListener {
 
@@ -54,7 +51,6 @@ public class MainActivity extends ActionBarActivity implements
     private static final String LAST_SHOW_FRAGMENT = "LAST_SHOW_FRAGMENT";
 
     private UpdateAvailReceiver mUpdateReceiver = null;
-    private LocalBroadcastManager mManager = null;
     private volatile static int LOADER_ID = 0;
 
     public synchronized static int getNextLoaderId() {
@@ -77,28 +73,13 @@ public class MainActivity extends ActionBarActivity implements
             recoverFragmentState(className);
         }
 
-        ImageButton iBtnRoute = (ImageButton) findViewById(R.id.button_route);
-        iBtnRoute.setOnClickListener(this);
-
-        ImageButton iBtnNews = (ImageButton) findViewById(R.id.button_news);
-        iBtnNews.setOnClickListener(this);
-
-        ImageButton iBtnStops = (ImageButton) findViewById(R.id.button_stops);
-        iBtnStops.setOnClickListener(this);
-
         mUpdateReceiver = new UpdateAvailReceiver();
-        mManager = LocalBroadcastManager.getInstance(this);
 
-        if (! PreferenceUtils.isManualUpdate(this)) {
-            UpdateService.runCheckUpdateService(this);
+        if (! PreferenceUtils.isManualUpdate(this) &&
+                PreferenceUtils.isUpdateAllowed(this) &&
+                ! PreferenceUtils.isUpdateFound(this)) {
 
-            /*if update allowed and not found and update not set to "manual"*/
-
-            if (PreferenceUtils.isUpdateAllowed(this) &&
-                    ! PreferenceUtils.isUpdateFound(this)) {
-                UpdateUtils.cancelAlarm(this);                           //delete old alarm
-                UpdateUtils.setRepeatingAlarm(getApplicationContext());  //set new alarm
-            }
+            UpdateUtils.setRepeatingAlarm(getApplicationContext());  //set new alarm
         }
     }
 
@@ -106,14 +87,15 @@ public class MainActivity extends ActionBarActivity implements
     protected void onStart() {
         super.onStart();
 
-        mManager.registerReceiver(mUpdateReceiver, new IntentFilter(UPDATE_AVAIL_RECEIVER));
+        invalidateOptionsMenu();
+        BroadcastUtils.registerReceiver(this, mUpdateReceiver, UPDATE_AVAIL_RECEIVER);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
 
-        mManager.unregisterReceiver(mUpdateReceiver);
+        BroadcastUtils.unregisterReceiver(this, mUpdateReceiver);
     }
 
     @Override
@@ -132,8 +114,10 @@ public class MainActivity extends ActionBarActivity implements
         if (item != null) {
             //schedule time in millisecond = 0 when user set manual update
             //PREF_UPDATE_BUTTON_STATE set in true when update found earlier
-            item.setVisible(PreferenceUtils.isManualUpdate(this) ||
-                    PreferenceUtils.isUpdateFound(this));
+            item.setVisible(
+                    PreferenceUtils.isUpdateAllowed(this) &&
+                    (PreferenceUtils.isManualUpdate(this) ||
+                    PreferenceUtils.isUpdateFound(this)));
         }
 
         return true;
@@ -170,10 +154,12 @@ public class MainActivity extends ActionBarActivity implements
 
             case R.id.action_update:
                 if (PreferenceUtils.isUpdateFound(this)) {
-                    UpdateService.runUpdateService(this);
+                    UpdateUtils.runUpdateService(this);
+                    item.setVisible(false);
                 } else if (PreferenceUtils.isManualUpdate(this)) {
-                    UpdateService.runCheckUpdateServiceImmediately(this);
+                    UpdateUtils.runCheckUpdateServiceImmediately(this);
                 }
+
                 return true;
 
             default:
@@ -216,7 +202,7 @@ public class MainActivity extends ActionBarActivity implements
      *
      * @param fragmentTag fragment for showing
      */
-    private void showFragment(Class<? extends BaseFragment> cls, String fragmentTag, Bundle args) {
+    private void showFragment(String fragmentTag, Bundle args) {
         FragmentManager fManager = getSupportFragmentManager();
 
         BaseFragment currentFragment =
@@ -225,12 +211,7 @@ public class MainActivity extends ActionBarActivity implements
         BaseFragment showingFragment = (BaseFragment) fManager.findFragmentByTag(fragmentTag);
         if (showingFragment == null) {
 
-            try {
-                showingFragment = cls.newInstance();
-            } catch (ReflectiveOperationException e) {
-                Log.e(LOG_TAG, e.getMessage());
-                showingFragment = new NewsFragment();
-            }
+            showingFragment = buildFragment(fragmentTag);
 
             addFragmentToManager(showingFragment, fragmentTag, true);
         }
@@ -253,6 +234,22 @@ public class MainActivity extends ActionBarActivity implements
         fragmentTransaction.commit();
     }
 
+    private BaseFragment buildFragment(String fragmentTag) {
+        if (RouteFragment.TAG.equals(fragmentTag)) {
+            return new RouteFragment();
+        } else if (RouteStopFragment.TAG.equals(fragmentTag)) {
+            return new RouteStopFragment();
+        } else if (StopDetailFragment.TAG.equals(fragmentTag)) {
+            return new StopDetailFragment();
+        } else if (TimeListFragment.TAG.equals(fragmentTag)) {
+            return new TimeListFragment();
+        } else if (NewsFragment.TAG.equals(fragmentTag)) {
+            return new NewsFragment();
+        } else {         //else throw exception (in order to don't forget add new fragment here)
+            throw new IllegalArgumentException("unsupported fragment: " + fragmentTag);
+        }
+    }
+
     /**
      * show fragment with className class and hide another
      *
@@ -270,8 +267,8 @@ public class MainActivity extends ActionBarActivity implements
 
         if (fragmentList != null) {
             for (Fragment item : fragmentList) {
-                if ((className != null) &&
-                        (((Object) item).getClass().getSimpleName().equals(className))) {
+                if ((className != null) && className.equals(item.getTag())){    //in tag saved ClassName
+//                        (((Object) item).getClass().getSimpleName().equals(className))) {
                     fragmentTransaction.show(item);
                 } else {
                     fragmentTransaction.hide(item);
@@ -294,47 +291,20 @@ public class MainActivity extends ActionBarActivity implements
 
     /*      interface implementations   */
 
-    //View.OnClickListener
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-
-            case R.id.button_route:
-                clearBackStack();
-                showFragment(RouteFragment.class, RouteFragment.TAG, null);
-                break;
-
-            case R.id.button_news:
-                clearBackStack();
-
-                //in the top of back stack saved NewsFragment (method onCreate in this Activity)
-                break;
-
-            case R.id.button_stops:
-                clearBackStack();
-                showRouteStopFragment(- 1);
-                break;
-
-            default:
-                break;
-        }
-    }
-
-
     private void showTimeListFragment(int id, String stopName, String stopDetail) {
         Bundle args = new Bundle();
         args.putInt(TimeListFragment.ROUTE_LIST_ID, id);
         args.putString(TimeListFragment.STOP_NAME, stopName);
         args.putString(TimeListFragment.STOP_DETAIL, stopDetail);
 
-        showFragment(TimeListFragment.class, TimeListFragment.TAG, args);
+        showFragment(TimeListFragment.TAG, args);
     }
 
     private void showRouteStopFragment(int routeId) {
         Bundle args = new Bundle();
         args.putInt(RouteStopFragment.ROUTE_ID, routeId);
 
-        showFragment(RouteStopFragment.class, RouteStopFragment.TAG, args);
+        showFragment(RouteStopFragment.TAG, args);
     }
 
     //fragment interaction interface implementations
@@ -359,69 +329,80 @@ public class MainActivity extends ActionBarActivity implements
         args.putInt(StopDetailFragment.STOP_ID, stopId);
         args.putString(StopDetailFragment.STOP_NAME, stopName);
 
-        showFragment(StopDetailFragment.class, StopDetailFragment.TAG, args);
+        showFragment(StopDetailFragment.TAG, args);
+    }
+
+    public void onClickNews(View view) {
+        clearBackStack();
+    }
+
+    public void onClickRoute(View view) {
+        clearBackStack();
+        showFragment(RouteFragment.TAG, null);
+    }
+
+    public void onClickStops(View view) {
+        clearBackStack();
+        showRouteStopFragment(- 1);
     }
 
     class UpdateAvailReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-//            String messageStr = "";
-            switch (intent.getIntExtra(UpdateService.TYPE, 0)) {
+            String messageStr = "";
+            switch (intent.getIntExtra(UpdateUtils.TYPE, 0)) {
 
-                case UpdateService.MSG_UPDATE_FINISH:
-//                    messageStr = getString(R.string.toast_update_finish);
+                case UpdateUtils.MSG_UPDATE_FINISH:
+                    messageStr = getString(R.string.toast_update_finish);
                     invalidateOptionsMenu();
                     break;
 
-                case UpdateService.MSG_NO_INTERNET:
-//                    messageStr = getString(R.string.toast_no_internet);
+                case UpdateUtils.MSG_NO_INTERNET:
+                    messageStr = getString(R.string.toast_no_internet);
                     break;
 
-                case UpdateService.MSG_UPDATE_FILE_STRUCTURE_ERROR:
-//                    messageStr = getString(R.string.toast_file_struct_error);
+                case UpdateUtils.MSG_UPDATE_FILE_STRUCTURE_ERROR:
+                    messageStr = getString(R.string.toast_file_struct_error);
                     break;
 
-                case UpdateService.MSG_UPDATE_DB_WORK_ERROR:
-//                    messageStr = getString(R.string.toast_db_update_error);
+                case UpdateUtils.MSG_UPDATE_DB_WORK_ERROR:
+                    messageStr = getString(R.string.toast_db_update_error);
                     break;
 
-                case UpdateService.MSG_IO_ERROR:
-//                    messageStr = getString(R.string.toast_io_error) + " " +
-//                            intent.getStringExtra(UpdateService.MESSAGE);
+                case UpdateUtils.MSG_IO_ERROR:
+                    messageStr = getString(R.string.toast_io_error) + " " +
+                            intent.getStringExtra(UpdateUtils.MESSAGE);
                     break;
 
-                case UpdateService.MSG_UPDATE_BIFF_ERROR:
-//                    messageStr = getString(R.string.toast_biff_error) + " " +
-//                            intent.getStringExtra(UpdateService.MESSAGE);
+                case UpdateUtils.MSG_UPDATE_BIFF_ERROR:
+                    messageStr = getString(R.string.toast_biff_error) + " " +
+                            intent.getStringExtra(UpdateUtils.MESSAGE);
                     break;
 
-                case UpdateService.MSG_APP_ERROR:
+                case UpdateUtils.MSG_APP_ERROR:
 //                    messageStr = getString(R.string.toast_app_error) + " " +
 //                            intent.getStringExtra(UpdateService.MESSAGE);
                     break;
 
-                case UpdateService.MSG_UPDATE_NOT_NEED:
-//                    messageStr = getString(R.string.toast_update_not_available);
+                case UpdateUtils.MSG_UPDATE_NOT_NEED:
+                    messageStr = getString(R.string.toast_update_not_available);
                     break;
 
-                case UpdateService.MSG_LAST_UPDATE:
-//                    messageStr = getString(R.string.toast_update_available) + " " +
-//                            intent.getStringExtra(UpdateService.MESSAGE);
+                case UpdateUtils.MSG_LAST_UPDATE:
                     invalidateOptionsMenu();
                     if (PreferenceUtils.isManualUpdate(getApplicationContext())) {
-                        new RunUpdateDialogFragment().show(getSupportFragmentManager(),
+                        new RunUpdateDialogFragment().show(
+                                getSupportFragmentManager(),
                                 RunUpdateDialogFragment.class.getSimpleName());
-
-                        //UpdateService.runCheckUpdateServiceImmediately(this);
                     }
                     break;
 
                 default:
                     break;
             }
-            /*if (! messageStr.equals("")) {
+            if (! messageStr.equals("")) {
                 Toast.makeText(getApplicationContext(), messageStr, Toast.LENGTH_LONG).show();
-            }*/
+            }
         }
     }
 }

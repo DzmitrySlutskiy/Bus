@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import by.slutskiy.busschedule.services.UpdateService;
+import by.slutskiy.busschedule.utils.UpdateUtils;
 
 public class AlarmReceiver extends BroadcastReceiver {
     public AlarmReceiver() {
@@ -14,6 +14,6 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d("AlarmReceiver","onReceive. Do check update...");
-        UpdateService.runCheckUpdateService(context);
+        UpdateUtils.runCheckUpdateService(context);
     }
 }
