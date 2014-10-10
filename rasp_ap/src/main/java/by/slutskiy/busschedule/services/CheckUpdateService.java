@@ -34,7 +34,7 @@ public class CheckUpdateService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "onHandleIntent");
 
-        if (! intent.getBooleanExtra("IMMEDIATELY", false) && ! UpdateUtils.canCheck(this)) {
+        if (! intent.getBooleanExtra(IMMEDIATELY, false) && ! UpdateUtils.canCheck(this)) {
             Log.d(TAG, "Run check update disabled in onHandleIntent");
             return;
         }
