@@ -4,12 +4,15 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -18,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.loaders.NewsLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.utils.PreferenceUtils;
@@ -80,16 +84,22 @@ public class NewsFragment extends BaseFragment {
      *
      * @param data list with news
      */
-    private void updateData(List<String> data) {
-
+    private void updateData(Cursor data) {
+        ListAdapter adapter;
         if (data == null) {
-            data = new ArrayList<String>();
-            data.add(getString(R.string.text_view_get_data));
-        }
+            List<String> getData = new ArrayList<String>();
+            getData.add(getString(R.string.text_view_get_data));
 
-        updateTextView();
-        mNewsList.setAdapter(new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, data));
+            updateTextView();
+            adapter = new ArrayAdapter<String>(getActivity(),
+                    android.R.layout.simple_list_item_1, getData);
+        } else {
+            adapter = new SimpleCursorAdapter(getActivity(),
+                    android.R.layout.simple_list_item_1,data,
+                    new String[]{DBStructure.KEY_NEWS_TEXT},
+                    new int[]{android.R.id.text1}, 0);
+        }
+        mNewsList.setAdapter(adapter);
     }
 
     /**
@@ -108,21 +118,21 @@ public class NewsFragment extends BaseFragment {
     }
 
     /*  Async data loader callback implementation*/
-    private class NewsCallback implements LoaderCallbacks<List<String>> {
+    private class NewsCallback implements LoaderCallbacks<Cursor> {
 
         @Override
-        public Loader<List<String>> onCreateLoader(int id, Bundle args) {
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
             return new NewsLoader(getActivity().getApplicationContext());
         }
 
         @Override
-        public void onLoadFinished(Loader<List<String>> loader, List<String> data) {
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
             updateData(data);                                           //update data in list
         }
 
         @Override
-        public void onLoaderReset(Loader<List<String>> loader) {
+        public void onLoaderReset(Loader<Cursor> loader) {
             updateData(null);
         }
     }

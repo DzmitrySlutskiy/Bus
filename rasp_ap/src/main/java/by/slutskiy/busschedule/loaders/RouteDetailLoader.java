@@ -1,7 +1,9 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
 
 import by.slutskiy.busschedule.data.DBReader;
 
@@ -11,7 +13,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class RouteDetailLoader extends CacheLoader<String> {
+public class RouteDetailLoader extends CursorLoader {
 
     public static final String ATT_ROUT_ID = "routeId";
 
@@ -32,9 +34,9 @@ public class RouteDetailLoader extends CacheLoader<String> {
     }
 
     @Override
-    public String loadInBackground() {
+    public Cursor loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getRouteDetail(routeId);
+        return dbReader.getRouteDetailCursor(routeId);
     }
 }

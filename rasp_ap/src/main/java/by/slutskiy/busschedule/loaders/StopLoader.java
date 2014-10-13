@@ -1,12 +1,10 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Bundle;
 
-import java.util.List;
-
 import by.slutskiy.busschedule.data.DBReader;
-import by.slutskiy.busschedule.data.entities.Stop;
 
 /**
  * background download task
@@ -14,7 +12,7 @@ import by.slutskiy.busschedule.data.entities.Stop;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopLoader extends CacheLoader<List<Stop>> {
+public class StopLoader extends BaseLoader {
     public static final String ATT_ROUT_ID = "routeId";
 
     private int routeId;
@@ -34,9 +32,9 @@ public class StopLoader extends CacheLoader<List<Stop>> {
     }
 
     @Override
-    public List<Stop> loadInBackground() {
+    public Cursor loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getRouteStopsList(routeId);
+        return dbReader.getRouteStopsListCursor(routeId);
     }
 }

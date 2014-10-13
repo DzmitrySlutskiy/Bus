@@ -1,10 +1,8 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
+import android.database.Cursor;
 
-import java.util.List;
-
-import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.data.DBReader;
 
 /**
@@ -13,7 +11,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class BusRouteLoader extends CacheLoader<List<BusRoute>> {
+public class BusRouteLoader extends BaseLoader {
 
     /**
      * @param context used to retrieve the application context.
@@ -23,9 +21,9 @@ public class BusRouteLoader extends CacheLoader<List<BusRoute>> {
     }
 
     @Override
-    public List<BusRoute> loadInBackground() {
+    public Cursor loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getRoutesList();
+        return dbReader.getRoutesListCursor();
     }
 }

@@ -4,6 +4,7 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
@@ -12,10 +13,11 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.entities.TimeList;
+import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
 import by.slutskiy.busschedule.loaders.TypeListLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
@@ -138,7 +140,7 @@ public class TimeListFragment extends BaseFragment {
         mStopDetail.setText(getString(R.string.text_view_stop) + "\t\t" + mStopName);
     }
 
-    private void initListHeader(List<String> listHeader) {
+    private void initListHeader(Cursor listHeader) {
         //delete old header, if exists
         if (mTimeListView.getHeaderViewsCount() > 0 && mHeaderView != null) {
             mTimeListView.removeHeaderView(mHeaderView);        //remove header from list view
@@ -152,7 +154,12 @@ public class TimeListFragment extends BaseFragment {
         }
 
         if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
-            mTypeList = listHeader;
+            mTypeList = new ArrayList<String>();
+            listHeader.moveToFirst();
+            do{
+                int index = listHeader.getColumnIndex(DBReader.KEY_TYPE);
+                mTypeList.add(listHeader.getString(index));
+            }while (listHeader.moveToNext());
 
             TimeView timeView = (TimeView) mHeaderView.findViewById(R.id.time_view);
             timeView.setMinList(mTypeList);
@@ -160,7 +167,7 @@ public class TimeListFragment extends BaseFragment {
         }
     }
 
-    private void updateData(List<TimeList> timeList) {
+    private void updateData(Cursor timeList) {
         if (mTypeList == null || timeList == null) {
             return;
         }
@@ -171,9 +178,9 @@ public class TimeListFragment extends BaseFragment {
     }
 
     /*  Async data loader callback implementation*/
-    private class CallBackImpl implements LoaderCallbacks<List<?>> {
+    private class CallBackImpl implements LoaderCallbacks<Cursor> {
         @Override
-        public Loader<List<?>> onCreateLoader(int id, Bundle args) {
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             if (id == LOADER_TYPE_ID) {
                 return new TypeListLoader(getActivity().getApplicationContext(), args);
             } else if (id == LOADER_TIME_ID) {
@@ -184,10 +191,10 @@ public class TimeListFragment extends BaseFragment {
 
         @SuppressWarnings("unchecked")
         @Override
-        public void onLoadFinished(Loader<List<?>> loader, List<?> data) {
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
             if (data != null) {
                 if (loader.getId() == LOADER_TYPE_ID) {
-                    initListHeader((List<String>) data);
+                    initListHeader( data);
 
                     //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
                     //т.к. от количества типа времени зависит как будет выводится результат
@@ -198,13 +205,13 @@ public class TimeListFragment extends BaseFragment {
                     initLoader(args, LOADER_TIME_ID, getCallBack(), mNeedRestartLoaders);
                     mNeedRestartLoaders = false;
                 } else if (loader.getId() == LOADER_TIME_ID) {
-                    updateData((List<TimeList>) data);
+                    updateData(data);
                 }
             }
         }
 
         @Override
-        public void onLoaderReset(Loader<List<?>> loader) {
+        public void onLoaderReset(Loader<Cursor> loader) {
         }
     }
 }

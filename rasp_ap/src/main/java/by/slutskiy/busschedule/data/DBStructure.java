@@ -53,23 +53,25 @@ public class DBStructure extends SQLiteOpenHelper {
     static final String DB_TABLE_TYPE_LIST = "TypeList";
 
     /*  Table fields    */
-    static final String KEY_NEWS_TEXT = "NewsText";
-    static final String KEY_STOP_NAME = "StopName";
-    static final String KEY_BUS_NUMBER = "BusNumber";
+    public static final String KEY_NEWS_TEXT = "NewsText";
+    public static final String KEY_STOP_NAME = "StopName";
+    public static final String KEY_BUS_NUMBER = "BusNumber";
     static final String KEY_BUS_ID = "BusId";
     static final String KEY_BEGIN_STOP_ID = "BeginStopId";
     static final String KEY_END_STOP_ID = "EndStopId";
-    static final String KEY_ROUTE_ID = "RouteId";
+    public static final String KEY_ROUTE_ID = "RouteId";
     static final String KEY_STOP_ID = "StopId";
     static final String KEY_STOP_INDEX = "StopIndex";
     static final String KEY_ROUTE_LIST_ID = "RouteListId";
-    static final String KEY_HOUR = "Hour";
-    static final String KEY_MINUTES = "Minutes";
+    public static final String KEY_HOUR = "Hour";
+    public static final String KEY_MINUTES = "Minutes";
     static final String KEY_DAY_TYPE_ID = "DayTypeId";
-    static final String KEY_TYPE = "Type";
-    static final String KEY_ID = "_id";
-    static final String KEY_BEGIN_STOP = "BeginStop";
-    static final String KEY_END_STOP = "EndStop";
+    public static final String KEY_TYPE = "Type";
+    public static final String KEY_ID = "_id";
+    public static final String KEY_BEGIN_STOP = "BeginStop";
+    public static final String KEY_END_STOP = "EndStop";
+
+    public static final String FULL_ROUTE = "FullRoute";
 
     /*  SQLite data types */
     private static final String SQL_INTEGER = "INTEGER";
@@ -145,11 +147,30 @@ public class DBStructure extends SQLiteOpenHelper {
             SQL_ON + DB_TABLE_TIME_LIST + " (\"" + KEY_ROUTE_LIST_ID + "\");";
 
     /*   SELECT QUERY   */
+
+    /*SELECT TimeList.Hour, TimeList.Minutes, TimeList.DayTypeId
+        FROM TimeList
+        WHERE RouteListId = 10*/
     static final String DB_SELECT_TIME_LIST_BY_ROUTE_LIST_ID = SQL_SELECT +
             DB_TABLE_TIME_LIST + "." + KEY_HOUR + ", " + DB_TABLE_TIME_LIST + "." + KEY_MINUTES + ", " +
             DB_TABLE_TIME_LIST + ". " + KEY_DAY_TYPE_ID +
             SQL_FROM + DB_TABLE_TIME_LIST + SQL_WHERE + KEY_ROUTE_LIST_ID + " = ?;";
 
+    /*SELECT RouteList._id, StopId, StopIndex, RouteId, Routes.BusId, BusList.BusNumber,
+    StopList.StopName AS BeginStop, StopList2.StopName AS EndStop,
+    TimeList.Hour, TimeList.Minutes, TypeList.Type
+
+    FROM RouteList
+
+    INNER JOIN Routes ON RouteList.RouteId = Routes._id
+    INNER JOIN BusList ON Routes.BusId = BusList._id
+    INNER JOIN StopList ON Routes.BeginStopId = StopList._id
+    INNER JOIN StopList AS StopList2 ON Routes.EndStopId = StopList2._id
+    INNER JOIN TimeList ON TimeList.RouteListId = RouteList._id
+    INNER JOIN TypeList ON TypeList._id = TimeList.DayTypeId
+
+    WHERE
+    RouteList.StopId = 1 AND TimeList.Hour = 10*/
     static final String DB_SELECT_STOP_DETAIL = SQL_SELECT +
             DB_TABLE_ROUTE_LIST + "." + KEY_ID + ", " +
             DB_TABLE_ROUTE_LIST + "." + KEY_STOP_ID + ", " +
@@ -217,6 +238,8 @@ public class DBStructure extends SQLiteOpenHelper {
             SQL_WHERE + KEY_ROUTE_ID + " = ?" +
             SQL_ORDER_BY + KEY_STOP_INDEX + SQL_ASC + ";";
 
+    /*SELECT * FROM TypeList
+    WHERE TypeList._id IN (Select DISTINCT DayTypeId FROM TimeList WHERE RouteLIstId = ?)*/
     static final String DB_SELECT_DAY_TYPE_BY_ROUTE_LIST_ID = SQL_SELECT + "*" +
             SQL_FROM + DB_TABLE_TYPE_LIST + SQL_WHERE + DB_TABLE_TYPE_LIST + "." + KEY_ID +
             SQL_IN + "(" + SQL_SELECT + SQL_DISTINCT + KEY_DAY_TYPE_ID + SQL_FROM +

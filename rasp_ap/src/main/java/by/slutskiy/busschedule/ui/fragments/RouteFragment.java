@@ -4,6 +4,7 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.loaders.BusRouteLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.ui.adapters.BusRouteAdapter;
@@ -95,7 +95,7 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
      *
      * @param routesList list with route info
      */
-    private void updateData(List<BusRoute> routesList) {
+    private void updateData(Cursor routesList) {
         if (mBusList != null && routesList != null) {
             BusRouteAdapter adapter = new BusRouteAdapter(getActivity(), routesList);
             mBusList.setAdapter(adapter);
@@ -112,20 +112,20 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
     }
 
     /*  implementation LoaderManager.LoaderCallbacks<List<String>>*/
-    private class BusRouteCallback implements LoaderCallbacks<List<BusRoute>> {
+    private class BusRouteCallback implements LoaderCallbacks<Cursor> {
 
         @Override
-        public Loader<List<BusRoute>> onCreateLoader(int id, Bundle args) {
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             return new BusRouteLoader(getActivity().getApplicationContext());
         }
 
         @Override
-        public void onLoadFinished(Loader<List<BusRoute>> loader, List<BusRoute> data) {
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
             updateData(data);
         }
 
         @Override
-        public void onLoaderReset(Loader<List<BusRoute>> loader) {
+        public void onLoaderReset(Loader<Cursor> loader) {
             if (mBusList != null) {
                 mBusList.setOnItemClickListener(null);
             }

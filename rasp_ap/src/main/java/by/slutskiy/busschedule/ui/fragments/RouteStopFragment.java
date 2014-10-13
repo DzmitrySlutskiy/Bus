@@ -4,6 +4,7 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
@@ -11,14 +12,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CursorAdapter;
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
-import java.util.Collections;
-import java.util.List;
-
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.entities.Stop;
+import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.loaders.RouteDetailLoader;
 import by.slutskiy.busschedule.loaders.StopLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
@@ -44,7 +45,7 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     private int mRouteId = Integer.MIN_VALUE;
 
-    private List<Stop> mStopList;
+    private Cursor mStopList;
     private String mStopDetail = "";
 
     private ListView mStopListView;
@@ -103,9 +104,23 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mStopList != null && position >= 0 && position < mStopList.size()) {
-            String stopName = mStopList.get(position).getStopName();
-            int key = mStopList.get(position).getKey();
+//        if (mStopList != null && position >= 0 && position < mStopList.size()) {
+//            String stopName = mStopList.get(position).getStopName();
+//            int key = mStopList.get(position).getKey();
+//
+//            if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
+//                OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
+//                if (mRouteId >= 0) {
+//                    listener.OnRouteStopSelected(key, stopName, mStopDetail);
+//                } else {
+//                    listener.OnStopSelected(key, stopName);
+//                }
+//            }
+//        }
+        if (mStopList != null && mStopList.moveToPosition(position)) {
+
+            String stopName = mStopList.getString(mStopList.getColumnIndex(DBReader.KEY_STOP_NAME));
+            int key = mStopList.getInt(mStopList.getColumnIndex(DBReader.KEY_ID));
 
             if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
                 OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
@@ -171,19 +186,26 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
      *
      * @param data stop list
      */
-    private void updateData(List<Stop> data) {
+    private void updateData(Cursor data) {
         if (data != null) {
 
             mStopList = data;
 
             /* if mRoute< 0 this fragment show all stop list*/
-            if (mRouteId < 0) {
-                Collections.sort(mStopList);
-            }
+//            if (mRouteId < 0) {
+//                Collections.sort(mStopList);
+//            }
 
-            ArrayAdapter<Stop> adapter = new ArrayAdapter<Stop>(getActivity(),
-                    android.R.layout.simple_list_item_1, mStopList);
-            mStopListView.setAdapter(adapter);
+            CursorAdapter cursorAdapter = new SimpleCursorAdapter(
+                    getActivity(), android.R.layout.simple_list_item_1, data,
+                    new String[]{DBStructure.KEY_STOP_NAME},
+                    new int[]{android.R.id.text1}, 0);
+
+
+//            ArrayAdapter<Stop> adapter = new ArrayAdapter<Stop>(getActivity(),
+//                    android.R.layout.simple_list_item_1, mStopList);
+//            mStopListView.setAdapter(adapter);
+            mStopListView.setAdapter(cursorAdapter);
             mStopListView.setOnItemClickListener(this);
 
             updateStopDetailText();
@@ -217,41 +239,63 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     /*  Async data loader callback implementation
     * for loader return String object*/
-    private class StringCallback implements LoaderCallbacks<String> {
+    private class StringCallback implements LoaderCallbacks<Cursor> {
         @Override
-        public Loader<String> onCreateLoader(int i, Bundle bundle) {
+        public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
             return new RouteDetailLoader(getActivity().getApplicationContext(), bundle);
         }
 
         @Override
-        public void onLoadFinished(Loader<String> stringLoader, String data) {
-            mStopDetail = data;
+        public void onLoadFinished(Loader<Cursor> stringLoader, Cursor data) {
+            if (data.moveToFirst()) {
+                String busNumber = "";
+                String beginStop = "";
+                String endStop = "";
+
+                int fieldIndex = data.getColumnIndex(DBStructure.KEY_BUS_NUMBER);//1
+                if (fieldIndex >= 0) {
+                    busNumber = data.getString(fieldIndex);
+                }
+
+                fieldIndex = data.getColumnIndex(DBStructure.KEY_BEGIN_STOP);//2
+                if (fieldIndex >= 0) {
+                    beginStop = data.getString(fieldIndex);
+                }
+
+                fieldIndex = data.getColumnIndex(DBStructure.KEY_END_STOP);//3
+                if (fieldIndex >= 0) {
+                    endStop = data.getString(fieldIndex);
+                }
+
+                mStopDetail = busNumber + "   " + beginStop + " - " + endStop;
+            }
+
             updateStopDetailText();
         }
 
         @Override
-        public void onLoaderReset(Loader<String> stringLoader) {
+        public void onLoaderReset(Loader<Cursor> stringLoader) {
         }
     }
 
     /*  Async data loader callback implementation for loader return List<Stop> object*/
 
-    private class ListStopCallBack implements LoaderCallbacks<List<Stop>> {
+    private class ListStopCallBack implements LoaderCallbacks<Cursor> {
 
         @Override
-        public Loader<List<Stop>> onCreateLoader(int i, Bundle bundle) {
+        public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
             return new StopLoader(getActivity().getApplicationContext(), bundle);
         }
 
         @Override
-        public void onLoadFinished(Loader<List<Stop>> listLoader, List<Stop> data) {
+        public void onLoadFinished(Loader<Cursor> listLoader, Cursor data) {
             if (data != null) {
                 updateData(data);
             }
         }
 
         @Override
-        public void onLoaderReset(Loader<List<Stop>> listLoader) {
+        public void onLoaderReset(Loader<Cursor> listLoader) {
         }
     }
 }

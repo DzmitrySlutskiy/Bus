@@ -5,15 +5,15 @@
 package by.slutskiy.busschedule.data;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.data.entities.BusRoute;
 import by.slutskiy.busschedule.data.entities.Stop;
 import by.slutskiy.busschedule.data.entities.StopDetail;
 import by.slutskiy.busschedule.data.entities.TimeList;
@@ -88,6 +88,21 @@ public class DBReader extends DBStructure {
     }
 
     /**
+     * Get news from database
+     *
+     * @return List string with news
+     */
+    public Cursor getNewsCursor() {
+        List<String> newsList = new ArrayList<String>();
+        mDb = getDB();
+        if (mDb != null && mDb.isOpen()) {
+            return mDb.query(DB_TABLE_NEWS_LIST, null, null, null, null, null, null);
+        }
+        return null;
+    }
+
+
+    /**
      * Get route list
      *
      * @return List of BusRoute objects
@@ -128,6 +143,14 @@ public class DBReader extends DBStructure {
         return routesList;
     }
 
+    public Cursor getRoutesListCursor() {
+        mDb = getDB();
+        if (mDb != null && mDb.isOpen()) {
+            return mDb.rawQuery(DB_SELECT_ROUTE_LIST, null);
+        }
+        return null;
+    }
+
     /**
      * Get route detail string (string like "2 Девятовка 5 - Томина")
      *
@@ -166,6 +189,22 @@ public class DBReader extends DBStructure {
             cursor.close();
         }
         return result;
+    }
+
+    /**
+     * Get route detail string (string like "2 Девятовка 5 - Томина")
+     *
+     * @param routeId route ID
+     * @return string in format "BUS_NUMBER   BEGIN_STOP - END STOP"
+     */
+    public Cursor getRouteDetailCursor(int routeId) {
+        mDb = getDB();
+        if (routeId >= 0 && mDb != null && mDb.isOpen()) {
+            String[] args = new String[1];
+            args[0] = "" + routeId;
+            return mDb.rawQuery(DB_SELECT_ROUTE_BY_ROUTE_ID, args);
+        }
+        return null;
     }
 
     /**
@@ -210,6 +249,27 @@ public class DBReader extends DBStructure {
     }
 
     /**
+     * Return stop list for some bus route if routeId >=0 otherwise return all stops list
+     *
+     * @param routeId - route ID
+     * @return list of stops
+     */
+    public Cursor getRouteStopsListCursor(int routeId) {
+        mDb = getDB();
+        if (mDb != null && mDb.isOpen()) {
+            if (routeId < 0) {
+                return mDb.query(DB_TABLE_STOP_LIST, null, null, null, null, null, KEY_STOP_NAME);
+            } else {
+                String[] queryArgs = new String[1];
+                queryArgs[0] = Integer.toString(routeId);
+
+                return mDb.rawQuery(DB_SELECT_ROUTE_STOP_LIST_BY_ROUTE_ID, queryArgs);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get type list for route list id
      *
      * @param routeListId route list ID
@@ -235,6 +295,23 @@ public class DBReader extends DBStructure {
             cursor.close();
         }
         return typeList;
+    }
+
+    /**
+     * Get type list for route list id
+     *
+     * @param routeListId route list ID
+     * @return List of string
+     */
+    public Cursor getTypeListByRouteListIdCursor(int routeListId) {
+        mDb = getDB();
+        if (mDb != null && mDb.isOpen()) {
+            String[] queryArgs = new String[1];
+            queryArgs[0] = Integer.toString(routeListId);
+
+            return mDb.rawQuery(DB_SELECT_DAY_TYPE_BY_ROUTE_LIST_ID, queryArgs);
+        }
+        return null;
     }
 
     /**
@@ -285,6 +362,64 @@ public class DBReader extends DBStructure {
             cursor.close();
         }
         return timeList;
+    }
+
+    /**
+     * Get list with time for route with route list ID = routeListId
+     *
+     * @param routeListId route list ID
+     * @return List of TimeList
+     */
+    public Cursor getTimeListByRouteListIdCursor(int routeListId) {
+        mDb = getDB();
+        if (mDb != null && mDb.isOpen()) {
+
+
+            /*Need build query like below with some type count (don't know how build
+            query with PIVOT statement - SQLite not have this statement:
+
+            SELECT TimeList.Hour,
+            TimeList.Minutes,
+
+            TimeList2.Minutes as M2,
+            TimeList3.Minutes as M3
+
+            FROM TimeList
+
+            INNER JOIN TimeList AS TimeList2 ON TimeList2.Hour = TimeList.Hour
+            INNER JOIN TimeList AS TimeList3 ON TimeList3.Hour = TimeList.Hour
+
+            WHERE TimeList.RouteListId = 1 and TimeList.DayTypeId = 1
+
+            AND TimeList2.RouteListId = 1 and TimeList2.DayTypeId = 2
+            AND TimeList3.RouteListId = 1 and TimeList3.DayTypeId = 3*/
+
+            String sqlSelect = "SELECT TimeList._id, TimeList.Hour, TimeList.Minutes ";
+            String sqlWhere = " WHERE TimeList.RouteListId = " + routeListId
+                    + " and TimeList.DayTypeId = ";
+            String sqlFrom = " FROM TimeList ";
+
+            Cursor typeCursor = getTypeListByRouteListIdCursor(routeListId);
+            if (typeCursor.moveToFirst()) {
+                do {
+                    int id = typeCursor.getInt(typeCursor.getColumnIndex(KEY_ID));
+
+                    if (typeCursor.isFirst()) {
+                        sqlWhere += id;
+                    } else {
+                        sqlWhere += " AND TimeList" + id + ".RouteListId = " + routeListId +
+                                " and TimeList" + id + ".DayTypeId = " + id;
+
+                        sqlSelect += ", TimeList" + id + ".Minutes as M" + id;
+
+                        sqlFrom += " INNER JOIN TimeList AS TimeList" + id +
+                                " ON TimeList" + id + ".Hour = TimeList.Hour";
+                    }
+                } while (typeCursor.moveToNext());
+            }
+            return mDb.rawQuery(sqlSelect + sqlFrom + sqlWhere, null);
+        }
+        return null;
     }
 
     /**
@@ -365,6 +500,25 @@ public class DBReader extends DBStructure {
             cursor.close();
         }
         return stopDetailList;
+    }
+
+    /**
+     * Get stop detail info with any route using this stop
+     *
+     * @param stopId stop ID
+     * @param hour   hour
+     * @return List of StopDetail
+     */
+    public Cursor getStopDetailCursor(int stopId, int hour) {
+        mDb = getDB();
+        if (mDb != null && mDb.isOpen()) {
+            String[] queryArgs = new String[2];
+            queryArgs[0] = Integer.toString(stopId);
+            queryArgs[1] = Integer.toString(hour);
+
+            return mDb.rawQuery(DB_SELECT_STOP_DETAIL, queryArgs);
+        }
+        return null;
     }
 
     /**

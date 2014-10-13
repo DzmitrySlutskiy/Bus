@@ -1,7 +1,7 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -14,7 +14,7 @@ import by.slutskiy.busschedule.services.UpdateService;
  * 19.09.2014
  * Created by Dzmitry Slutskiy.
  */
-abstract class BaseLoader<T> extends AsyncTaskLoader<T> implements Observer {
+abstract class BaseLoader extends CursorLoader implements Observer {
 
     BaseLoader(Context context) {
         super(context);

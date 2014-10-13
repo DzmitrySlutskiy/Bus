@@ -1,9 +1,9 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Bundle;
-
-import java.util.List;
+import android.support.v4.content.CursorLoader;
 
 import by.slutskiy.busschedule.data.DBReader;
 
@@ -13,7 +13,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class TimeListLoader extends CacheLoader<List<?>> {
+public class TimeListLoader extends CursorLoader {
 
     public static final String ATT_ROUT_LIST_ID = "routeListIdLoader";
     private int mRouteListIdLoader;
@@ -33,9 +33,9 @@ public class TimeListLoader extends CacheLoader<List<?>> {
     }
 
     @Override
-    public List<?> loadInBackground() {
+    public Cursor loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getTimeListByRouteListId(mRouteListIdLoader);
+        return dbReader.getTimeListByRouteListIdCursor(mRouteListIdLoader);
     }
 }

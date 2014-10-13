@@ -4,6 +4,7 @@
 
 package by.slutskiy.busschedule.ui.fragments;
 
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
@@ -15,10 +16,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.Calendar;
-import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.entities.StopDetail;
 import by.slutskiy.busschedule.loaders.StopDetailLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.ui.adapters.StopDetailAdapter;
@@ -41,7 +40,7 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
     public static final String STOP_NAME = "mStopName";
     // the fragment initialization parameters
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
-    private List<StopDetail> mStopDetList = null;
+    //private List<StopDetail> mStopDetList = null;
     private int mStopId;
     private String mStopName;
     private int mCurrentHour;
@@ -104,16 +103,20 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mStopDetList != null &&
+        /*if (mStopDetList != null &&
                 position >= 0 &&
                 position < mStopDetList.size() &&
                 mListener != null &&
                 mListener instanceof OnStopDetailListener) {
             ((OnStopDetailListener) mListener).onStopDetailSelected((int) id, mStopName,
                     mStopDetList.get(position).getRouteName());
+        }*/
+
+        if (mListener != null &&
+                mListener instanceof OnStopDetailListener) {
+            ((OnStopDetailListener) mListener).onStopDetailSelected((int) id, mStopName,
+                    ((TextView) view.findViewById(R.id.text_view_route_name)).getText().toString());
         }
-
-
     }
 
     @Override
@@ -152,10 +155,10 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
      *
      * @param data list with StopDetail
      */
-    private void updateData(List<StopDetail> data) {
+    private void updateData(Cursor data) {
         if (data != null) {
             mStopDetail.setText(mStopName);
-            mStopDetList = data;
+            //mStopDetList = data;
 
             StopDetailAdapter adapter = new StopDetailAdapter(getActivity(), data);
             mDetailList.setAdapter(adapter);
@@ -174,19 +177,19 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
     }
 
     /*  Async data loader callback implementation*/
-    private class StopDetailCallBack implements LoaderCallbacks<List<StopDetail>> {
+    private class StopDetailCallBack implements LoaderCallbacks<Cursor> {
         @Override
-        public Loader<List<StopDetail>> onCreateLoader(int id, Bundle args) {
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             return new StopDetailLoader(getActivity().getApplicationContext(), args);
         }
 
         @Override
-        public void onLoadFinished(Loader<List<StopDetail>> loader, List<StopDetail> data) {
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
             updateData(data);
         }
 
         @Override
-        public void onLoaderReset(Loader<List<StopDetail>> loader) {
+        public void onLoaderReset(Loader<Cursor> loader) {
         }
     }
 }

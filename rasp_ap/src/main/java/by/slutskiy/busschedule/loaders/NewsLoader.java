@@ -1,9 +1,7 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-
-import java.util.List;
-import java.util.Observer;
+import android.database.Cursor;
 
 import by.slutskiy.busschedule.data.DBReader;
 
@@ -13,7 +11,7 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class NewsLoader extends CacheLoader<List<String>> implements Observer {
+public class NewsLoader extends BaseLoader {
 
     /**
      * @param context used to retrieve the application context.
@@ -23,9 +21,9 @@ public class NewsLoader extends CacheLoader<List<String>> implements Observer {
     }
 
     @Override
-    public List<String> loadInBackground() {
+    public Cursor loadInBackground() {
         DBReader dbReader = DBReader.getInstance(getContext());
 
-        return dbReader.getNews();
+        return dbReader.getNewsCursor();
     }
 }
