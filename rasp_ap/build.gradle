@@ -5,7 +5,7 @@ android {
         SignConfig {
             keyAlias 'bus_schedule'
             keyPassword 'djyW0f_3kQ'
-            storeFile file('D:/ANDROID/AndroidRepository/bus_schedule.jks')
+            storeFile file('..\\bus_schedule.jks')
             storePassword '1Uf93_gkZm0'
         }
     }
@@ -16,12 +16,11 @@ android {
         minSdkVersion 8
         versionCode 1
         versionName "1.0"
-        signingConfig signingConfigs.SignConfig
+//        signingConfig signingConfigs.SignConfig
     }
     buildTypes {
         debug {
             buildConfigField "int", "SHEET_COUNT", "5"
-            signingConfig signingConfigs.SignConfig
         }
         release {
             buildConfigField "int", "SHEET_COUNT", "1"
