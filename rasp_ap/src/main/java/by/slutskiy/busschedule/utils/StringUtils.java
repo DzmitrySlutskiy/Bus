@@ -17,10 +17,6 @@ public class StringUtils {
 
     private static SimpleDateFormat dateFormat = new SimpleDateFormat(USED_DATE_FORMAT);
 
-    /*  private fields  */
-
-    /*  public constructors */
-
     private StringUtils() {/*   code    */}
 
     /*  public methods  */
@@ -96,10 +92,11 @@ public class StringUtils {
 
     /**
      * Convert Date to String with {@code USED_DATE_FORMAT} format
+     *
      * @param date date for converting
      * @return date as String
      */
-    public static String formatDate(Date date){
+    public static String formatDate(Date date) {
         return dateFormat.format(date);
     }
 }

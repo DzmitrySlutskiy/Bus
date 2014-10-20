@@ -40,6 +40,8 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
     private static final String TAG = UpdateService.class.getSimpleName();
 
     private static final String BUS_NUMBER_PATTERN = "^[0-9]{1,3}(Э|э)?$";
+    public static final String TYPE_DELIMITER = ";";
+    public static final String TYPE_MIN_DELIMITER = ":";
     /**
      * full bus list, String Key - bus number, Integer Value - ID record in DB
      */
@@ -342,28 +344,31 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
         fillDayType(sheet, rowIndex, stopSize);
 
         for (int hourIndex = 1; hourIndex < mLastHourColumnIndex; hourIndex++) {
+            String minStr = "";
             Cell cell = getCell(sheet, hourIndex, rowIndex + 1);
             int hour = StringUtils.strToInt(cell.getContents().trim());
             int minuteRowIndex = rowIndex + 4;
             for (ScheduleDayType type : mDayTypes) {
-                String minStr = "";
+                minStr += (! minStr.equals("") ? TYPE_DELIMITER : "") +
+                        type.typeString + TYPE_MIN_DELIMITER;
                 for (int rIndex = minuteRowIndex; rIndex < minuteRowIndex + type.typeRowSize;
                      rIndex++) {
 
                     minStr += XLSHelper.processingMinutes(
                             getCell(sheet, hourIndex, rIndex).getContents()) + " ";
                 }
-                if (mDbUpdater.addTime(mRouteListId, hour, minStr.trim(), type.typeID) < 0) {
-                    throw new DBUpdateWorkException("Error add time for stop: " +
-                            stopName + " for route " + routeName);
-                }
                 minuteRowIndex += type.typeRowSize;
+            }
+            if (mDbUpdater.addTime(mRouteListId, hour, minStr.trim()) < 0) {
+                throw new DBUpdateWorkException("Error add time for stop: " +
+                        stopName + " for route " + routeName);
             }
         }
         mStopIndex++;
         return stopSize;
     }
 
+    private int mTypeCounter = 0;
     /**
      * fill day type info for current stop to ArrayList mDayTypes
      *
@@ -414,15 +419,12 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
             /*  сохраняем в БД и в mTypeList значение типа (если его там еще нет)*/
             if (! mTypeList.containsKey(cellContent)) {
-                int typeId = mDbUpdater.addType(cellContent);
-                if (typeId == - 1) {
-                    throw new DBUpdateWorkException("Error add type: " + cellContent);
-                }
-                mTypeList.put(cellContent, typeId);
+                mTypeList.put(cellContent, mTypeCounter++);
             }
             ScheduleDayType type = new ScheduleDayType();
             type.typeID = mTypeList.get(cellContent);
             type.typeRowSize = typeRowSize;
+            type.typeString = cellContent;
 
             /*  save day type for current stop in bus route */
             mDayTypes.add(type);
@@ -610,6 +612,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
         //        public String type;
         public int typeID;                  //id in DB for current time type (по вых, по раб etc)
         public int typeRowSize;             //sometimes take 2 and more row for one time type
+        public String typeString;
     }
 
     /**

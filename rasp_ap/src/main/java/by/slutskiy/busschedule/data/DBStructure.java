@@ -41,7 +41,7 @@ public class DBStructure extends SQLiteOpenHelper {
     /**
      * Версия базы данных
      */
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
 
     /*  Table list  */
     static final String DB_TABLE_NEWS_LIST = "News";
@@ -50,7 +50,6 @@ public class DBStructure extends SQLiteOpenHelper {
     static final String DB_TABLE_ROUTES = "Routes";
     static final String DB_TABLE_ROUTE_LIST = "RouteList";
     static final String DB_TABLE_TIME_LIST = "TimeList";
-    static final String DB_TABLE_TYPE_LIST = "TypeList";
 
     /*  Table fields    */
     public static final String KEY_NEWS_TEXT = "NewsText";
@@ -65,8 +64,6 @@ public class DBStructure extends SQLiteOpenHelper {
     static final String KEY_ROUTE_LIST_ID = "RouteListId";
     public static final String KEY_HOUR = "Hour";
     public static final String KEY_MINUTES = "Minutes";
-    static final String KEY_DAY_TYPE_ID = "DayTypeId";
-    public static final String KEY_TYPE = "Type";
     public static final String KEY_ID = "_id";
     public static final String KEY_BEGIN_STOP = "BeginStop";
     public static final String KEY_END_STOP = "EndStop";
@@ -88,24 +85,16 @@ public class DBStructure extends SQLiteOpenHelper {
     private static final String SQL_WHERE = " WHERE ";
     private static final String SQL_CREATE_INDEX = "CREATE INDEX idx";
     private static final String SQL_AS = " AS ";
-    private static final String SQL_DISTINCT = " DISTINCT ";
     private static final String SQL_ORDER_BY = " ORDER BY ";
     private static final String SQL_ASC = " ASC ";
-    private static final String SQL_IN = " IN ";
 
     /*  CREATE TABLE QUERY    */
-    private static final String DB_CREATE_TYPE_LIST = SQL_CREATE_TABLE +
-            DB_TABLE_TYPE_LIST + "(" +
-            KEY_ID + " " + SQL_INTEGER + " " + SQL_P_KEY + ", " +
-            KEY_TYPE + " " + SQL_TEXT + ");";
-
     private static final String DB_CREATE_TIME_LIST = SQL_CREATE_TABLE +
             DB_TABLE_TIME_LIST + "(" +
             KEY_ID + " " + SQL_INTEGER + " " + SQL_P_KEY + ", " +
             KEY_ROUTE_LIST_ID + " " + SQL_INTEGER + ", " +
             KEY_HOUR + " " + SQL_INTEGER + ", " +
-            KEY_MINUTES + " " + SQL_TEXT + ", " +
-            KEY_DAY_TYPE_ID + " " + SQL_INTEGER + ");";
+            KEY_MINUTES + " " + SQL_TEXT + ");";
 
     private static final String DB_CREATE_ROUTE_LIST = SQL_CREATE_TABLE +
             DB_TABLE_ROUTE_LIST + "(" +
@@ -148,41 +137,37 @@ public class DBStructure extends SQLiteOpenHelper {
 
     /*   SELECT QUERY   */
 
-    /*SELECT TimeList.Hour, TimeList.Minutes, TimeList.DayTypeId
-        FROM TimeList
-        WHERE RouteListId = 10*/
+    /*SELECT TimeList._id, TimeList.Hour, TimeList.Minutes
+      FROM TimeList
+      WHERE TimeList.RouteListId = ?
+      ORDER BY TimeList._id*/
     static final String DB_SELECT_TIME_LIST_BY_ROUTE_LIST_ID = SQL_SELECT +
-            DB_TABLE_TIME_LIST + "." + KEY_HOUR + ", " + DB_TABLE_TIME_LIST + "." + KEY_MINUTES + ", " +
-            DB_TABLE_TIME_LIST + ". " + KEY_DAY_TYPE_ID +
-            SQL_FROM + DB_TABLE_TIME_LIST + SQL_WHERE + KEY_ROUTE_LIST_ID + " = ?;";
+            DB_TABLE_TIME_LIST + "." + KEY_ID + ", " +
+            DB_TABLE_TIME_LIST + "." + KEY_HOUR + ", " +
+            DB_TABLE_TIME_LIST + "." + KEY_MINUTES +
+            SQL_FROM + DB_TABLE_TIME_LIST + SQL_WHERE +
+            DB_TABLE_TIME_LIST + "." + KEY_ROUTE_LIST_ID + " = ? " +
+            SQL_ORDER_BY + DB_TABLE_TIME_LIST + "." + KEY_ID;
 
-    /*SELECT RouteList._id, StopId, StopIndex, RouteId, Routes.BusId, BusList.BusNumber,
-    StopList.StopName AS BeginStop, StopList2.StopName AS EndStop,
-    TimeList.Hour, TimeList.Minutes, TypeList.Type
-
-    FROM RouteList
-
-    INNER JOIN Routes ON RouteList.RouteId = Routes._id
-    INNER JOIN BusList ON Routes.BusId = BusList._id
-    INNER JOIN StopList ON Routes.BeginStopId = StopList._id
-    INNER JOIN StopList AS StopList2 ON Routes.EndStopId = StopList2._id
-    INNER JOIN TimeList ON TimeList.RouteListId = RouteList._id
-    INNER JOIN TypeList ON TypeList._id = TimeList.DayTypeId
-
-    WHERE
-    RouteList.StopId = 1 AND TimeList.Hour = 10*/
+    /*SELECT
+      RouteList._id, RouteList.RouteId,
+      BusList.BusNumber || '   ' || StopList.StopName || ' - ' || StopList2.StopName AS Stop,
+      TypeList.Type || ' ' || TimeList.Minutes as Minutes
+      FROM RouteList
+      INNER JOIN Routes ON RouteList.RouteId = Routes._id
+      INNER JOIN BusList ON Routes.BusId = BusList._id
+      INNER JOIN StopList ON Routes.BeginStopId = StopList._id
+      INNER JOIN StopList AS StopList2 ON Routes.EndStopId = StopList2._id
+      INNER JOIN TimeList ON TimeList.RouteListId = RouteList._id
+      INNER JOIN TypeList ON TypeList._id = TimeList.DayTypeId
+      WHERE RouteList.StopId = ? AND TimeList.Hour = ?*/
     static final String DB_SELECT_STOP_DETAIL = SQL_SELECT +
             DB_TABLE_ROUTE_LIST + "." + KEY_ID + ", " +
-            DB_TABLE_ROUTE_LIST + "." + KEY_STOP_ID + ", " +
-            DB_TABLE_ROUTE_LIST + "." + KEY_STOP_INDEX + ", " +
             DB_TABLE_ROUTE_LIST + "." + KEY_ROUTE_ID + ", " +
-            DB_TABLE_ROUTES + "." + KEY_BUS_ID + ", " +
-            DB_TABLE_BUS_LIST + "." + KEY_BUS_NUMBER + ", " +
-            DB_TABLE_STOP_LIST + "." + KEY_STOP_NAME + SQL_AS + KEY_BEGIN_STOP + ", " +
-            DB_TABLE_STOP_LIST + "2." + KEY_STOP_NAME + SQL_AS + KEY_END_STOP + ", " +
-            DB_TABLE_TIME_LIST + "." + KEY_HOUR + ", " +
-            DB_TABLE_TIME_LIST + "." + KEY_MINUTES + ", " +
-            DB_TABLE_TYPE_LIST + "." + KEY_TYPE + " " +
+            DB_TABLE_BUS_LIST + "." + KEY_BUS_NUMBER + " || ' ' || " +
+            DB_TABLE_STOP_LIST + "." + KEY_STOP_NAME + " || ' - ' || " +
+            DB_TABLE_STOP_LIST + "2." + KEY_STOP_NAME + SQL_AS + FULL_ROUTE + ", " +
+            DB_TABLE_TIME_LIST + "." + KEY_MINUTES +
             SQL_FROM + DB_TABLE_ROUTE_LIST + " " +
             SQL_INNER_JOIN + DB_TABLE_ROUTES + SQL_ON + DB_TABLE_ROUTE_LIST + "." +
             KEY_ROUTE_ID + " = " + DB_TABLE_ROUTES + "." + KEY_ID + " " +
@@ -195,8 +180,6 @@ public class DBStructure extends SQLiteOpenHelper {
             DB_TABLE_STOP_LIST + "2." + KEY_ID + " " +
             SQL_INNER_JOIN + DB_TABLE_TIME_LIST + SQL_ON + DB_TABLE_TIME_LIST + "." +
             KEY_ROUTE_LIST_ID + " = " + DB_TABLE_ROUTE_LIST + "." + KEY_ID + " " +
-            SQL_INNER_JOIN + DB_TABLE_TYPE_LIST + SQL_ON + DB_TABLE_TYPE_LIST + "." +
-            KEY_ID + " = " + DB_TABLE_TIME_LIST + "." + KEY_DAY_TYPE_ID + " " +
             SQL_WHERE + DB_TABLE_ROUTE_LIST + "." + KEY_STOP_ID + " = ? AND " +
             DB_TABLE_TIME_LIST + "." + KEY_HOUR + " = ?";
 
@@ -238,12 +221,14 @@ public class DBStructure extends SQLiteOpenHelper {
             SQL_WHERE + KEY_ROUTE_ID + " = ?" +
             SQL_ORDER_BY + KEY_STOP_INDEX + SQL_ASC + ";";
 
-    /*SELECT * FROM TypeList
-    WHERE TypeList._id IN (Select DISTINCT DayTypeId FROM TimeList WHERE RouteLIstId = ?)*/
-    static final String DB_SELECT_DAY_TYPE_BY_ROUTE_LIST_ID = SQL_SELECT + "*" +
-            SQL_FROM + DB_TABLE_TYPE_LIST + SQL_WHERE + DB_TABLE_TYPE_LIST + "." + KEY_ID +
-            SQL_IN + "(" + SQL_SELECT + SQL_DISTINCT + KEY_DAY_TYPE_ID + SQL_FROM +
-            DB_TABLE_TIME_LIST + SQL_WHERE + KEY_ROUTE_LIST_ID + " = ?);";
+    /*SELECT Minutes
+      FROM TimeList
+      WHERE TimeList.RouteListId = ?
+      LIMIT 1*/
+    static final String DB_SELECT_DAY_TYPE_BY_ROUTE_LIST_ID = SQL_SELECT +
+            DB_TABLE_TIME_LIST + "." + KEY_MINUTES + " " +
+            SQL_FROM + DB_TABLE_TIME_LIST +
+            SQL_WHERE + DB_TABLE_TIME_LIST + "." + KEY_ROUTE_LIST_ID + " = ? " + " LIMIT 1";
 
     private String mDbPath;
     private final String mDbName;
@@ -399,7 +384,6 @@ public class DBStructure extends SQLiteOpenHelper {
         dropTable(DBStructure.DB_TABLE_ROUTES);
         dropTable(DBStructure.DB_TABLE_ROUTE_LIST);
         dropTable(DBStructure.DB_TABLE_TIME_LIST);
-        dropTable(DBStructure.DB_TABLE_TYPE_LIST);
     }
 
     /**
@@ -412,10 +396,8 @@ public class DBStructure extends SQLiteOpenHelper {
         execSQL(DBStructure.DB_CREATE_ROUTES);
         execSQL(DBStructure.DB_CREATE_ROUTE_LIST);
         execSQL(DBStructure.DB_CREATE_TIME_LIST);
-        execSQL(DBStructure.DB_CREATE_TYPE_LIST);
 
         /*Create indexes*/
-        /*   These indexes will reduce query time in two or more times (for queries using these tables)   */
         execSQL(DBStructure.DB_CREATE_INDEX_TIME_LIST);
         execSQL(DBStructure.DB_CREATE_INDEX_ROUTE_LIST);
         execSQL(DBStructure.DB_CREATE_INDEX_STOP_LIST);

@@ -7,6 +7,7 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
 import by.slutskiy.busschedule.loaders.TypeListLoader;
+import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.ui.adapters.TimeAdapter;
 import by.slutskiy.busschedule.ui.views.TimeView;
@@ -156,10 +158,18 @@ public class TimeListFragment extends BaseFragment {
         if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
             mTypeList = new ArrayList<String>();
             listHeader.moveToFirst();
-            do{
-                int index = listHeader.getColumnIndex(DBReader.KEY_TYPE);
-                mTypeList.add(listHeader.getString(index));
-            }while (listHeader.moveToNext());
+
+            int index = listHeader.getColumnIndex(DBReader.KEY_MINUTES);
+            String type = listHeader.getString(index);
+
+            String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);
+            for (String item : result) {
+                if (item.contains(UpdateService.TYPE_MIN_DELIMITER)) {
+                    int subIndex = item.indexOf(UpdateService.TYPE_MIN_DELIMITER);
+                    item = item.substring(0, subIndex);
+                }
+                mTypeList.add(item);
+            }
 
             TimeView timeView = (TimeView) mHeaderView.findViewById(R.id.time_view);
             timeView.setMinList(mTypeList);
@@ -194,7 +204,7 @@ public class TimeListFragment extends BaseFragment {
         public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
             if (data != null) {
                 if (loader.getId() == LOADER_TYPE_ID) {
-                    initListHeader( data);
+                    initListHeader(data);
 
                     //выполнился лоадер для типа времени, запускаем лоадер для отборки расписания
                     //т.к. от количества типа времени зависит как будет выводится результат

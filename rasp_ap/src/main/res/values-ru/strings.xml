@@ -54,7 +54,6 @@
     <string name="preference_update_freq_time_per_week">Раз в неделю</string>
     <string name="preference_update_freq_time_per_month">Раз в месяц</string>
     <string name="preference_update_freq_manual">В ручную</string>
-
     <string name="preference_update_use_mobile_net">Использовать мобильный интернет</string>
     <string name="preference_update_use_mobile_net_summary">Может взиматься плата за передачу данных</string>
 
@@ -64,6 +63,10 @@
     <string name="preference_key_use_mobile">use_mobile</string>
     <string name="preference_key_last_check">preference_key_last_check</string>
 
+    <string name="preference_update_freq_value_day">1</string>
+    <string name="preference_update_freq_value_week">7</string>
+    <string name="preference_update_freq_value_month">30</string>
+    <string name="preference_update_freq_value_manual">0</string>
     <!-- dialog string -->
     <string name="dialog_run_update_message">Доступно обновление. Обновить?</string>
     <string name="dialog_run_update_button_positive">@android:string/yes</string>

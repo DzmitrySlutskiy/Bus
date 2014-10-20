@@ -135,34 +135,17 @@ public class DBUpdater extends DBStructure {
      * @param routeListId route list ID
      * @param hour        hour
      * @param minutes     minutes string (store full string: minutes "10 15 50" for this route)
-     * @param dayTypeId   day type ID
      * @return the row ID of the newly inserted row, or -1 if an error occurred
      */
-    public int addTime(int routeListId, int hour, String minutes, int dayTypeId) {
+    public int addTime(int routeListId, int hour, String minutes/*, int dayTypeId*/) {
         mDb = getDB();
         if (mDb != null && mDb.isOpen()) {
             ContentValues content = new ContentValues();
             content.put(KEY_ROUTE_LIST_ID, routeListId);
             content.put(KEY_HOUR, hour);
             content.put(KEY_MINUTES, minutes);
-            content.put(KEY_DAY_TYPE_ID, dayTypeId);
-            return (int) mDb.insert(DB_TABLE_TIME_LIST, null, content);
-        } else return - 1;
-    }
 
-    /**
-     * Add type to database
-     *
-     * @param type type string (used types: "Вых", "раб", "пт", "ежедневно" etc, often change and
-     *             add new)
-     * @return the row ID of the newly inserted row, or -1 if an error occurred
-     */
-    public int addType(String type) {
-        mDb = getDB();
-        if (mDb != null && mDb.isOpen()) {
-            ContentValues content = new ContentValues();
-            content.put(KEY_TYPE, type);
-            return (int) mDb.insert(DB_TABLE_TYPE_LIST, null, content);
+            return (int) mDb.insert(DB_TABLE_TIME_LIST, null, content);
         } else return - 1;
     }
 
