@@ -7,11 +7,13 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -54,6 +56,7 @@ public class TimeListFragment extends BaseFragment {
     private View mHeaderView;
     private TextView mRouteName;
     private TextView mStopDetail;
+    private ProgressBar mProgress;
 
     private List<String> mTypeList;
 
@@ -101,6 +104,7 @@ public class TimeListFragment extends BaseFragment {
         mTimeListView = (ListView) view.findViewById(R.id.list_view_time);
         mHeaderView = inflater.inflate(R.layout.list_item_time, (ViewGroup) view.findViewById(R.id.list_view_time), false);
 
+        mProgress = (ProgressBar) view.findViewById(android.R.id.progress);
 
         return view;
     }
@@ -182,15 +186,31 @@ public class TimeListFragment extends BaseFragment {
             return;
         }
 
-        TimeAdapter adapter = new TimeAdapter(getActivity(), timeList);
+        CursorAdapter adapter = (CursorAdapter) mTimeListView.getAdapter();
+        if (adapter == null) {
+            adapter = new TimeAdapter(getActivity(), timeList);
+            mTimeListView.setAdapter(adapter);
+        } else {
+            adapter.changeCursor(timeList);
+        }
+        setLoadingProgressState(false);
+    }
 
-        mTimeListView.setAdapter(adapter);
+    /**
+     * if state == true show progress bar and hide ListView
+     *
+     * @param state loading progress state
+     */
+    private void setLoadingProgressState(boolean state) {
+        mTimeListView.setVisibility(state ? View.GONE : View.VISIBLE);
+        mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
     }
 
     /*  Async data loader callback implementation*/
     private class CallBackImpl implements LoaderCallbacks<Cursor> {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            setLoadingProgressState(true);
             if (id == LOADER_TYPE_ID) {
                 return new TypeListLoader(getActivity().getApplicationContext(), args);
             } else if (id == LOADER_TIME_ID) {
@@ -222,6 +242,7 @@ public class TimeListFragment extends BaseFragment {
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
+            setLoadingProgressState(true);
         }
     }
 }

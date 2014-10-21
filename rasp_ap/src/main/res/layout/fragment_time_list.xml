@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              tools:context="by.slutskiy.busschedule.ui.fragments.TimeListFragment">
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="by.slutskiy.busschedule.ui.fragments.TimeListFragment">
 
     <TextView
+        android:layout_centerHorizontal="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/text_view_route_detail_time"
@@ -15,6 +15,8 @@
         android:padding="@dimen/text_view_padding"/>
 
     <TextView
+        android:layout_below="@id/text_view_route_detail_time"
+        android:layout_centerHorizontal="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/text_view_stop_detail"
@@ -23,10 +25,17 @@
         android:padding="@dimen/text_view_padding"/>
 
     <ListView
+        android:layout_below="@id/text_view_stop_detail"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/list_view_time"
         android:padding="@dimen/text_view_padding"
         android:headerDividersEnabled="true"/>
 
-</LinearLayout>
+    <ProgressBar
+        android:id="@android:id/progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone"/>
+</RelativeLayout>

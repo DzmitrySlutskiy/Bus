@@ -7,14 +7,15 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.CursorAdapter;
+
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
@@ -50,7 +51,7 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     private ListView mStopListView;
     private TextView mRouteNameView;
-
+    private ProgressBar mProgress;
     /*  call backs  */
     private StringCallback mStringCallBack = null;
 
@@ -88,6 +89,7 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
         mRouteNameView = (TextView) view.findViewById(R.id.text_view_route_detail);
         mStopListView = (ListView) view.findViewById(R.id.list_view_stop);
+        mProgress = (ProgressBar) view.findViewById(android.R.id.progress);
 
         resetUI();
 
@@ -104,19 +106,6 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//        if (mStopList != null && position >= 0 && position < mStopList.size()) {
-//            String stopName = mStopList.get(position).getStopName();
-//            int key = mStopList.get(position).getKey();
-//
-//            if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
-//                OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
-//                if (mRouteId >= 0) {
-//                    listener.OnRouteStopSelected(key, stopName, mStopDetail);
-//                } else {
-//                    listener.OnStopSelected(key, stopName);
-//                }
-//            }
-//        }
         if (mStopList != null && mStopList.moveToPosition(position)) {
 
             String stopName = mStopList.getString(mStopList.getColumnIndex(DBReader.KEY_STOP_NAME));
@@ -137,16 +126,8 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
      * reset UI elements to default values
      */
     private void resetUI() {
-        //clear list and set text "get data"
-        String[] newsArr;
-        newsArr = new String[1];
-        newsArr[0] = getString(R.string.text_view_get_data);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, newsArr);
-        mStopListView.setAdapter(adapter);
-
-        //reset text in textView to "get data"
-        mRouteNameView.setText(getString(R.string.text_view_get_data));
+        setLoadingProgressState(true);
+        mRouteNameView.setText("");
     }
 
     @Override
@@ -188,28 +169,35 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
      */
     private void updateData(Cursor data) {
         if (data != null) {
-
             mStopList = data;
 
-            /* if mRoute< 0 this fragment show all stop list*/
-//            if (mRouteId < 0) {
-//                Collections.sort(mStopList);
-//            }
+            CursorAdapter cursorAdapter = (CursorAdapter) mStopListView.getAdapter();
+            if (cursorAdapter==null){
+                cursorAdapter = new SimpleCursorAdapter(
+                        getActivity(), android.R.layout.simple_list_item_1, data,
+                        new String[]{DBStructure.KEY_STOP_NAME},
+                        new int[]{android.R.id.text1}, 0);
 
-            CursorAdapter cursorAdapter = new SimpleCursorAdapter(
-                    getActivity(), android.R.layout.simple_list_item_1, data,
-                    new String[]{DBStructure.KEY_STOP_NAME},
-                    new int[]{android.R.id.text1}, 0);
+                mStopListView.setAdapter(cursorAdapter);
+            }else{
+                cursorAdapter.changeCursor(data);
+            }
 
-
-//            ArrayAdapter<Stop> adapter = new ArrayAdapter<Stop>(getActivity(),
-//                    android.R.layout.simple_list_item_1, mStopList);
-//            mStopListView.setAdapter(adapter);
-            mStopListView.setAdapter(cursorAdapter);
             mStopListView.setOnItemClickListener(this);
 
+            setLoadingProgressState(false);
             updateStopDetailText();
         }
+    }
+
+    /**
+     * if state == true show progress bar and hide ListView
+     *
+     * @param state loading progress state
+     */
+    private void setLoadingProgressState(boolean state) {
+        mStopListView.setVisibility(state ? View.GONE : View.VISIBLE);
+        mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
     }
 
     private LoaderCallbacks getStringCallback() {
@@ -275,6 +263,7 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
         @Override
         public void onLoaderReset(Loader<Cursor> stringLoader) {
+            resetUI();
         }
     }
 
@@ -296,6 +285,7 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
         @Override
         public void onLoaderReset(Loader<Cursor> listLoader) {
+            resetUI();
         }
     }
 }

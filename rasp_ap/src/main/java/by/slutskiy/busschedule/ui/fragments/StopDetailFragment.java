@@ -7,12 +7,13 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.Calendar;
@@ -40,13 +41,14 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
     public static final String STOP_NAME = "mStopName";
     // the fragment initialization parameters
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
-    //private List<StopDetail> mStopDetList = null;
+
     private int mStopId;
     private String mStopName;
     private int mCurrentHour;
 
     private ListView mDetailList;
     private TextView mStopDetail;
+    private ProgressBar mProgress;
 
     public StopDetailFragment() {
         // Required empty public constructor
@@ -96,6 +98,8 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
         mDetailList = (ListView) view.findViewById(R.id.list_view_stop_detail);
         mDetailList.setOnItemClickListener(this);
 
+        mProgress = (ProgressBar) view.findViewById(android.R.id.progress);
+
         updateData(null);
 
         return view;
@@ -103,15 +107,6 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        /*if (mStopDetList != null &&
-                position >= 0 &&
-                position < mStopDetList.size() &&
-                mListener != null &&
-                mListener instanceof OnStopDetailListener) {
-            ((OnStopDetailListener) mListener).onStopDetailSelected((int) id, mStopName,
-                    mStopDetList.get(position).getRouteName());
-        }*/
-
         if (mListener != null &&
                 mListener instanceof OnStopDetailListener) {
             ((OnStopDetailListener) mListener).onStopDetailSelected((int) id, mStopName,
@@ -157,16 +152,30 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
      */
     private void updateData(Cursor data) {
         if (data != null) {
-            mStopDetail.setText(mStopName);
-            //mStopDetList = data;
+            CursorAdapter adapter = (CursorAdapter) mDetailList.getAdapter();
+            if (adapter == null) {
+                adapter = new StopDetailAdapter(getActivity(), data);
+                mDetailList.setAdapter(adapter);
+            } else {
+                adapter.changeCursor(data);
+            }
 
-            StopDetailAdapter adapter = new StopDetailAdapter(getActivity(), data);
-            mDetailList.setAdapter(adapter);
+            mStopDetail.setText(mStopName);
+
+            setLoadingProgressState(false);
         } else {
-            mDetailList.setAdapter(new ArrayAdapter<String>(getActivity(),
-                    android.R.layout.simple_list_item_1,
-                    new String[]{getString(R.string.text_view_get_data)}));
+            setLoadingProgressState(true);
         }
+    }
+
+    /**
+     * if state == true show progress bar and hide ListView
+     *
+     * @param state loading progress state
+     */
+    private void setLoadingProgressState(boolean state) {
+        mDetailList.setVisibility(state ? View.GONE : View.VISIBLE);
+        mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
     }
 
     /**
@@ -190,6 +199,7 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
+            setLoadingProgressState(true);
         }
     }
 }

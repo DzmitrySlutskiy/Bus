@@ -7,15 +7,13 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-
-import java.util.ArrayList;
-import java.util.List;
+import android.widget.ProgressBar;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.BusRouteLoader;
@@ -39,6 +37,7 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
 
     private ListView mBusList;
+    private ProgressBar mProgress;
 
     public RouteFragment() {
     }
@@ -60,7 +59,9 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
         View fragmentView = inflater.inflate(R.layout.fragment_route, container, false);
 
         mBusList = (ListView) fragmentView.findViewById(R.id.list_view_bus);
-        clearList();
+        mProgress = (ProgressBar) fragmentView.findViewById(android.R.id.progress);
+
+        setLoadingProgressState(true);
 
         return fragmentView;
     }
@@ -78,29 +79,35 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
     }
 
     /**
-     * clear list with bus route (show "get data" string in list)
-     */
-    private void clearList() {
-        if (mBusList != null) {
-            List<String> updateText = new ArrayList<String>();
-            updateText.add(getString(R.string.text_view_get_data));
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                    android.R.layout.simple_list_item_1, updateText);
-            mBusList.setAdapter(adapter);
-        }
-    }
-
-    /**
      * update list in fragment
      *
      * @param routesList list with route info
      */
     private void updateData(Cursor routesList) {
         if (mBusList != null && routesList != null) {
-            BusRouteAdapter adapter = new BusRouteAdapter(getActivity(), routesList);
-            mBusList.setAdapter(adapter);
+            CursorAdapter adapter = (CursorAdapter) mBusList.getAdapter();
+            if (adapter == null) {
+                adapter = new BusRouteAdapter(getActivity(), routesList);
+                mBusList.setAdapter(adapter);
+            } else {
+                adapter.changeCursor(routesList);
+            }
             mBusList.setOnItemClickListener(this);
+            setLoadingProgressState(false);
+        } else {
+            setLoadingProgressState(true);
         }
+    }
+
+
+    /**
+     * if state == true show progress bar and hide ListView
+     *
+     * @param state loading progress state
+     */
+    private void setLoadingProgressState(boolean state) {
+        mBusList.setVisibility(state ? View.GONE : View.VISIBLE);
+        mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
     }
 
     /**
@@ -130,7 +137,7 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
                 mBusList.setOnItemClickListener(null);
             }
 
-            clearList();
+            setLoadingProgressState(true);
         }
     }
 }

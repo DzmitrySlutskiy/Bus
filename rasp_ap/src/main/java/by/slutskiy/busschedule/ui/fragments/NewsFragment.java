@@ -7,18 +7,16 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.data.DBStructure;
@@ -45,6 +43,7 @@ public class NewsFragment extends BaseFragment {
     /*   UI   */
     private TextView mUpdateDate;
     private ListView mNewsList;
+    private ProgressBar mProgress;
 
     public NewsFragment() {
         // Required empty public constructor
@@ -63,6 +62,9 @@ public class NewsFragment extends BaseFragment {
         View fragmentView = inflater.inflate(R.layout.fragment_news, container, false);
         mUpdateDate = (TextView) fragmentView.findViewById(R.id.text_view_update_date);
         mNewsList = (ListView) fragmentView.findViewById(R.id.list_view_news);
+        mProgress = (ProgressBar) fragmentView.findViewById(android.R.id.progress);
+
+        setLoadingProgressState(true);
 
         updateData(null);
 
@@ -85,21 +87,23 @@ public class NewsFragment extends BaseFragment {
      * @param data list with news
      */
     private void updateData(Cursor data) {
-        ListAdapter adapter;
         if (data == null) {
-            List<String> getData = new ArrayList<String>();
-            getData.add(getString(R.string.text_view_get_data));
-
-            updateTextView();
-            adapter = new ArrayAdapter<String>(getActivity(),
-                    android.R.layout.simple_list_item_1, getData);
+            setLoadingProgressState(true);
         } else {
-            adapter = new SimpleCursorAdapter(getActivity(),
-                    android.R.layout.simple_list_item_1,data,
-                    new String[]{DBStructure.KEY_NEWS_TEXT},
-                    new int[]{android.R.id.text1}, 0);
+            CursorAdapter adapter = (CursorAdapter) mNewsList.getAdapter();
+            if (adapter == null) {
+                adapter = new SimpleCursorAdapter(getActivity(),
+                        android.R.layout.simple_list_item_1, data,
+                        new String[]{DBStructure.KEY_NEWS_TEXT},
+                        new int[]{android.R.id.text1}, 0);
+
+                mNewsList.setAdapter(adapter);
+            } else {
+                adapter.changeCursor(data);
+            }
+            setLoadingProgressState(false);
+            updateTextView();
         }
-        mNewsList.setAdapter(adapter);
     }
 
     /**
@@ -115,6 +119,16 @@ public class NewsFragment extends BaseFragment {
         }
 
         mUpdateDate.setText(lastUpdateStr);
+    }
+
+    /**
+     * if state == true show progress bar and hide ListView
+     *
+     * @param state loading progress state
+     */
+    private void setLoadingProgressState(boolean state) {
+        mNewsList.setVisibility(state ? View.GONE : View.VISIBLE);
+        mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
     }
 
     /*  Async data loader callback implementation*/
