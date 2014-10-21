@@ -38,6 +38,7 @@ public class NotificationUtils {
         builder.setSmallIcon(iconId);
         builder.setContentTitle(title);
         builder.setContentText(text);
+        builder.setOngoing(true);
 
         //initialize manager
         NotificationManager nManager = getNotificationManager(context);
@@ -58,6 +59,7 @@ public class NotificationUtils {
 
             mBuilder.setContentTitle(title);
             mBuilder.setContentText(text);
+            mBuilder.setOngoing(true);
 
             mNotificationManager.notify(id, mBuilder.build());
         }
