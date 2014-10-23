@@ -45,7 +45,14 @@
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
-        <receiver android:name="by.slutskiy.busschedule.receivers.AlarmReceiver"/>
+        <receiver android:name="by.slutskiy.busschedule.receivers.AlarmReceiver" />
+
+        <provider
+            android:name="by.slutskiy.busschedule.providers.BusProvider"
+            android:authorities="by.slutskiy.busschedule.providers.busprovider"
+            android:enabled="true"
+            android:exported="false" >
+        </provider>
     </application>
 
 </manifest>
