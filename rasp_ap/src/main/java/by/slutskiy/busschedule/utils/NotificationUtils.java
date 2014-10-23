@@ -24,21 +24,22 @@ public class NotificationUtils {
     /**
      * Create notification and show it
      *
-     * @param context context
-     * @param title   notification title
-     * @param text    notification text
-     * @param iconId  notification icon
+     * @param context   context
+     * @param title     notification title
+     * @param text      notification text
+     * @param iconId    notification icon
+     * @param isOngoing if = true notification set to ongoing
      * @return Id notification for next update
      */
     public static int createNotification(Context context,
-                                         String title, String text, int iconId) {
+                                         String title, String text, int iconId, boolean isOngoing) {
         int notificationId = NOTIFICATION_ID++;
 
         Builder builder = getBuilder(context);  //initialize builder
         builder.setSmallIcon(iconId);
         builder.setContentTitle(title);
         builder.setContentText(text);
-        builder.setOngoing(true);
+        builder.setOngoing(isOngoing);
 
         //initialize manager
         NotificationManager nManager = getNotificationManager(context);
@@ -47,22 +48,31 @@ public class NotificationUtils {
         return notificationId;
     }
 
+    public static int createNotification(Context context, String title, String text, int iconId) {
+        return createNotification(context, title, text, iconId, false);
+    }
+
     /**
      * Update notification with specified id
      *
-     * @param id    notification id for update
-     * @param title notification text
-     * @param text  notification icon
+     * @param id        notification id for update
+     * @param title     notification text
+     * @param isOngoing if = true notification set to ongoing
+     * @param text      notification icon
      */
-    public static void updateNotification(int id, String title, String text) {
+    public static void updateNotification(int id, String title, String text, boolean isOngoing) {
         if (mBuilder != null && mNotificationManager != null) {
 
             mBuilder.setContentTitle(title);
             mBuilder.setContentText(text);
-            mBuilder.setOngoing(true);
+            mBuilder.setOngoing(isOngoing);
 
             mNotificationManager.notify(id, mBuilder.build());
         }
+    }
+
+    public static void updateNotification(int id, String title, String text) {
+        updateNotification(id, title, text, false);
     }
 
     /**

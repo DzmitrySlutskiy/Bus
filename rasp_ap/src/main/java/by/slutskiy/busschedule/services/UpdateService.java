@@ -136,7 +136,8 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
         mNotificationId = NotificationUtils.createNotification(getApplicationContext(),
                 getString(R.string.notification_title_update),
                 getString(R.string.notification_message_try_update),
-                R.drawable.ic_launcher);
+                R.drawable.ic_launcher,
+                true);
 
         mDbUpdater = DBUpdater.getInstance(getApplicationContext());
         String filePath = getApplicationContext().getFilesDir().getPath() + "/" + UpdateUtils.FILE_NAME;
@@ -149,7 +150,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
                 NotificationUtils.updateNotification(mNotificationId,
                         getString(R.string.notification_title_update),
-                        getString(R.string.notification_message_open_file));
+                        getString(R.string.notification_message_open_file),true);
 
                 NotificationUtils.showIndeterminateProgress(mNotificationId);
 
@@ -159,7 +160,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
                 NotificationUtils.updateNotification(mNotificationId,
                         getString(R.string.notification_title_update),
-                        getString(R.string.notification_message_update_db));
+                        getString(R.string.notification_message_update_db),true);
 
                 extractNews(mXlsHelper);                            //get news from first sheet
 
