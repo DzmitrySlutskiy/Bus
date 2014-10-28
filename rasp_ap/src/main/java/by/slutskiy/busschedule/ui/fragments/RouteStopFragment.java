@@ -13,13 +13,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.loaders.RouteDetailLoader;
 import by.slutskiy.busschedule.loaders.StopLoader;
@@ -108,8 +106,8 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (mStopList != null && mStopList.moveToPosition(position)) {
 
-            String stopName = mStopList.getString(mStopList.getColumnIndex(DBReader.KEY_STOP_NAME));
-            int key = mStopList.getInt(mStopList.getColumnIndex(DBReader.KEY_ID));
+            String stopName = mStopList.getString(mStopList.getColumnIndex(DBStructure.KEY_STOP_NAME));
+            int key = mStopList.getInt(mStopList.getColumnIndex(DBStructure.KEY_ID));
 
             if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
                 OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
@@ -132,9 +130,11 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     @Override
     protected void initLoader() {
-        Bundle args = new Bundle();
-        args.putInt(StopLoader.ATT_ROUT_ID, mRouteId);
-
+        Bundle args = null;
+        if (mRouteId > 0) {
+            args = new Bundle();
+            args.putInt(StopLoader.ATT_ROUT_ID, mRouteId);
+        }
         initLoader(args, LOADER_ID_STOP_LIST, getCallBack(), mNeedRestartLoaders);
 
         //если загружаем конкретный маршрут запускаем дополнительный лоадер для инфо по маршруту
@@ -172,14 +172,14 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
             mStopList = data;
 
             CursorAdapter cursorAdapter = (CursorAdapter) mStopListView.getAdapter();
-            if (cursorAdapter==null){
+            if (cursorAdapter == null) {
                 cursorAdapter = new SimpleCursorAdapter(
                         getActivity(), android.R.layout.simple_list_item_1, data,
                         new String[]{DBStructure.KEY_STOP_NAME},
                         new int[]{android.R.id.text1}, 0);
 
                 mStopListView.setAdapter(cursorAdapter);
-            }else{
+            } else {
                 cursorAdapter.changeCursor(data);
             }
 

@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.loaders.TimeListLoader;
 import by.slutskiy.busschedule.loaders.TypeListLoader;
 import by.slutskiy.busschedule.services.UpdateService;
@@ -163,7 +163,7 @@ public class TimeListFragment extends BaseFragment {
             mTypeList = new ArrayList<String>();
             listHeader.moveToFirst();
 
-            int index = listHeader.getColumnIndex(DBReader.KEY_MINUTES);
+            int index = listHeader.getColumnIndex(DBStructure.KEY_MINUTES);
             String type = listHeader.getString(index);
 
             String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);

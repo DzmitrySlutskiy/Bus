@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.services.UpdateService;
 
 /**
@@ -50,9 +50,9 @@ public class StopDetailAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder) view.getTag();
 
-        holder.mRouteName.setText(cursor.getString(cursor.getColumnIndex(DBReader.FULL_ROUTE)));
+        holder.mRouteName.setText(cursor.getString(cursor.getColumnIndex(DBStructure.FULL_ROUTE)));
 
-        String minutes = cursor.getString(cursor.getColumnIndex(DBReader.KEY_MINUTES));
+        String minutes = cursor.getString(cursor.getColumnIndex(DBStructure.KEY_MINUTES));
 
         String[] result = TextUtils.split(minutes, UpdateService.TYPE_DELIMITER);
         String resultMinutes = "";

@@ -1,10 +1,11 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.RouteListContract;
+import by.slutskiy.busschedule.providers.contracts.StopContract;
 
 /**
  * background download task
@@ -15,8 +16,6 @@ import by.slutskiy.busschedule.data.DBReader;
 public class StopLoader extends BaseLoader {
     public static final String ATT_ROUT_ID = "routeId";
 
-    private int routeId;
-
     /**
      * Stores away the application context associated with context. Since Loaders can be used
      * across multiple activities it's dangerous to store the context directly.
@@ -24,17 +23,20 @@ public class StopLoader extends BaseLoader {
      * @param context used to retrieve the application context.
      */
     public StopLoader(Context context, Bundle args) {
-        super(context);
+        super(context,
 
-        if (args != null) {
-            routeId = args.getInt(ATT_ROUT_ID);
-        }
-    }
+                (args != null)
+                        ? Uri.withAppendedPath(RouteListContract.CONTENT_URI, "" + args.getInt(ATT_ROUT_ID))
+                        : StopContract.CONTENT_URI,
 
-    @Override
-    public Cursor loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
+                new String[]{
+                        StopContract.COLUMN_ID,
+                        StopContract.COLUMN_STOP_NAME},
+                null, null,
 
-        return dbReader.getRouteStopsListCursor(routeId);
+                (args != null)
+                        ? null
+                        : StopContract.COLUMN_STOP_NAME
+        );
     }
 }

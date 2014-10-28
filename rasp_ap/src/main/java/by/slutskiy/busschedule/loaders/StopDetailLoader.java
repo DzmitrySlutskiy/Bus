@@ -1,10 +1,9 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.StopDetailContract;
 
 /**
  * background task loader
@@ -16,8 +15,6 @@ public class StopDetailLoader extends BaseLoader {
 
     public static final String ATT_STOP_ID = "stopId";
     public static final String ATT_HOUR = "currentHour";
-    private int mStopIdLoader;
-    private int mCurrentHourLoader;
 
     /**
      * Stores away the application context associated with context. Since Loaders can be used
@@ -26,18 +23,14 @@ public class StopDetailLoader extends BaseLoader {
      * @param context used to retrieve the application context.
      */
     public StopDetailLoader(Context context, Bundle args) {
-        super(context);
+        super(context,
+                StopDetailContract.CONTENT_URI,
+                new String[]{StopDetailContract.COLUMN_ID,
+                        StopDetailContract.COLUMN_FULL_ROUTE,
+                        StopDetailContract.COLUMN_MINUTES},
+                "RouteList.StopId = ? AND TimeList.Hour = ?",
+                new String[]{"" + args.getInt(ATT_STOP_ID),
+                        "" + args.getInt(ATT_HOUR)}, null);
 
-        if (args != null) {
-            mStopIdLoader = args.getInt(ATT_STOP_ID);
-            mCurrentHourLoader = args.getInt(ATT_HOUR);
-        }
-    }
-
-    @Override
-    public Cursor loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
-
-        return dbReader.getStopDetailCursor(mStopIdLoader, mCurrentHourLoader);
     }
 }

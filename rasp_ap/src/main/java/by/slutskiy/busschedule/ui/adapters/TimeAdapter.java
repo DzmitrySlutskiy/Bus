@@ -15,7 +15,6 @@ import java.util.Calendar;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.views.TimeView;
@@ -68,7 +67,7 @@ public class TimeAdapter extends CursorAdapter {
         int hour = cursor.getInt(cursor.getColumnIndex(DBStructure.KEY_HOUR));
         List<String> mins = new ArrayList<String>();
 
-        int index = cursor.getColumnIndex(DBReader.KEY_MINUTES);
+        int index = cursor.getColumnIndex(DBStructure.KEY_MINUTES);
         String type = cursor.getString(index);
 
         String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);

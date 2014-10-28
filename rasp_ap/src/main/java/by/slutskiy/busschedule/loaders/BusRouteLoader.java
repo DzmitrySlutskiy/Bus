@@ -1,9 +1,8 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.database.Cursor;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.RouteContract;
 
 /**
  * background data loader
@@ -17,13 +16,12 @@ public class BusRouteLoader extends BaseLoader {
      * @param context used to retrieve the application context.
      */
     public BusRouteLoader(Context context) {
-        super(context);
-    }
-
-    @Override
-    public Cursor loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
-
-        return dbReader.getRoutesListCursor();
+        super(context, RouteContract.CONTENT_URI,
+                new String[]{
+                        RouteContract.COLUMN_ID,
+                        RouteContract.COLUMN_BUS_NUMBER,
+                        RouteContract.COLUMN_BEGIN_STOP,
+                        RouteContract.COLUMN_END_STOP}
+                , null, null, null);
     }
 }

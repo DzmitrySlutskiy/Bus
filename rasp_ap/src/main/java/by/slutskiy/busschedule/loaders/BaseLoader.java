@@ -1,6 +1,7 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
+import android.net.Uri;
 import android.support.v4.content.CursorLoader;
 
 import java.util.Observable;
@@ -16,8 +17,8 @@ import by.slutskiy.busschedule.services.UpdateService;
  */
 abstract class BaseLoader extends CursorLoader implements Observer {
 
-    BaseLoader(Context context) {
-        super(context);
+    public BaseLoader(Context context, Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        super(context, uri, projection, selection, selectionArgs, sortOrder);
         UpdateService.addObserver(this);
     }
 

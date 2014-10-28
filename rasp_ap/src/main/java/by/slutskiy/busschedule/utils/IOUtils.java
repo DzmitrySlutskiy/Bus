@@ -1,9 +1,11 @@
 package by.slutskiy.busschedule.utils;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
+import java.util.zip.ZipInputStream;
 
 /**
  * IOUtils
@@ -27,6 +30,9 @@ public class IOUtils {
     private static final int NOTIFY_PERCENT = 1;
     private static final int MAX_BUFFER = 1024;
     private static final int EOF = - 1;
+
+    /*  default buffer size  */
+    private static final int BUFFER_SIZE = 8192;
 
     private IOUtils() {/*   code    */}
 
@@ -173,26 +179,13 @@ public class IOUtils {
         } catch (IOException e) {
             return false;
         } finally {
-
-            if (stream != null) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                    Log.e(LOG_TAG, "Error while closing stream: " + e.getMessage());
-                }
-            }
+            closeStreamSilent(stream);
 
             if (uCon != null) {
                 uCon.disconnect();
             }
 
-            try {
-                if (outStream != null) {
-                    outStream.close();
-                }
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error while closing stream: " + e.getMessage());
-            }
+            closeStreamSilent(outStream);
 
             if (listener != null) {
                 listener.onFinishLoad();
@@ -202,6 +195,66 @@ public class IOUtils {
         Log.i(LOG_TAG, "Download complete file size: " + fileSize);
 
         return true;
+    }
+
+    /**
+     * Close stream with hide exception in close method
+     *
+     * @param needToClose closeable interface
+     */
+    public static void closeStreamSilent(Closeable needToClose) {
+        try {
+            if (needToClose != null) {
+                needToClose.close();
+            }
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "Silent close exception: " + e);
+        }
+    }
+
+    public static void extractFile(Context context, int resourceId, String dest) throws IOException {
+
+        Log.i(LOG_TAG, "try extract db from zip file");
+
+        File fileDst = new File(dest);
+
+        /*   streams for unzip file and save to fileDst   */
+        InputStream inputStream = context.getResources().openRawResource(resourceId);
+
+        ZipInputStream zipInputStream = null;
+        OutputStream outputStream = null;
+        try {
+            zipInputStream = new ZipInputStream(new BufferedInputStream(inputStream));
+            outputStream = new BufferedOutputStream(new FileOutputStream(fileDst));
+
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int count;
+            while (zipInputStream.getNextEntry() != null) {
+                while ((count = zipInputStream.read(buffer)) != - 1) {
+                    outputStream.write(buffer, 0, count);
+                }
+            }
+
+            Log.i(LOG_TAG, "extract db from zip file complete");
+        } catch (IOException ioe) {
+            Log.e(LOG_TAG, "unzip error: " + ioe.getMessage());
+            throw new IOException(ioe);
+        } finally {
+
+            /*  close all streams   */
+            IOUtils.closeStreamSilent(inputStream);
+
+            IOUtils.closeStreamSilent(outputStream);
+
+            IOUtils.closeStreamSilent(zipInputStream);
+        }
+    }
+
+    public static void mkDir(String path) {
+        File dirCreator = new File(path);
+        if (! dirCreator.mkdirs()) {
+            Log.i(LOG_TAG, "make dir return false! path:" + dirCreator.getPath());
+        }
     }
 
     /**

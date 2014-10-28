@@ -5,20 +5,13 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-import android.widget.Toast;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.Closeable;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.zip.ZipInputStream;
 
 import by.slutskiy.busschedule.BuildConfig;
 import by.slutskiy.busschedule.R;
+import by.slutskiy.busschedule.utils.IOUtils;
 
 /**
  * DBStructure extends SQLiteOpenHelper
@@ -35,33 +28,30 @@ public class DBStructure extends SQLiteOpenHelper {
 
     private static final String LOG_TAG = DBStructure.class.getSimpleName();
 
-    /*  default buffer size  */
-    private static final int BUFFER_SIZE = 8192;
-
     /**
      * Версия базы данных
      */
     private static final int DB_VERSION = 3;
 
     /*  Table list  */
-    static final String DB_TABLE_NEWS_LIST = "News";
-    static final String DB_TABLE_STOP_LIST = "StopList";
-    static final String DB_TABLE_BUS_LIST = "BusList";
-    static final String DB_TABLE_ROUTES = "Routes";
-    static final String DB_TABLE_ROUTE_LIST = "RouteList";
-    static final String DB_TABLE_TIME_LIST = "TimeList";
+    public static final String DB_TABLE_NEWS_LIST = "News";
+    public static final String DB_TABLE_STOP_LIST = "StopList";
+    public static final String DB_TABLE_BUS_LIST = "BusList";
+    public static final String DB_TABLE_ROUTES = "Routes";
+    public static final String DB_TABLE_ROUTE_LIST = "RouteList";
+    public static final String DB_TABLE_TIME_LIST = "TimeList";
 
     /*  Table fields    */
     public static final String KEY_NEWS_TEXT = "NewsText";
     public static final String KEY_STOP_NAME = "StopName";
     public static final String KEY_BUS_NUMBER = "BusNumber";
-    static final String KEY_BUS_ID = "BusId";
-    static final String KEY_BEGIN_STOP_ID = "BeginStopId";
-    static final String KEY_END_STOP_ID = "EndStopId";
+    public static final String KEY_BUS_ID = "BusId";
+    public static final String KEY_BEGIN_STOP_ID = "BeginStopId";
+    public static final String KEY_END_STOP_ID = "EndStopId";
     public static final String KEY_ROUTE_ID = "RouteId";
-    static final String KEY_STOP_ID = "StopId";
-    static final String KEY_STOP_INDEX = "StopIndex";
-    static final String KEY_ROUTE_LIST_ID = "RouteListId";
+    public static final String KEY_STOP_ID = "StopId";
+    public static final String KEY_STOP_INDEX = "StopIndex";
+    public static final String KEY_ROUTE_LIST_ID = "RouteListId";
     public static final String KEY_HOUR = "Hour";
     public static final String KEY_MINUTES = "Minutes";
     public static final String KEY_ID = "_id";
@@ -152,7 +142,7 @@ public class DBStructure extends SQLiteOpenHelper {
     /*SELECT
       RouteList._id, RouteList.RouteId,
       BusList.BusNumber || '   ' || StopList.StopName || ' - ' || StopList2.StopName AS Stop,
-      TypeList.Type || ' ' || TimeList.Minutes as Minutes
+      TimeList.Minutes
       FROM RouteList
       INNER JOIN Routes ON RouteList.RouteId = Routes._id
       INNER JOIN BusList ON Routes.BusId = BusList._id
@@ -230,8 +220,6 @@ public class DBStructure extends SQLiteOpenHelper {
             SQL_FROM + DB_TABLE_TIME_LIST +
             SQL_WHERE + DB_TABLE_TIME_LIST + "." + KEY_ROUTE_LIST_ID + " = ? " + " LIMIT 1";
 
-    private String mDbPath;
-    private final String mDbName;
     final Context mContext;
     SQLiteDatabase mDb;
 
@@ -244,17 +232,22 @@ public class DBStructure extends SQLiteOpenHelper {
     DBStructure(Context context, String dbName) {
         super(context, dbName, null, DB_VERSION);
 
-        mDbName = dbName;
         this.mContext = context;
-        mDbPath = context.getDatabasePath(mDbName).getPath();
+        String mDbPath = context.getDatabasePath(dbName).getPath();
 
         /*cut mDbName from path - get full path */
-        mDbPath = mDbPath.substring(0, mDbPath.length() - mDbName.length() - 1);
-        if (! new File(mDbPath + "/" + mDbName).exists() &&
-                (mDbName.equals(DEFAULT_DB_NAME))) {
+        mDbPath = mDbPath.substring(0, mDbPath.length() - dbName.length() - 1);
+        if (! new File(mDbPath + "/" + dbName).exists() &&
+                (dbName.equals(DEFAULT_DB_NAME))) {
 
             /*  extract database from raw resource (zip file)*/
-            extractDB();
+            IOUtils.mkDir(mDbPath);
+            try {
+                IOUtils.extractFile(context, R.raw.ap, mDbPath + "/" + dbName);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "unzip error: " + e.getMessage() + ". Run createDB()");
+                createDB();
+            }
         }
         openDB();
     }
@@ -401,72 +394,5 @@ public class DBStructure extends SQLiteOpenHelper {
         execSQL(DBStructure.DB_CREATE_INDEX_TIME_LIST);
         execSQL(DBStructure.DB_CREATE_INDEX_ROUTE_LIST);
         execSQL(DBStructure.DB_CREATE_INDEX_STOP_LIST);
-    }
-
-    /**
-     * Extract database from zip file stored as raw resource
-     */
-    private void extractDB() {
-        Log.i(LOG_TAG, "try extract db from zip file");
-
-        File dirCreator = new File(mDbPath);
-        if (! dirCreator.mkdirs()) {
-            Log.i(LOG_TAG, "make dir return false! path:" + dirCreator.getPath());
-        }
-        File fileDst = new File(mDbPath + "/" + mDbName);
-
-        /*   streams for unzip file and save to fileDst   */
-        InputStream inputStream = mContext.getResources().openRawResource(R.raw.ap);
-
-        ZipInputStream zipInputStream = null;
-        OutputStream outputStream = null;
-        try {
-            zipInputStream = new ZipInputStream(new BufferedInputStream(inputStream));
-            outputStream = new BufferedOutputStream(new FileOutputStream(fileDst));
-
-            byte[] buffer = new byte[BUFFER_SIZE];
-            int count;
-            while (zipInputStream.getNextEntry() != null) {
-                while ((count = zipInputStream.read(buffer)) != - 1) {
-                    outputStream.write(buffer, 0, count);
-                }
-            }
-
-            Log.i(LOG_TAG, "extract db from zip file complete");
-        } catch (IOException ioe) {
-            Log.e(LOG_TAG, "unzip error: " + ioe.getMessage() + ". Run createDB()");
-            Toast.makeText(mContext.getApplicationContext(),
-                    R.string.toast_extract_db_error, Toast.LENGTH_LONG).show();
-            createDB();                                     //create clear DB
-        } finally {
-
-            /*  close all streams   */
-            if (inputStream != null) {
-                closeStream(inputStream);
-            }
-
-            if (outputStream != null) {
-                closeStream(outputStream);
-            }
-
-            if (zipInputStream != null) {
-                closeStream(zipInputStream);
-            }
-        }
-    }
-
-    /**
-     * Close stream
-     *
-     * @param needClose stream implemented interface Closeable
-     */
-    private void closeStream(Closeable needClose) {
-        try {
-            needClose.close();
-        } catch (IOException ioError) {
-            Log.e(LOG_TAG, "closeStream: " + ioError.getMessage());
-            Toast.makeText(mContext.getApplicationContext(),
-                    R.string.toast_extract_db_error, Toast.LENGTH_LONG).show();
-        }
     }
 }

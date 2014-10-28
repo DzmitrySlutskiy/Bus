@@ -2,10 +2,10 @@ package by.slutskiy.busschedule.loaders;
 
 
 import android.content.Context;
-import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.TimeListContract;
 
 /**
  * TypeListLoader
@@ -17,8 +17,6 @@ public class TypeListLoader extends BaseLoader {
 
     public static final String ATT_ROUT_LIST_ID = "routeListIdLoader";
 
-    private int mRouteListIdLoader;
-
     /**
      * Stores away the application context associated with context. Since Loaders can be used
      * across multiple activities it's dangerous to store the context directly.
@@ -26,17 +24,10 @@ public class TypeListLoader extends BaseLoader {
      * @param context used to retrieve the application context.
      */
     public TypeListLoader(Context context, Bundle args) {
-        super(context);
-
-        if (args != null) {
-            mRouteListIdLoader = args.getInt(ATT_ROUT_LIST_ID);
-        }
-    }
-
-    @Override
-    public Cursor loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
-
-        return dbReader.getTypeListByRouteListIdCursor(mRouteListIdLoader);
+        super(context,
+                Uri.withAppendedPath(TimeListContract.CONTENT_TYPE_URI,
+                        "" + args.getInt(ATT_ROUT_LIST_ID)),
+                new String[]{TimeListContract.COLUMN_MINUTES},
+                null, null, null);
     }
 }

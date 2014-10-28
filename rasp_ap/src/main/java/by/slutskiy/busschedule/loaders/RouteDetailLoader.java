@@ -1,11 +1,10 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.content.CursorLoader;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.RouteContract;
 
 /**
  * RouteDetailLoader
@@ -13,11 +12,9 @@ import by.slutskiy.busschedule.data.DBReader;
  * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class RouteDetailLoader extends CursorLoader {
+public class RouteDetailLoader extends BaseLoader {
 
     public static final String ATT_ROUT_ID = "routeId";
-
-    private int routeId;
 
     /**
      * Stores away the application context associated with context. Since Loaders can be used
@@ -26,17 +23,13 @@ public class RouteDetailLoader extends CursorLoader {
      * @param context used to retrieve the application context.
      */
     public RouteDetailLoader(Context context, Bundle args) {
-        super(context);
-
-        if (args != null) {
-            routeId = args.getInt(ATT_ROUT_ID);
-        }
-    }
-
-    @Override
-    public Cursor loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
-
-        return dbReader.getRouteDetailCursor(routeId);
+        super(context,
+                Uri.withAppendedPath(RouteContract.CONTENT_URI, "" + args.getInt(ATT_ROUT_ID)),
+                new String[]{
+                        RouteContract.COLUMN_ID,
+                        RouteContract.COLUMN_BUS_NUMBER,
+                        RouteContract.COLUMN_BEGIN_STOP,
+                        RouteContract.COLUMN_END_STOP
+                }, null, null, null);
     }
 }
