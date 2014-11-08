@@ -2,9 +2,6 @@ package by.slutskiy.busschedule.providers.contracts;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.util.Log;
-
-import by.slutskiy.busschedule.data.DBStructure;
 
 /**
  * StopContract
@@ -12,14 +9,14 @@ import by.slutskiy.busschedule.data.DBStructure;
  * 27.10.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopContract extends BaseContract{
+public class StopContract extends BaseContract {
 
-    public static final String PATH = DBStructure.DB_TABLE_STOP_LIST;
+    public static final String PATH = "StopList";
 
     public static final Uri CONTENT_URI =
             Uri.withAppendedPath(AUTHORITY_URI, PATH);
 
-    public static final String COLUMN_STOP_NAME = DBStructure.KEY_STOP_NAME;
+    public static final String COLUMN_STOP_NAME = "StopName";
 
     private static final String DATABASE_CREATE = "create table "
             + PATH
@@ -27,20 +24,19 @@ public class StopContract extends BaseContract{
             + COLUMN_ID + " integer primary key autoincrement, "
             + COLUMN_STOP_NAME + " text);";
 
+    public static final String[] defaultColumns =
+            new String[]{COLUMN_ID, COLUMN_STOP_NAME};
+
     private static final String[] availableColumns =
             new String[]{COLUMN_ID, COLUMN_STOP_NAME};
 
     public static void onCreate(SQLiteDatabase database) {
-        database.execSQL(DATABASE_CREATE);
+        onCreate(database, DATABASE_CREATE, PATH);
     }
 
     public static void onUpgrade(SQLiteDatabase database, int oldVersion,
                                  int newVersion) {
-        Log.w(StopContract.class.getSimpleName(), "Upgrading database from version "
-                + oldVersion + " to " + newVersion
-                + ", which will destroy all old data");
-        database.execSQL("DROP TABLE IF EXISTS " + PATH);
-        onCreate(database);
+        onUpgrade(database, oldVersion, newVersion, DATABASE_CREATE, PATH);
     }
 
     /**

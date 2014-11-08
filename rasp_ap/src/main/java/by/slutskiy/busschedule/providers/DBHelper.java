@@ -3,19 +3,15 @@ package by.slutskiy.busschedule.providers;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 import android.util.Log;
 
-import java.io.File;
-import java.io.IOException;
-
-import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.providers.contracts.BusContract;
 import by.slutskiy.busschedule.providers.contracts.NewsContract;
 import by.slutskiy.busschedule.providers.contracts.RouteContract;
 import by.slutskiy.busschedule.providers.contracts.RouteListContract;
 import by.slutskiy.busschedule.providers.contracts.StopContract;
 import by.slutskiy.busschedule.providers.contracts.TimeListContract;
-import by.slutskiy.busschedule.utils.IOUtils;
+import by.slutskiy.busschedule.providers.contracts.TypeContract;
 
 /**
  * DBHelper
@@ -28,7 +24,7 @@ class DBHelper extends SQLiteOpenHelper {
     private static final String LOG_TAG = DBHelper.class.getSimpleName();
     /*  private fields  */
     private static final String DEFAULT_DB_NAME = "ap.db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
     /*  public constructors */
 
     public DBHelper(Context context) {
@@ -36,19 +32,19 @@ class DBHelper extends SQLiteOpenHelper {
 
         String mDbPath = context.getDatabasePath(DEFAULT_DB_NAME).getPath();
 
-        /*cut mDbName from path - get full path */
-        mDbPath = mDbPath.substring(0, mDbPath.length() - DEFAULT_DB_NAME.length() - 1);
-        if (! new File(mDbPath + "/" + DEFAULT_DB_NAME).exists() &&
-                (DEFAULT_DB_NAME.equals(DEFAULT_DB_NAME))) {
-
-            /*  extract database from raw resource (zip file)*/
-            IOUtils.mkDir(mDbPath);
-            try {
-                IOUtils.extractFile(context, R.raw.ap, mDbPath + "/" + DEFAULT_DB_NAME);
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "unzip error: " + e.getMessage() + ". Run onCreate()");
-            }
-        }
+//        /*cut mDbName from path - get full path */
+//        mDbPath = mDbPath.substring(0, mDbPath.length() - DEFAULT_DB_NAME.length() - 1);
+//        if (! new File(mDbPath + "/" + DEFAULT_DB_NAME).exists() &&
+//                (DEFAULT_DB_NAME.equals(DEFAULT_DB_NAME))) {
+//
+//            /*  extract database from raw resource (zip file)*/
+//            IOUtils.mkDir(mDbPath);
+//            try {
+//                IOUtils.extractFile(context, R.raw.ap, mDbPath + "/" + DEFAULT_DB_NAME);
+//            } catch (IOException e) {
+//                Log.e(LOG_TAG, "unzip error: " + e.getMessage() + ". Run onCreate()");
+//            }
+//        }
     }
 
     /**
@@ -64,8 +60,8 @@ class DBHelper extends SQLiteOpenHelper {
         StopContract.onCreate(db);
         RouteContract.onCreate(db);
         RouteListContract.onCreate(db);
-        BusContract.onCreate(db);
         TimeListContract.onCreate(db);
+        TypeContract.onCreate(db);
     }
 
     /**
@@ -90,11 +86,28 @@ class DBHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
         NewsContract.onUpgrade(db, oldVersion, newVersion);
         StopContract.onUpgrade(db, oldVersion, newVersion);
         RouteContract.onUpgrade(db, oldVersion, newVersion);
         RouteListContract.onUpgrade(db, oldVersion, newVersion);
-        BusContract.onUpgrade(db, oldVersion, newVersion);
         TimeListContract.onUpgrade(db, oldVersion, newVersion);
+        TypeContract.onUpgrade(db, oldVersion, newVersion);
+    }
+
+    public static void beginTransaction(SQLiteDatabase dbHelper) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            dbHelper.beginTransactionNonExclusive();
+        } else {
+            dbHelper.beginTransaction();
+        }
+    }
+
+    public static void setTransactionSuccessful(SQLiteDatabase dbHelper) {
+        dbHelper.setTransactionSuccessful();
+    }
+
+    public static void endTransaction(SQLiteDatabase dbHelper) {
+        dbHelper.endTransaction();
     }
 }

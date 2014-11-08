@@ -1,6 +1,7 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
+import android.support.v4.content.CursorLoader;
 
 import by.slutskiy.busschedule.providers.contracts.RouteContract;
 
@@ -10,18 +11,13 @@ import by.slutskiy.busschedule.providers.contracts.RouteContract;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class BusRouteLoader extends BaseLoader {
+public class BusRouteLoader extends CursorLoader {
 
     /**
      * @param context used to retrieve the application context.
      */
     public BusRouteLoader(Context context) {
         super(context, RouteContract.CONTENT_URI,
-                new String[]{
-                        RouteContract.COLUMN_ID,
-                        RouteContract.COLUMN_BUS_NUMBER,
-                        RouteContract.COLUMN_BEGIN_STOP,
-                        RouteContract.COLUMN_END_STOP}
-                , null, null, null);
+                RouteContract.availableColumns, null, null, null);
     }
 }

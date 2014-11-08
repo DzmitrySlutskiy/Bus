@@ -3,6 +3,7 @@ package by.slutskiy.busschedule.loaders;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
 
 import by.slutskiy.busschedule.providers.contracts.RouteContract;
 
@@ -12,7 +13,7 @@ import by.slutskiy.busschedule.providers.contracts.RouteContract;
  * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class RouteDetailLoader extends BaseLoader {
+public class RouteDetailLoader extends CursorLoader {
 
     public static final String ATT_ROUT_ID = "routeId";
 
@@ -25,11 +26,6 @@ public class RouteDetailLoader extends BaseLoader {
     public RouteDetailLoader(Context context, Bundle args) {
         super(context,
                 Uri.withAppendedPath(RouteContract.CONTENT_URI, "" + args.getInt(ATT_ROUT_ID)),
-                new String[]{
-                        RouteContract.COLUMN_ID,
-                        RouteContract.COLUMN_BUS_NUMBER,
-                        RouteContract.COLUMN_BEGIN_STOP,
-                        RouteContract.COLUMN_END_STOP
-                }, null, null, null);
+                RouteContract.availableColumns, null, null, null);
     }
 }

@@ -1,8 +1,8 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
 
 import by.slutskiy.busschedule.providers.contracts.RouteListContract;
 import by.slutskiy.busschedule.providers.contracts.StopContract;
@@ -13,7 +13,7 @@ import by.slutskiy.busschedule.providers.contracts.StopContract;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopLoader extends BaseLoader {
+public class StopLoader extends CursorLoader {
     public static final String ATT_ROUT_ID = "routeId";
 
     /**
@@ -26,13 +26,18 @@ public class StopLoader extends BaseLoader {
         super(context,
 
                 (args != null)
-                        ? Uri.withAppendedPath(RouteListContract.CONTENT_URI, "" + args.getInt(ATT_ROUT_ID))
+                        ? RouteListContract.CONTENT_URI
                         : StopContract.CONTENT_URI,
 
-                new String[]{
-                        StopContract.COLUMN_ID,
-                        StopContract.COLUMN_STOP_NAME},
-                null, null,
+                StopContract.defaultColumns,
+
+                (args != null)
+                        ? RouteListContract.COLUMN_ROUTE_ID + " = ?"
+                        : null,
+
+                (args != null)
+                        ? new String[]{Integer.toString(args.getInt(ATT_ROUT_ID))}
+                        : null,
 
                 (args != null)
                         ? null

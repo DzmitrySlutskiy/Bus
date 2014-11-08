@@ -18,9 +18,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.loaders.RouteDetailLoader;
 import by.slutskiy.busschedule.loaders.StopLoader;
+import by.slutskiy.busschedule.providers.contracts.BaseContract;
+import by.slutskiy.busschedule.providers.contracts.RouteContract;
+import by.slutskiy.busschedule.providers.contracts.StopContract;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -106,8 +108,8 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (mStopList != null && mStopList.moveToPosition(position)) {
 
-            String stopName = mStopList.getString(mStopList.getColumnIndex(DBStructure.KEY_STOP_NAME));
-            int key = mStopList.getInt(mStopList.getColumnIndex(DBStructure.KEY_ID));
+            String stopName = mStopList.getString(mStopList.getColumnIndex(StopContract.COLUMN_STOP_NAME));
+            int key = mStopList.getInt(mStopList.getColumnIndex(BaseContract.COLUMN_ID));
 
             if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
                 OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
@@ -175,7 +177,7 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
             if (cursorAdapter == null) {
                 cursorAdapter = new SimpleCursorAdapter(
                         getActivity(), android.R.layout.simple_list_item_1, data,
-                        new String[]{DBStructure.KEY_STOP_NAME},
+                        new String[]{StopContract.COLUMN_STOP_NAME},
                         new int[]{android.R.id.text1}, 0);
 
                 mStopListView.setAdapter(cursorAdapter);
@@ -238,24 +240,24 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
             if (data.moveToFirst()) {
                 String busNumber = "";
                 String beginStop = "";
-                String endStop = "";
+//                String endStop = "";
 
-                int fieldIndex = data.getColumnIndex(DBStructure.KEY_BUS_NUMBER);//1
+                int fieldIndex = data.getColumnIndex(RouteContract.COLUMN_BUS);//1
                 if (fieldIndex >= 0) {
                     busNumber = data.getString(fieldIndex);
                 }
 
-                fieldIndex = data.getColumnIndex(DBStructure.KEY_BEGIN_STOP);//2
+                fieldIndex = data.getColumnIndex(RouteContract.COLUMN_ROUTE_NAME);//2
                 if (fieldIndex >= 0) {
                     beginStop = data.getString(fieldIndex);
                 }
 
-                fieldIndex = data.getColumnIndex(DBStructure.KEY_END_STOP);//3
-                if (fieldIndex >= 0) {
-                    endStop = data.getString(fieldIndex);
-                }
-
-                mStopDetail = busNumber + "   " + beginStop + " - " + endStop;
+//                fieldIndex = data.getColumnIndex(DBStructure.KEY_END_STOP);//3
+//                if (fieldIndex >= 0) {
+//                    endStop = data.getString(fieldIndex);
+//                }
+//TODO
+                mStopDetail = busNumber + "   " + beginStop /*+ " - " + endStop*/;
             }
 
             updateStopDetailText();

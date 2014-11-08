@@ -19,8 +19,8 @@ import android.widget.TextView;
 import java.util.Date;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.loaders.NewsLoader;
+import by.slutskiy.busschedule.providers.contracts.NewsContract;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 import by.slutskiy.busschedule.utils.PreferenceUtils;
 import by.slutskiy.busschedule.utils.StringUtils;
@@ -94,7 +94,7 @@ public class NewsFragment extends BaseFragment {
             if (adapter == null) {
                 adapter = new SimpleCursorAdapter(getActivity(),
                         android.R.layout.simple_list_item_1, data,
-                        new String[]{DBStructure.KEY_NEWS_TEXT},
+                        new String[]{NewsContract.COLUMN_NEWS},
                         new int[]{android.R.id.text1}, 0);
 
                 mNewsList.setAdapter(adapter);

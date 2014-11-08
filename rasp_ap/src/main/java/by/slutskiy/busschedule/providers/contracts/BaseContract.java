@@ -1,11 +1,11 @@
 package by.slutskiy.busschedule.providers.contracts;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.util.Log;
 
 import java.util.Arrays;
 import java.util.HashSet;
-
-import by.slutskiy.busschedule.data.DBStructure;
 
 /**
  * BaseContract
@@ -14,12 +14,13 @@ import by.slutskiy.busschedule.data.DBStructure;
  * Created by Dzmitry Slutskiy.
  */
 public class BaseContract {
+    private static final String LOG_TAG = BaseContract.class.getSimpleName();
 
-    public static final String COLUMN_ID = DBStructure.KEY_ID;
+    public static final String COLUMN_ID = "_id";
 
     public static final String AUTHORITY = "by.slutskiy.busschedule.providers.busprovider";
 
-    static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
+    public static final Uri AUTHORITY_URI = Uri.parse("content://" + AUTHORITY);
 
     BaseContract() {/*   code    */}
 
@@ -41,5 +42,21 @@ public class BaseContract {
         } else {
             throw new IllegalArgumentException("available and projection can't be null");
         }
+    }
+
+    protected static void onCreate(SQLiteDatabase database, String query, String tableName) {
+        Log.w(LOG_TAG, "onCreate " + tableName);
+
+        database.execSQL(query);
+    }
+
+    protected static void onUpgrade(SQLiteDatabase database, int oldVersion,
+                                 int newVersion, String createQuery, String tableName) {
+        Log.w(LOG_TAG, "Upgrading database from version "
+                + oldVersion + " to " + newVersion
+                + ", which will destroy all old data");
+
+        database.execSQL("DROP TABLE IF EXISTS " + tableName);
+        onCreate(database, createQuery, tableName);
     }
 }

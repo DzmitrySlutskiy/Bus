@@ -58,11 +58,18 @@ public class StringUtils {
      */
     public static String getSubStringByIndex(String source, int index, String divider) {
         String[] result = TextUtils.split(source, divider);
-        if (index >= 0 && index < result.length) {
+        if (index >= 0 && index < result.length && result.length == 2) {
             return result[index];
+        } else if (result.length == 0) {
+
+            //if divider "-" rather than " - " - bus "23 ХИМВОЛОКНО-ФОЛЮШ"
+            return getSubStringByIndex(source, index, divider.trim());
         } else {
-            return EMPTY_STRING;
+            //if splited more than 2 items (bus like 14 ДЕВЯТОВКА-5 - РСУ-2 with divider "-"
+
         }
+
+        return EMPTY_STRING;
     }
 
     /**

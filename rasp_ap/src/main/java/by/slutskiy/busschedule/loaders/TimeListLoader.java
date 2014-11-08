@@ -1,7 +1,6 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.CursorLoader;
 
@@ -25,11 +24,13 @@ public class TimeListLoader extends CursorLoader {
      */
     public TimeListLoader(Context context, Bundle args) {
         super(context,
-                Uri.withAppendedPath(TimeListContract.CONTENT_URI, "" + args.getInt(ATT_ROUT_LIST_ID)),
+                TimeListContract.CONTENT_URI,
                 new String[]{
                         TimeListContract.COLUMN_ID,
                         TimeListContract.COLUMN_HOUR,
                         TimeListContract.COLUMN_MINUTES},
-                null, null, TimeListContract.COLUMN_ID);
+                TimeListContract.COLUMN_ROUTE_LIST_ID + " = ?",
+                new String[]{Integer.toString(args.getInt(ATT_ROUT_LIST_ID))},
+                TimeListContract.COLUMN_ID);
     }
 }

@@ -1,6 +1,7 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
+import android.support.v4.content.CursorLoader;
 
 import by.slutskiy.busschedule.providers.contracts.NewsContract;
 
@@ -10,13 +11,13 @@ import by.slutskiy.busschedule.providers.contracts.NewsContract;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class NewsLoader extends BaseLoader {
+public class NewsLoader extends CursorLoader {
 
     /**
      * @param context used to retrieve the application context.
      */
     public NewsLoader(Context context) {
         super(context, NewsContract.CONTENT_URI,
-                new String[]{NewsContract.COLUMN_ID, NewsContract.COLUMN_NEWS}, null, null, null);
+                NewsContract.availableColumns, null, null, null);
     }
 }

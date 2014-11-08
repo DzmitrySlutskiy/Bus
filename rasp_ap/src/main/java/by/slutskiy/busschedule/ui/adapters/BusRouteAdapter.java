@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBStructure;
+import by.slutskiy.busschedule.providers.contracts.RouteContract;
 
 /**
  * BusRouteAdapter
@@ -43,8 +43,8 @@ public class BusRouteAdapter extends CursorAdapter {
         ViewHolder viewHolder = new ViewHolder();
 
         viewHolder.mBus = (TextView) v.findViewById(R.id.text_view_bus_number);
-        viewHolder.mBegin = (TextView) v.findViewById(R.id.text_view_begin_stop);
-        viewHolder.mEnd = (TextView) v.findViewById(R.id.text_view_end_stop);
+        viewHolder.mRouteName = (TextView) v.findViewById(R.id.text_view_route_name);
+//        viewHolder.mEnd = (TextView) v.findViewById(R.id.text_view_end_stop);
 
         v.setTag(viewHolder);
 
@@ -63,25 +63,25 @@ public class BusRouteAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder) view.getTag();
 
-        int fieldIndex = cursor.getColumnIndex(DBStructure.KEY_BUS_NUMBER);//1
+        int fieldIndex = cursor.getColumnIndex(RouteContract.COLUMN_BUS);//1
         if (fieldIndex >= 0) {
             holder.mBus.setText(cursor.getString(fieldIndex));
         }
 
-        fieldIndex = cursor.getColumnIndex(DBStructure.KEY_BEGIN_STOP);//2
+        fieldIndex = cursor.getColumnIndex(RouteContract.COLUMN_ROUTE_NAME);//2
         if (fieldIndex >= 0) {
-            holder.mBegin.setText(cursor.getString(fieldIndex));
+            holder.mRouteName.setText(cursor.getString(fieldIndex));
         }
 
-        fieldIndex = cursor.getColumnIndex(DBStructure.KEY_END_STOP);//3
-        if (fieldIndex >= 0) {
-            holder.mEnd.setText(cursor.getString(fieldIndex));
-        }
+//        fieldIndex = cursor.getColumnIndex(DBStructure.KEY_END_STOP);//3
+//        if (fieldIndex >= 0) {
+//            holder.mEnd.setText(cursor.getString(fieldIndex));
+//        }
     }
 
     private static class ViewHolder {
         public TextView mBus;
-        public TextView mBegin;
-        public TextView mEnd;
+        public TextView mRouteName;
+//        public TextView mEnd;
     }
 }

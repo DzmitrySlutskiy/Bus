@@ -2,7 +2,7 @@
  * Bus schedule for Grodno
  */
 
-package by.slutskiy.busschedule.data;
+package by.slutskiy.busschedule.utils;
 
 import android.util.Log;
 
@@ -13,11 +13,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import by.slutskiy.busschedule.utils.StringUtils;
-import jxl.Range;
-import jxl.Workbook;
-import jxl.Sheet;
 import jxl.Cell;
+import jxl.Range;
+import jxl.Sheet;
+import jxl.Workbook;
 import jxl.read.biff.BiffException;
 
 /*
@@ -49,8 +48,9 @@ public class XLSHelper {
 
     private static final String TAG_TERM = "(КОНЕЧНАЯ)";
     private static final String TAG_STREET = "УЛИЦА";
+    private static final String TAG_QUOTE = "\"";
 
-    public static final String[] DELETING_SUBSTRING = {TAG_TERM, TAG_STREET};
+    public static final String[] DELETING_SUBSTRING = {TAG_TERM, TAG_STREET, TAG_QUOTE};
 
     public static final String TAG_STOP_DIVIDER = " - ";
 

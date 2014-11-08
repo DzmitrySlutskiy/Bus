@@ -2,11 +2,8 @@ package by.slutskiy.busschedule.providers.contracts;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.util.Log;
 
 import java.util.HashMap;
-
-import by.slutskiy.busschedule.data.DBStructure;
 
 /**
  * TimeListContract
@@ -16,7 +13,11 @@ import by.slutskiy.busschedule.data.DBStructure;
  */
 public class TimeListContract extends BaseContract {
 
-    public static final String PATH = DBStructure.DB_TABLE_TIME_LIST;
+    public static final String PATH = "TimeList";
+    public static final String JOIN_PATH = PATH +
+            " LEFT OUTER JOIN " + TypeContract.PATH + " ON " +
+            TimeListContract.COLUMN_TYPE_ID + " = " +
+            TypeContract.PATH + "." + TypeContract.COLUMN_ID;
 
     public static final Uri CONTENT_URI =
             Uri.withAppendedPath(AUTHORITY_URI, PATH);
@@ -24,11 +25,11 @@ public class TimeListContract extends BaseContract {
     public static final Uri CONTENT_TYPE_URI =
             Uri.withAppendedPath(AUTHORITY_URI, PATH + "/type");
 
-    public static final String COLUMN_ROUTE_LIST_ID = DBStructure.KEY_ROUTE_LIST_ID;
-    public static final String COLUMN_HOUR = DBStructure.KEY_HOUR;
-    public static final String COLUMN_MINUTES = DBStructure.KEY_MINUTES;
-
-    public static final HashMap<String, String> PROJECTION_MAP = new HashMap<String, String>();
+    public static final String COLUMN_ROUTE_LIST_ID = "RouteListId";
+    public static final String COLUMN_HOUR = "Hour";
+    public static final String COLUMN_MINUTES = "Minutes";
+    public static final String COLUMN_TYPE_ID = "TypeId";
+    public static final String COLUMN_TYPES = TypeContract.COLUMN_TYPE_NAME;
 
     private static final String DATABASE_CREATE = "CREATE TABLE "
             + PATH
@@ -36,31 +37,31 @@ public class TimeListContract extends BaseContract {
             + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + COLUMN_ROUTE_LIST_ID + " INTEGER, "
             + COLUMN_HOUR + " INTEGER, "
-            + COLUMN_MINUTES + " TEXT);";
+            + COLUMN_MINUTES + " TEXT, "
+            + COLUMN_TYPE_ID + " TEXT );";
 
-    private static final String[] availableColumns =
-            new String[]{COLUMN_ID, COLUMN_ROUTE_LIST_ID, COLUMN_HOUR, COLUMN_MINUTES};
+    public static final String[] availableColumns =
+            new String[]{COLUMN_ID, COLUMN_ROUTE_LIST_ID, COLUMN_HOUR, COLUMN_MINUTES, COLUMN_TYPE_ID};
+
+    public static final HashMap<String, String> PROJECTION_MAP = new HashMap<String, String>();
 
     static {
         PROJECTION_MAP.put(COLUMN_ID, PATH + "." + COLUMN_ID);
         PROJECTION_MAP.put(COLUMN_ROUTE_LIST_ID, PATH + "." + COLUMN_ROUTE_LIST_ID);
-        PROJECTION_MAP.put(COLUMN_HOUR,
-                PATH + "." + COLUMN_HOUR);
-        PROJECTION_MAP.put(COLUMN_MINUTES,
-                PATH + "." + COLUMN_MINUTES);
+        PROJECTION_MAP.put(COLUMN_HOUR, PATH + "." + COLUMN_HOUR);
+        PROJECTION_MAP.put(COLUMN_MINUTES, PATH + "." + COLUMN_MINUTES);
+        PROJECTION_MAP.put(COLUMN_TYPE_ID, PATH + "." + COLUMN_TYPE_ID);
+
+        PROJECTION_MAP.put(COLUMN_TYPES, TypeContract.PATH + "." + TypeContract.COLUMN_TYPE_NAME);
     }
 
     public static void onCreate(SQLiteDatabase database) {
-        database.execSQL(DATABASE_CREATE);
+        onCreate(database, DATABASE_CREATE, PATH);
     }
 
     public static void onUpgrade(SQLiteDatabase database, int oldVersion,
                                  int newVersion) {
-        Log.w(TimeListContract.class.getSimpleName(), "Upgrading database from version "
-                + oldVersion + " to " + newVersion
-                + ", which will destroy all old data");
-        database.execSQL("DROP TABLE IF EXISTS " + PATH);
-        onCreate(database);
+        onUpgrade(database, oldVersion, newVersion, DATABASE_CREATE, PATH);
     }
 
     /**

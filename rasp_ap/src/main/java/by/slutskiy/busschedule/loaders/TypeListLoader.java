@@ -2,8 +2,8 @@ package by.slutskiy.busschedule.loaders;
 
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
 
 import by.slutskiy.busschedule.providers.contracts.TimeListContract;
 
@@ -13,7 +13,7 @@ import by.slutskiy.busschedule.providers.contracts.TimeListContract;
  * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class TypeListLoader extends BaseLoader {
+public class TypeListLoader extends CursorLoader {
 
     public static final String ATT_ROUT_LIST_ID = "routeListIdLoader";
 
@@ -25,9 +25,10 @@ public class TypeListLoader extends BaseLoader {
      */
     public TypeListLoader(Context context, Bundle args) {
         super(context,
-                Uri.withAppendedPath(TimeListContract.CONTENT_TYPE_URI,
-                        "" + args.getInt(ATT_ROUT_LIST_ID)),
-                new String[]{TimeListContract.COLUMN_MINUTES},
-                null, null, null);
+                TimeListContract.CONTENT_TYPE_URI,
+                new String[]{TimeListContract.COLUMN_TYPES},
+                TimeListContract.COLUMN_ROUTE_LIST_ID + " = ?",
+                new String[]{Integer.toString(args.getInt(ATT_ROUT_LIST_ID))},
+                null);
     }
 }

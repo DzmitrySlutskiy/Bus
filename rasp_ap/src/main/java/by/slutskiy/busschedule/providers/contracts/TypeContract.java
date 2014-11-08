@@ -4,28 +4,28 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
 /**
- * NewsContract
- * Version 1.0
- * 27.10.2014
+ * Classname
+ * Version information
+ * 08.11.2014
  * Created by Dzmitry Slutskiy.
  */
-public class NewsContract extends BaseContract {
+public class TypeContract extends BaseContract{
 
-    public static final String PATH = "News";
+    public static final String PATH = "TypeList";
 
     public static final Uri CONTENT_URI =
             Uri.withAppendedPath(AUTHORITY_URI, PATH);
 
-    public static final String COLUMN_NEWS = "NewsText";
+    public static final String COLUMN_TYPE_NAME = "Type";
 
     private static final String DATABASE_CREATE = "create table "
             + PATH
             + "("
             + COLUMN_ID + " integer primary key autoincrement, "
-            + COLUMN_NEWS + " text);";
+            + COLUMN_TYPE_NAME + " text);";
 
     public static final String[] availableColumns =
-            new String[]{COLUMN_ID, COLUMN_NEWS};
+            new String[]{COLUMN_ID, COLUMN_TYPE_NAME};
 
     public static void onCreate(SQLiteDatabase database) {
         onCreate(database, DATABASE_CREATE, PATH);
@@ -46,5 +46,5 @@ public class NewsContract extends BaseContract {
         checkColumns(availableColumns, projection);
     }
 
-    private NewsContract() {/*   code    */}
+    private TypeContract() {/*   code    */}
 }

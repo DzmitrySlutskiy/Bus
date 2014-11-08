@@ -12,10 +12,11 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBStructure;
+import by.slutskiy.busschedule.providers.contracts.TimeListContract;
 import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.views.TimeView;
 
@@ -64,23 +65,17 @@ public class TimeAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder) view.getTag();
 
-        int hour = cursor.getInt(cursor.getColumnIndex(DBStructure.KEY_HOUR));
-        List<String> mins = new ArrayList<String>();
+        int hour = cursor.getInt(cursor.getColumnIndex(TimeListContract.COLUMN_HOUR));
+        List<String> minutes = new ArrayList<String>();
 
-        int index = cursor.getColumnIndex(DBStructure.KEY_MINUTES);
+        int index = cursor.getColumnIndex(TimeListContract.COLUMN_MINUTES);
         String type = cursor.getString(index);
 
         String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);
-        for (String item : result) {
-            if (item.contains(UpdateService.TYPE_MIN_DELIMITER)) {
-                int subIndex = item.indexOf(UpdateService.TYPE_MIN_DELIMITER);
-                item = item.substring(subIndex + 1, item.length());
-            }
-            mins.add(item);
-        }
+        Collections.addAll(minutes, result);
 
         holder.mHour.setText("" + hour);
-        holder.mView.setMinList(mins);
+        holder.mView.setMinList(minutes);
 
         view.setBackgroundColor((hour == mHour) ? COLOR_CURRENT_HOUR : COLOR_ANY_HOUR);
     }
