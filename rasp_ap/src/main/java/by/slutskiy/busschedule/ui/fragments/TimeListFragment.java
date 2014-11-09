@@ -164,7 +164,7 @@ public class TimeListFragment extends BaseFragment {
             mTypeList = new ArrayList<String>();
             listHeader.moveToFirst();
 
-            int index = listHeader.getColumnIndex(TimeListContract.COLUMN_TYPE_ID);
+            int index = listHeader.getColumnIndex(TimeListContract.COLUMN_TYPES);
             String type = listHeader.getString(index);
 
             String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);

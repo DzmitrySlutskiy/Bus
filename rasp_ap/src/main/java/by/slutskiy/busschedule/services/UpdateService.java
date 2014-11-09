@@ -391,6 +391,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
                 typeId = addOperation(ContentProviderOperation.newInsert(TypeContract.CONTENT_URI)
                         .withValue(TypeContract.COLUMN_TYPE_NAME, typeStr)
                         .build());
+                mFullTypeMap.put(typeStr,typeId);
             }
 
             currentOperation = ContentProviderOperation.newInsert(TimeListContract.CONTENT_URI);

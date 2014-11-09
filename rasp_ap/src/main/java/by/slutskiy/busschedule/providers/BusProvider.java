@@ -28,7 +28,7 @@ import by.slutskiy.busschedule.providers.contracts.TimeListContract;
  * Created by Dzmitry Slutskiy.
  */
 public class BusProvider extends ContentProvider {
-    private static final String LOG_TAG = BusProvider.class.getSimpleName();
+//    private static final String LOG_TAG = BusProvider.class.getSimpleName();
 
     private static final int CODE_TABLE = 1;
     private static final int CODE_ID = 2;
@@ -189,15 +189,15 @@ public class BusProvider extends ContentProvider {
     public ContentProviderResult[] applyBatch(@NonNull ArrayList<ContentProviderOperation> operations) throws OperationApplicationException {
         SQLiteDatabase db = mDBHelper.getWritableDatabase();
 
-
-//        DBHelper.beginTransaction(db);
-//        try {
+        DBHelper.beginTransaction(db);
+        try {
             ContentProviderResult[] result = super.applyBatch(operations);
-//            DBHelper.setTransactionSuccessful(db);
+            DBHelper.setTransactionSuccessful(db);
+
             return result;
-//        } finally {
-//            DBHelper.endTransaction(db);
-//        }
+        } finally {
+            DBHelper.endTransaction(db);
+        }
     }
 
     private String getTableNameByUriCode(int matchCode, Uri uri) {

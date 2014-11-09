@@ -21,8 +21,6 @@ import by.slutskiy.busschedule.services.UpdateService;
  */
 public class StopDetailAdapter extends CursorAdapter {
 
-    /*  private fields  */
-
     private final LayoutInflater mInflater;
     private final String NO_BUS;
 
@@ -60,19 +58,8 @@ public class StopDetailAdapter extends CursorAdapter {
         String resultMinutes = "";
 
         for (int i = 0; i < splitMinutes.length && i < splitTypes.length; i++) {
-//        for (String item : splitTypes) {
             resultMinutes += splitTypes[i] + " " +
                     (splitMinutes[i].equals("") ? NO_BUS : splitMinutes[i]) + " ";
-//            if (item.contains(UpdateService.TYPE_MIN_DELIMITER)) {
-//                int subIndex = item.indexOf(UpdateService.TYPE_MIN_DELIMITER);
-//                String currentMinutes = item.substring(subIndex + 1, item.length());
-//                String currentType = item.substring(0, subIndex);
-//
-//                resultMinutes += currentType + " " +
-//                        (currentMinutes.equals("") ? NO_BUS : currentMinutes) + " ";
-//            } else {
-//                resultMinutes += " " + item;
-//            }
         }
 
         holder.mTime.setText(resultMinutes);

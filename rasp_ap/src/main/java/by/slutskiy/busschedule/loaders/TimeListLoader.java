@@ -31,6 +31,6 @@ public class TimeListLoader extends CursorLoader {
                         TimeListContract.COLUMN_MINUTES},
                 TimeListContract.COLUMN_ROUTE_LIST_ID + " = ?",
                 new String[]{Integer.toString(args.getInt(ATT_ROUT_LIST_ID))},
-                TimeListContract.COLUMN_ID);
+                TimeListContract.PATH + "." + TimeListContract.COLUMN_ID);
     }
 }

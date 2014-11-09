@@ -21,8 +21,11 @@ public class StopDetailContract extends BaseContract {
 
             " LEFT OUTER JOIN " + TimeListContract.PATH + " ON " +
             TimeListContract.PATH + "." + TimeListContract.COLUMN_ROUTE_LIST_ID + " = " +
-            RouteListContract.PATH + "." + RouteListContract.COLUMN_ID;
+            RouteListContract.PATH + "." + RouteListContract.COLUMN_ID +
 
+            " LEFT OUTER JOIN " + TypeContract.PATH + " ON " +
+            TypeContract.PATH + "." + TypeContract.COLUMN_ID + " = " +
+            TimeListContract.PATH + "." + TimeListContract.COLUMN_TYPE_ID;
 
     public static final Uri CONTENT_URI =
             Uri.withAppendedPath(AUTHORITY_URI, PATH);
@@ -32,7 +35,7 @@ public class StopDetailContract extends BaseContract {
     public static final String COLUMN_ROUTE_NAME = RouteContract.COLUMN_ROUTE_NAME;
     public static final String COLUMN_FULL_ROUTE = "FullRoute";
     public static final String COLUMN_MINUTES = TimeListContract.COLUMN_MINUTES;
-    public static final String COLUMN_TYPES = TimeListContract.COLUMN_TYPE_ID;
+    public static final String COLUMN_TYPES = TimeListContract.COLUMN_TYPES;
 
 
     private static final String[] availableColumns =
