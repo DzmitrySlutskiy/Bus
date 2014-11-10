@@ -15,7 +15,7 @@ public class StringUtils {
     public static final String EMPTY_STRING = "";
     public static final String USED_DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
 
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat(USED_DATE_FORMAT);
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat(USED_DATE_FORMAT);
 
     private StringUtils() {/*   code    */}
 
@@ -53,20 +53,13 @@ public class StringUtils {
      * @param source  source string
      * @param index   index in result array
      * @param divider substring for split to array
-     * @return return String with specified index, if index < 0 or > resultarray.length
+     * @return return String with specified index, if index < 0 or > result array.length
      * return empty string
      */
     public static String getSubStringByIndex(String source, int index, String divider) {
         String[] result = TextUtils.split(source, divider);
         if (index >= 0 && index < result.length && result.length == 2) {
             return result[index];
-        } else if (result.length == 0) {
-
-            //if divider "-" rather than " - " - bus "23 ХИМВОЛОКНО-ФОЛЮШ"
-            return getSubStringByIndex(source, index, divider.trim());
-        } else {
-            //if splited more than 2 items (bus like 14 ДЕВЯТОВКА-5 - РСУ-2 with divider "-"
-
         }
 
         return EMPTY_STRING;

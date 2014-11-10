@@ -29,7 +29,7 @@ public class StopLoader extends CursorLoader {
                         ? RouteListContract.CONTENT_URI
                         : StopContract.CONTENT_URI,
 
-                StopContract.defaultColumns,
+                StopContract.availableColumns,
 
                 (args != null)
                         ? RouteListContract.COLUMN_ROUTE_ID + " = ?"

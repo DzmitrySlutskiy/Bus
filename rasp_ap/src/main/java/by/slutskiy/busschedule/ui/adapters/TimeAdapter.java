@@ -74,7 +74,7 @@ public class TimeAdapter extends CursorAdapter {
         String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);
         Collections.addAll(minutes, result);
 
-        holder.mHour.setText("" + hour);
+        holder.mHour.setText(Integer.toString(hour));
         holder.mView.setMinList(minutes);
 
         view.setBackgroundColor((hour == mHour) ? COLOR_CURRENT_HOUR : COLOR_ANY_HOUR);

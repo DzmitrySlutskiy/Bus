@@ -212,11 +212,11 @@ public class IOUtils {
         }
     }
 
-    public static void extractFile(Context context, int resourceId, String dest) throws IOException {
+    public static void extractFile(Context context, int resourceId, String destination) throws IOException {
 
         Log.i(LOG_TAG, "try extract db from zip file");
 
-        File fileDst = new File(dest);
+        File fileDst = new File(destination);
 
         /*   streams for unzip file and save to fileDst   */
         InputStream inputStream = context.getResources().openRawResource(resourceId);

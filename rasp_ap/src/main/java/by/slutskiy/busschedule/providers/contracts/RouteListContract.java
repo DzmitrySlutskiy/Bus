@@ -36,7 +36,7 @@ public class RouteListContract extends BaseContract {
             + COLUMN_STOP_ID + " INTEGER,"
             + COLUMN_STOP_INDEX + " INTEGER );";
 
-    private static final String[] availableColumns =
+    public static final String[] availableColumns =
             new String[]{COLUMN_ID, COLUMN_ROUTE_ID, COLUMN_STOP_ID, COLUMN_STOP_INDEX,
                     COLUMN_STOP_NAME};
 
@@ -58,16 +58,6 @@ public class RouteListContract extends BaseContract {
     public static void onUpgrade(SQLiteDatabase database, int oldVersion,
                                  int newVersion) {
         onUpgrade(database, oldVersion, newVersion, DATABASE_CREATE, PATH);
-    }
-
-    /**
-     * Check if the caller has requested a column which does not exists
-     *
-     * @param projection requested columns
-     * @throws IllegalArgumentException if requested column does not exists in current table
-     */
-    public static void checkColumns(String[] projection) {
-        checkColumns(availableColumns, projection);
     }
 
     private RouteListContract() {/*   code    */}

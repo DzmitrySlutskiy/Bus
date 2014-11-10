@@ -3,8 +3,6 @@ package by.slutskiy.busschedule.providers.contracts;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
-import java.util.HashMap;
-
 /**
  * RouteContract
  * Version 1.0
@@ -38,16 +36,6 @@ public class RouteContract extends BaseContract {
     public static void onUpgrade(SQLiteDatabase database, int oldVersion,
                                  int newVersion) {
         onUpgrade(database, oldVersion, newVersion, DATABASE_CREATE, PATH);
-    }
-
-    /**
-     * Check if the caller has requested a column which does not exists
-     *
-     * @param projection requested columns
-     * @throws IllegalArgumentException if requested column does not exists in current table
-     */
-    public static void checkColumns(String[] projection) {
-        checkColumns(availableColumns, projection);
     }
 
     private RouteContract() {/*   code    */}

@@ -239,8 +239,7 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
         public void onLoadFinished(Loader<Cursor> stringLoader, Cursor data) {
             if (data.moveToFirst()) {
                 String busNumber = "";
-                String beginStop = "";
-//                String endStop = "";
+                String routeName = "";
 
                 int fieldIndex = data.getColumnIndex(RouteContract.COLUMN_BUS);//1
                 if (fieldIndex >= 0) {
@@ -249,15 +248,10 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
                 fieldIndex = data.getColumnIndex(RouteContract.COLUMN_ROUTE_NAME);//2
                 if (fieldIndex >= 0) {
-                    beginStop = data.getString(fieldIndex);
+                    routeName = data.getString(fieldIndex);
                 }
 
-//                fieldIndex = data.getColumnIndex(DBStructure.KEY_END_STOP);//3
-//                if (fieldIndex >= 0) {
-//                    endStop = data.getString(fieldIndex);
-//                }
-//TODO
-                mStopDetail = busNumber + "   " + beginStop /*+ " - " + endStop*/;
+                mStopDetail = busNumber + "   " + routeName;
             }
 
             updateStopDetailText();

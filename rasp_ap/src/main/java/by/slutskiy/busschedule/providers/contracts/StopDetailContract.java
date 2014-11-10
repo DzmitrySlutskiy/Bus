@@ -38,7 +38,7 @@ public class StopDetailContract extends BaseContract {
     public static final String COLUMN_TYPES = TimeListContract.COLUMN_TYPES;
 
 
-    private static final String[] availableColumns =
+    public static final String[] availableColumns =
             new String[]{COLUMN_ID, COLUMN_ROUTE_ID, COLUMN_BUS, COLUMN_ROUTE_NAME,
                     COLUMN_FULL_ROUTE, COLUMN_MINUTES, COLUMN_TYPES};
 
@@ -55,16 +55,6 @@ public class StopDetailContract extends BaseContract {
 
         PROJECTION_MAP.put(COLUMN_MINUTES, COLUMN_MINUTES);
         PROJECTION_MAP.put(COLUMN_TYPES, COLUMN_TYPES);
-    }
-
-    /**
-     * Check if the caller has requested a column which does not exists
-     *
-     * @param projection requested columns
-     * @throws IllegalArgumentException if requested column does not exists in current table
-     */
-    public static void checkColumns(String[] projection) {
-        checkColumns(availableColumns, projection);
     }
 
     private StopDetailContract() {/*   code    */}

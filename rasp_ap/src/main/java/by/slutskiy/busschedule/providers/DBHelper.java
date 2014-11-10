@@ -6,12 +6,17 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
 import android.util.Log;
 
+import java.io.File;
+import java.io.IOException;
+
+import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.providers.contracts.NewsContract;
 import by.slutskiy.busschedule.providers.contracts.RouteContract;
 import by.slutskiy.busschedule.providers.contracts.RouteListContract;
 import by.slutskiy.busschedule.providers.contracts.StopContract;
 import by.slutskiy.busschedule.providers.contracts.TimeListContract;
 import by.slutskiy.busschedule.providers.contracts.TypeContract;
+import by.slutskiy.busschedule.utils.IOUtils;
 
 /**
  * DBHelper
@@ -30,21 +35,17 @@ class DBHelper extends SQLiteOpenHelper {
     public DBHelper(Context context) {
         super(context, DEFAULT_DB_NAME, null, DB_VERSION);
 
-        String mDbPath = context.getDatabasePath(DEFAULT_DB_NAME).getPath();
+        File dbFile = context.getDatabasePath(DEFAULT_DB_NAME);
+        if (! dbFile.exists()) {
 
-//        /*cut mDbName from path - get full path */
-//        mDbPath = mDbPath.substring(0, mDbPath.length() - DEFAULT_DB_NAME.length() - 1);
-//        if (! new File(mDbPath + "/" + DEFAULT_DB_NAME).exists() &&
-//                (DEFAULT_DB_NAME.equals(DEFAULT_DB_NAME))) {
-//
-//            /*  extract database from raw resource (zip file)*/
-//            IOUtils.mkDir(mDbPath);
-//            try {
-//                IOUtils.extractFile(context, R.raw.ap, mDbPath + "/" + DEFAULT_DB_NAME);
-//            } catch (IOException e) {
-//                Log.e(LOG_TAG, "unzip error: " + e.getMessage() + ". Run onCreate()");
-//            }
-//        }
+            /*  extract database from raw resource (zip file)*/
+            IOUtils.mkDir(dbFile.getParent());
+            try {
+                IOUtils.extractFile(context, R.raw.ap, dbFile.getAbsolutePath());
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "unzip error: " + e.getMessage() + ". Run onCreate()");
+            }
+        }
     }
 
     /**

@@ -25,7 +25,8 @@ public class RouteDetailLoader extends CursorLoader {
      */
     public RouteDetailLoader(Context context, Bundle args) {
         super(context,
-                Uri.withAppendedPath(RouteContract.CONTENT_URI, "" + args.getInt(ATT_ROUT_ID)),
+                Uri.withAppendedPath(RouteContract.CONTENT_URI,
+                        Integer.toString(args.getInt(ATT_ROUT_ID))),
                 RouteContract.availableColumns, null, null, null);
     }
 }

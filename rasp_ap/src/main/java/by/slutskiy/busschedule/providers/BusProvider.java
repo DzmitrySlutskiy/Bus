@@ -45,7 +45,6 @@ public class BusProvider extends ContentProvider {
         sURIMatcher.addURI(BaseContract.AUTHORITY, "*/type", CODE_TYPE);
     }
 
-
     private DBHelper mDBHelper;
 
     @Override

@@ -4,7 +4,9 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.CursorLoader;
 
+import by.slutskiy.busschedule.providers.contracts.RouteListContract;
 import by.slutskiy.busschedule.providers.contracts.StopDetailContract;
+import by.slutskiy.busschedule.providers.contracts.TimeListContract;
 
 /**
  * background task loader
@@ -30,9 +32,10 @@ public class StopDetailLoader extends CursorLoader {
                         StopDetailContract.COLUMN_FULL_ROUTE,
                         StopDetailContract.COLUMN_MINUTES,
                         StopDetailContract.COLUMN_TYPES},
-                "RouteList.StopId = ? AND TimeList.Hour = ?",
-                new String[]{"" + args.getInt(ATT_STOP_ID),
-                        "" + args.getInt(ATT_HOUR)}, null);
+                RouteListContract.PATH + "." + RouteListContract.COLUMN_STOP_ID + " = ? AND " +
+                        TimeListContract.PATH + "." + TimeListContract.COLUMN_HOUR + " = ? ",
+                new String[]{Integer.toString(args.getInt(ATT_STOP_ID)),
+                        Integer.toString(args.getInt(ATT_HOUR))}, null);
 
     }
 }

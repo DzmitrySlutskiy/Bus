@@ -49,7 +49,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
     private static final String BUS_NUMBER_PATTERN = "^[0-9]{1,3}(Э|э)?$";
     public static final String TYPE_DELIMITER = ";";
-    public static final String ROUTE_DIVIDER = "@";
+    private static final String ROUTE_DIVIDER = "@";
 
     /**
      * full stop list, String Key - stop name, Integer Value - ID record in DB
@@ -166,7 +166,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
                 int sheetCount;
                 if (BuildConfig.SHEET_COUNT > 1) {
-                    sheetCount = mXlsHelper.getSheetCount();
+                    sheetCount = BuildConfig.SHEET_COUNT;
                 } else {
                     sheetCount = mXlsHelper.getSheetCount();
                 }
@@ -186,7 +186,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
                 long currentTime = System.currentTimeMillis();
                 Log.d(TAG, "try apply batch. Size: " + mOperations.size());
                 mResolver.applyBatch(BaseContract.AUTHORITY, mOperations);
-                Log.d(TAG, "Apply successfull. used time(ms): " + (System.currentTimeMillis() - currentTime));
+                Log.d(TAG, "Apply successful. used time(ms): " + (System.currentTimeMillis() - currentTime));
                 PreferenceUtils.setUpdateDate(getApplicationContext(), lastUpdate);
 
             } catch (IOException e) {
@@ -305,10 +305,8 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
      * @param rowIndex row index where stop info found (tag "A" found)
      * @return stop size - count rows used for current stop info
      * @throws FileStructureErrorException if parsing stop failed (out of bound or any error)
-     * @throws DBUpdateWorkException       if adding to database return error
      */
-    private int parseStop(Sheet sheet, int rowIndex) throws FileStructureErrorException,
-            DBUpdateWorkException {
+    private int parseStop(Sheet sheet, int rowIndex) throws FileStructureErrorException {
 
         /*stopSize - размер блока расписания в высоту (RowSize)
         * + 2 - так как 2 строки от тега "А" до номера автобуса*/
@@ -391,7 +389,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
                 typeId = addOperation(ContentProviderOperation.newInsert(TypeContract.CONTENT_URI)
                         .withValue(TypeContract.COLUMN_TYPE_NAME, typeStr)
                         .build());
-                mFullTypeMap.put(typeStr,typeId);
+                mFullTypeMap.put(typeStr, typeId);
             }
 
             currentOperation = ContentProviderOperation.newInsert(TimeListContract.CONTENT_URI);
@@ -417,9 +415,8 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
      * @param sheet    current sheet
      * @param rowIndex row index
      * @param stopSize stop size (row count used for stop info)
-     * @throws DBUpdateWorkException error adding to database
      */
-    private void fillDayType(Sheet sheet, int rowIndex, int stopSize) throws DBUpdateWorkException {
+    private void fillDayType(Sheet sheet, int rowIndex, int stopSize) {
         for (int typeIndex = rowIndex + XLSHelper.TYPE_DAY_ROW_OFFSET; typeIndex < rowIndex + stopSize; ) {
             int lastColumn = mTagAColumnIndex + mLastHourColumnIndex;
 
@@ -464,7 +461,6 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
                 mTypeMap.put(cellContent, mTypeCounter++);
             }
             ScheduleDayType type = new ScheduleDayType();
-//            type.typeID = mTypeMap.get(cellContent);
             type.typeRowSize = typeRowSize;
             type.typeString = cellContent;
 
@@ -481,9 +477,8 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
      *
      * @param routeName route name for checking
      * @return id record in database about this route
-     * @throws DBUpdateWorkException if can't add info to database
      */
-    private int checkRoute(String routeName) throws DBUpdateWorkException {
+    private int checkRoute(String routeName) {
         int routeId;
 
         String route = StringUtils.deleteSubString(routeName, XLSHelper.DELETING_SUBSTRING);
@@ -560,7 +555,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
     private void initStopList() {
         mStopMap = new HashMap<String, Integer>();
         Cursor cursor = mResolver.query(StopContract.CONTENT_URI,
-                StopContract.defaultColumns, null, null, null);
+                StopContract.availableColumns, null, null, null);
         fillMapAndCloseCursor(mStopMap, StopContract.COLUMN_STOP_NAME, StopContract.COLUMN_ID, cursor);
     }
 
@@ -594,9 +589,8 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
      * add news to database from first sheet
      *
      * @param xlsHelper XLSHelper instance
-     * @throws DBUpdateWorkException if can't add row to database
      */
-    private void extractNews(XLSHelper xlsHelper) throws DBUpdateWorkException {
+    private void extractNews(XLSHelper xlsHelper) {
         List<String> newsList = xlsHelper.getNewsList();
 
         for (String news : newsList) {
@@ -612,9 +606,8 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
      *
      * @param stopName stop name for checking
      * @return id for checked stop in database
-     * @throws DBUpdateWorkException if can't add record to database
      */
-    private int checkStop(String stopName) throws DBUpdateWorkException {
+    private int checkStop(String stopName) {
         int stopId;
         if (! mStopMap.containsKey(stopName)) {
             stopId = addOperation(ContentProviderOperation.newInsert(StopContract.CONTENT_URI)
@@ -681,8 +674,6 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
     /*   private classes   */
 
     private class ScheduleDayType {         //class using like data structure without behavior
-        //        public String type;
-//        public int typeID;                  //id in DB for current time type (по вых, по раб etc)
         public int typeRowSize;             //sometimes take 2 and more row for one time type
         public String typeString;
     }

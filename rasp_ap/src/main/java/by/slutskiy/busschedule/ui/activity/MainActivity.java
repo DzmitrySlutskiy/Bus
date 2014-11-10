@@ -123,16 +123,6 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        /*DBReader dbReader = DBReader.getInstance(this);
-        if (dbReader != null) {
-            dbReader.closeDB();
-        }*/
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 

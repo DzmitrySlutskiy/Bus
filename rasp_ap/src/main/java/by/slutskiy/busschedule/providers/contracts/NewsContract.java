@@ -36,15 +36,5 @@ public class NewsContract extends BaseContract {
         onUpgrade(database, oldVersion, newVersion, DATABASE_CREATE, PATH);
     }
 
-    /**
-     * Check if the caller has requested a column which does not exists
-     *
-     * @param projection requested columns
-     * @throws IllegalArgumentException if requested column does not exists in current table
-     */
-    public static void checkColumns(String[] projection) {
-        checkColumns(availableColumns, projection);
-    }
-
     private NewsContract() {/*   code    */}
 }
