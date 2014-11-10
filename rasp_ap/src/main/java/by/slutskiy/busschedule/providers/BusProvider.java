@@ -3,6 +3,7 @@ package by.slutskiy.busschedule.providers;
 import android.content.ContentProvider;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.OperationApplicationException;
 import android.content.UriMatcher;
@@ -17,7 +18,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import by.slutskiy.busschedule.providers.contracts.BaseContract;
+import by.slutskiy.busschedule.providers.contracts.NewsContract;
+import by.slutskiy.busschedule.providers.contracts.RouteContract;
 import by.slutskiy.busschedule.providers.contracts.RouteListContract;
+import by.slutskiy.busschedule.providers.contracts.StopContract;
 import by.slutskiy.busschedule.providers.contracts.StopDetailContract;
 import by.slutskiy.busschedule.providers.contracts.TimeListContract;
 
@@ -77,7 +81,7 @@ public class BusProvider extends ContentProvider {
         String tableName = getTableNameByUriCode(uriType, uri);
         long id = db.insert(tableName, null, values);
 
-        getContext().getContentResolver().notifyChange(uri, null);
+//        getContext().getContentResolver().notifyChange(uri, null);
         return buildResultUri(id, tableName);
     }
 
@@ -141,7 +145,7 @@ public class BusProvider extends ContentProvider {
                 buildSelection(uriType, tableName, selection),
                 buildSelectionArgs(uriType, uri, selectionArgs));
 
-        getContext().getContentResolver().notifyChange(uri, null);
+//        getContext().getContentResolver().notifyChange(uri, null);
 
         return (int) id;
     }
@@ -157,7 +161,7 @@ public class BusProvider extends ContentProvider {
                 buildSelection(uriType, tableName, selection),
                 buildSelectionArgs(uriType, uri, selectionArgs));
 
-        getContext().getContentResolver().notifyChange(uri, null);
+//        getContext().getContentResolver().notifyChange(uri, null);
 
         return (int) id;
     }
@@ -179,7 +183,7 @@ public class BusProvider extends ContentProvider {
         } finally {
             DBHelper.endTransaction(db);
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+//        getContext().getContentResolver().notifyChange(uri, null);
 
         return values.length;
     }
@@ -193,6 +197,16 @@ public class BusProvider extends ContentProvider {
             ContentProviderResult[] result = super.applyBatch(operations);
             DBHelper.setTransactionSuccessful(db);
 
+            //full DB updated - notify for tables (not for updated Id):
+            ContentResolver resolver = getContext().getContentResolver();
+            if (resolver != null) {
+                resolver.notifyChange(NewsContract.CONTENT_URI, null);
+                resolver.notifyChange(RouteContract.CONTENT_URI, null);
+                resolver.notifyChange(RouteListContract.CONTENT_URI, null);
+                resolver.notifyChange(StopContract.CONTENT_URI, null);
+                resolver.notifyChange(StopDetailContract.CONTENT_URI, null);
+                resolver.notifyChange(TimeListContract.CONTENT_URI, null);
+            }
             return result;
         } finally {
             DBHelper.endTransaction(db);

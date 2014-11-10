@@ -146,7 +146,6 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
         if (IOUtils.saveUrlToFile(UpdateUtils.BUS_PARK_URL + UpdateUtils.FILE_NAME, filePath, this)) {
             try {
-                Log.d(TAG, "Begin transaction");
 
                 NotificationUtils.updateNotification(mNotificationId,
                         getString(R.string.notification_title_update),
