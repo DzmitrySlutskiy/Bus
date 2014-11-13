@@ -1,6 +1,7 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.CursorLoader;
 
@@ -24,24 +25,35 @@ public class StopLoader extends CursorLoader {
      */
     public StopLoader(Context context, Bundle args) {
         super(context,
-
-                (args != null)
-                        ? RouteListContract.CONTENT_URI
-                        : StopContract.CONTENT_URI,
-
+                getUri(args),
                 StopContract.availableColumns,
-
-                (args != null)
-                        ? RouteListContract.COLUMN_ROUTE_ID + " = ?"
-                        : null,
-
-                (args != null)
-                        ? new String[]{Integer.toString(args.getInt(ATT_ROUT_ID))}
-                        : null,
-
-                (args != null)
-                        ? null
-                        : StopContract.COLUMN_STOP_NAME
+                getSelection(args),
+                getSelectionArgs(args),
+                getSortOrder(args)
         );
+    }
+
+    private static String getSortOrder(Bundle args) {
+        return (args != null)
+                ? null
+                : StopContract.COLUMN_STOP_NAME;
+    }
+
+    private static String[] getSelectionArgs(Bundle args) {
+        return (args != null)
+                ? new String[]{Integer.toString(args.getInt(ATT_ROUT_ID))}
+                : null;
+    }
+
+    private static String getSelection(Bundle args) {
+        return (args != null)
+                ? RouteListContract.COLUMN_ROUTE_ID + " = ?"
+                : null;
+    }
+
+    private static Uri getUri(Bundle args) {
+        return (args != null)
+                ? RouteListContract.CONTENT_URI
+                : StopContract.CONTENT_URI;
     }
 }
