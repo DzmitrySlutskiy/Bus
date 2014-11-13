@@ -13,16 +13,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBReader;
-import by.slutskiy.busschedule.data.DBStructure;
 import by.slutskiy.busschedule.loaders.RouteDetailLoader;
 import by.slutskiy.busschedule.loaders.StopLoader;
+import by.slutskiy.busschedule.providers.contracts.BaseContract;
+import by.slutskiy.busschedule.providers.contracts.RouteContract;
+import by.slutskiy.busschedule.providers.contracts.StopContract;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -108,8 +108,8 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (mStopList != null && mStopList.moveToPosition(position)) {
 
-            String stopName = mStopList.getString(mStopList.getColumnIndex(DBReader.KEY_STOP_NAME));
-            int key = mStopList.getInt(mStopList.getColumnIndex(DBReader.KEY_ID));
+            String stopName = mStopList.getString(mStopList.getColumnIndex(StopContract.COLUMN_STOP_NAME));
+            int key = mStopList.getInt(mStopList.getColumnIndex(BaseContract.COLUMN_ID));
 
             if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
                 OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
@@ -132,9 +132,11 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     @Override
     protected void initLoader() {
-        Bundle args = new Bundle();
-        args.putInt(StopLoader.ATT_ROUT_ID, mRouteId);
-
+        Bundle args = null;
+        if (mRouteId > 0) {
+            args = new Bundle();
+            args.putInt(StopLoader.ATT_ROUT_ID, mRouteId);
+        }
         initLoader(args, LOADER_ID_STOP_LIST, getCallBack(), mNeedRestartLoaders);
 
         //если загружаем конкретный маршрут запускаем дополнительный лоадер для инфо по маршруту
@@ -172,14 +174,14 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
             mStopList = data;
 
             CursorAdapter cursorAdapter = (CursorAdapter) mStopListView.getAdapter();
-            if (cursorAdapter==null){
+            if (cursorAdapter == null) {
                 cursorAdapter = new SimpleCursorAdapter(
                         getActivity(), android.R.layout.simple_list_item_1, data,
-                        new String[]{DBStructure.KEY_STOP_NAME},
+                        new String[]{StopContract.COLUMN_STOP_NAME},
                         new int[]{android.R.id.text1}, 0);
 
                 mStopListView.setAdapter(cursorAdapter);
-            }else{
+            } else {
                 cursorAdapter.changeCursor(data);
             }
 
@@ -237,25 +239,19 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
         public void onLoadFinished(Loader<Cursor> stringLoader, Cursor data) {
             if (data.moveToFirst()) {
                 String busNumber = "";
-                String beginStop = "";
-                String endStop = "";
+                String routeName = "";
 
-                int fieldIndex = data.getColumnIndex(DBStructure.KEY_BUS_NUMBER);//1
+                int fieldIndex = data.getColumnIndex(RouteContract.COLUMN_BUS);//1
                 if (fieldIndex >= 0) {
                     busNumber = data.getString(fieldIndex);
                 }
 
-                fieldIndex = data.getColumnIndex(DBStructure.KEY_BEGIN_STOP);//2
+                fieldIndex = data.getColumnIndex(RouteContract.COLUMN_ROUTE_NAME);//2
                 if (fieldIndex >= 0) {
-                    beginStop = data.getString(fieldIndex);
+                    routeName = data.getString(fieldIndex);
                 }
 
-                fieldIndex = data.getColumnIndex(DBStructure.KEY_END_STOP);//3
-                if (fieldIndex >= 0) {
-                    endStop = data.getString(fieldIndex);
-                }
-
-                mStopDetail = busNumber + "   " + beginStop + " - " + endStop;
+                mStopDetail = busNumber + "   " + routeName;
             }
 
             updateStopDetailText();

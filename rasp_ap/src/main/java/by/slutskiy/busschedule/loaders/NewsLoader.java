@@ -1,9 +1,9 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.database.Cursor;
+import android.support.v4.content.CursorLoader;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.NewsContract;
 
 /**
  * background data loader
@@ -11,19 +11,13 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class NewsLoader extends BaseLoader {
+public class NewsLoader extends CursorLoader {
 
     /**
      * @param context used to retrieve the application context.
      */
     public NewsLoader(Context context) {
-        super(context);
-    }
-
-    @Override
-    public Cursor loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
-
-        return dbReader.getNewsCursor();
+        super(context, NewsContract.CONTENT_URI,
+                NewsContract.availableColumns, null, null, null);
     }
 }

@@ -10,7 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.StopDetailContract;
 import by.slutskiy.busschedule.services.UpdateService;
 
 /**
@@ -20,8 +20,6 @@ import by.slutskiy.busschedule.services.UpdateService;
  * Created by Dzmitry Slutskiy.
  */
 public class StopDetailAdapter extends CursorAdapter {
-
-    /*  private fields  */
 
     private final LayoutInflater mInflater;
     private final String NO_BUS;
@@ -50,24 +48,18 @@ public class StopDetailAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder holder = (ViewHolder) view.getTag();
 
-        holder.mRouteName.setText(cursor.getString(cursor.getColumnIndex(DBReader.FULL_ROUTE)));
+        holder.mRouteName.setText(cursor.getString(cursor.getColumnIndex(StopDetailContract.COLUMN_FULL_ROUTE)));
 
-        String minutes = cursor.getString(cursor.getColumnIndex(DBReader.KEY_MINUTES));
+        String minutes = cursor.getString(cursor.getColumnIndex(StopDetailContract.COLUMN_MINUTES));
+        String types = cursor.getString(cursor.getColumnIndex(StopDetailContract.COLUMN_TYPES));
 
-        String[] result = TextUtils.split(minutes, UpdateService.TYPE_DELIMITER);
+        String[] splitMinutes = TextUtils.split(minutes, UpdateService.TYPE_DELIMITER);
+        String[] splitTypes = TextUtils.split(types, UpdateService.TYPE_DELIMITER);
         String resultMinutes = "";
 
-        for (String item : result) {
-            if (item.contains(UpdateService.TYPE_MIN_DELIMITER)) {
-                int subIndex = item.indexOf(UpdateService.TYPE_MIN_DELIMITER);
-                String currentMinutes = item.substring(subIndex + 1, item.length());
-                String currentType = item.substring(0, subIndex);
-
-                resultMinutes += currentType + " " +
-                        (currentMinutes.equals("") ? NO_BUS : currentMinutes) + " ";
-            } else {
-                resultMinutes += " " + item;
-            }
+        for (int i = 0; i < splitMinutes.length && i < splitTypes.length; i++) {
+            resultMinutes += splitTypes[i] + " " +
+                    (splitMinutes[i].equals("") ? NO_BUS : splitMinutes[i]) + " ";
         }
 
         holder.mTime.setText(resultMinutes);

@@ -44,7 +44,7 @@ public class CheckUpdateService extends IntentService {
 
         if (lastUpdate != null) {
             if (dbUpdateDate.before(lastUpdate)) {
-                /*show notification only if autocheck update
+                /*show notification only if auto check update
                 * because in manual mode dialog will be shown*/
                 if (! PreferenceUtils.isManualUpdate(this)) {
                     NotificationUtils.createNotification(getApplicationContext(),

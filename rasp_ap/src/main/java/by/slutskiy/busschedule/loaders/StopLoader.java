@@ -1,10 +1,12 @@
 package by.slutskiy.busschedule.loaders;
 
 import android.content.Context;
-import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.RouteListContract;
+import by.slutskiy.busschedule.providers.contracts.StopContract;
 
 /**
  * background download task
@@ -12,10 +14,8 @@ import by.slutskiy.busschedule.data.DBReader;
  * 25.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopLoader extends BaseLoader {
+public class StopLoader extends CursorLoader {
     public static final String ATT_ROUT_ID = "routeId";
-
-    private int routeId;
 
     /**
      * Stores away the application context associated with context. Since Loaders can be used
@@ -24,17 +24,36 @@ public class StopLoader extends BaseLoader {
      * @param context used to retrieve the application context.
      */
     public StopLoader(Context context, Bundle args) {
-        super(context);
-
-        if (args != null) {
-            routeId = args.getInt(ATT_ROUT_ID);
-        }
+        super(context,
+                getUri(args),
+                StopContract.availableColumns,
+                getSelection(args),
+                getSelectionArgs(args),
+                getSortOrder(args)
+        );
     }
 
-    @Override
-    public Cursor loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
+    private static String getSortOrder(Bundle args) {
+        return (args != null)
+                ? null
+                : StopContract.COLUMN_STOP_NAME;
+    }
 
-        return dbReader.getRouteStopsListCursor(routeId);
+    private static String[] getSelectionArgs(Bundle args) {
+        return (args != null)
+                ? new String[]{Integer.toString(args.getInt(ATT_ROUT_ID))}
+                : null;
+    }
+
+    private static String getSelection(Bundle args) {
+        return (args != null)
+                ? RouteListContract.COLUMN_ROUTE_ID + " = ?"
+                : null;
+    }
+
+    private static Uri getUri(Bundle args) {
+        return (args != null)
+                ? RouteListContract.CONTENT_URI
+                : StopContract.CONTENT_URI;
     }
 }

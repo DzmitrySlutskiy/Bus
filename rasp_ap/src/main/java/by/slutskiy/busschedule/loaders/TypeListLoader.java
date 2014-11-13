@@ -2,10 +2,10 @@ package by.slutskiy.busschedule.loaders;
 
 
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
 
-import by.slutskiy.busschedule.data.DBReader;
+import by.slutskiy.busschedule.providers.contracts.TimeListContract;
 
 /**
  * TypeListLoader
@@ -13,11 +13,9 @@ import by.slutskiy.busschedule.data.DBReader;
  * 31.08.2014
  * Created by Dzmitry Slutskiy.
  */
-public class TypeListLoader extends BaseLoader {
+public class TypeListLoader extends CursorLoader {
 
     public static final String ATT_ROUT_LIST_ID = "routeListIdLoader";
-
-    private int mRouteListIdLoader;
 
     /**
      * Stores away the application context associated with context. Since Loaders can be used
@@ -26,17 +24,11 @@ public class TypeListLoader extends BaseLoader {
      * @param context used to retrieve the application context.
      */
     public TypeListLoader(Context context, Bundle args) {
-        super(context);
-
-        if (args != null) {
-            mRouteListIdLoader = args.getInt(ATT_ROUT_LIST_ID);
-        }
-    }
-
-    @Override
-    public Cursor loadInBackground() {
-        DBReader dbReader = DBReader.getInstance(getContext());
-
-        return dbReader.getTypeListByRouteListIdCursor(mRouteListIdLoader);
+        super(context,
+                TimeListContract.CONTENT_TYPE_URI,
+                new String[]{TimeListContract.COLUMN_TYPES},
+                TimeListContract.COLUMN_ROUTE_LIST_ID + " = ?",
+                new String[]{Integer.toString(args.getInt(ATT_ROUT_LIST_ID))},
+                null);
     }
 }

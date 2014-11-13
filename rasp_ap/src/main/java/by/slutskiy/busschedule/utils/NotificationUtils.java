@@ -1,7 +1,11 @@
 package by.slutskiy.busschedule.utils;
 
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+
+import by.slutskiy.busschedule.ui.activity.MainActivity;
 
 import static android.support.v4.app.NotificationCompat.Builder;
 
@@ -41,6 +45,9 @@ public class NotificationUtils {
         builder.setContentText(text);
         builder.setOngoing(isOngoing);
 
+        PendingIntent contentIntent = PendingIntent.getActivity(context,0,new Intent(context, MainActivity.class),PendingIntent.FLAG_UPDATE_CURRENT);
+
+        builder.setContentIntent(contentIntent);
         //initialize manager
         NotificationManager nManager = getNotificationManager(context);
         nManager.notify(notificationId, builder.build());

@@ -20,7 +20,6 @@ import android.widget.Toast;
 import java.util.List;
 
 import by.slutskiy.busschedule.R;
-import by.slutskiy.busschedule.data.DBReader;
 import by.slutskiy.busschedule.ui.fragments.BaseFragment;
 import by.slutskiy.busschedule.ui.fragments.NewsFragment;
 import by.slutskiy.busschedule.ui.fragments.RouteFragment;
@@ -116,21 +115,11 @@ public class MainActivity extends ActionBarActivity implements
             //PREF_UPDATE_BUTTON_STATE set in true when update found earlier
             item.setVisible(
                     PreferenceUtils.isUpdateAllowed(this) &&
-                    (PreferenceUtils.isManualUpdate(this) ||
-                    PreferenceUtils.isUpdateFound(this)));
+                            (PreferenceUtils.isManualUpdate(this) ||
+                                    PreferenceUtils.isUpdateFound(this)));
         }
 
         return true;
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        DBReader dbReader = DBReader.getInstance(this);
-        if (dbReader != null) {
-            dbReader.closeDB();
-        }
     }
 
     @Override
@@ -267,7 +256,7 @@ public class MainActivity extends ActionBarActivity implements
 
         if (fragmentList != null) {
             for (Fragment item : fragmentList) {
-                if ((className != null) && className.equals(item.getTag())){    //in tag saved ClassName
+                if ((className != null) && className.equals(item.getTag())) {    //in tag saved ClassName
 //                        (((Object) item).getClass().getSimpleName().equals(className))) {
                     fragmentTransaction.show(item);
                 } else {
