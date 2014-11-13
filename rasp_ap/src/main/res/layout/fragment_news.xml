@@ -20,6 +20,14 @@
         android:textStyle="bold"
         />
 
+    <android.support.v7.widget.RecyclerView
+        android:layout_below="@id/text_view_update_date"
+        android:id="@+id/my_recycler_view"
+        android:scrollbars="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
+
     <ListView
         android:layout_below="@id/text_view_update_date"
         android:layout_width="match_parent"

@@ -40,4 +40,5 @@ dependencies {
     compile 'com.android.support:support-v4:21.0.0'
     compile 'com.android.support:appcompat-v7:21.0.0'
     compile 'net.sourceforge.jexcelapi:jxl:2.6.12'
+    compile 'com.android.support:recyclerview-v7:21.0.0'
 }
