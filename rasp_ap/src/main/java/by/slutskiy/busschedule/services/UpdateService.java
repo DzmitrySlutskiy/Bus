@@ -232,14 +232,10 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
         mCurrentOperationIndex = 0;
 
         //this delete all data from table TimeList
-        addOperation(ContentProviderOperation.newDelete(TimeListContract.CONTENT_URI)
-                .withSelection(TimeListContract.COLUMN_ID + " != ?", new String[]{"-1"})
-                .build());
+        addOperation(ContentProviderOperation.newDelete(TimeListContract.CONTENT_URI).build());
 
         //this delete all data from table RouteList
-        addOperation(ContentProviderOperation.newDelete(RouteListContract.CONTENT_URI)
-                .withSelection(RouteListContract.COLUMN_ID + " != ?", new String[]{"-1"})
-                .build());
+        addOperation(ContentProviderOperation.newDelete(RouteListContract.CONTENT_URI).build());
     }
 
     /**
