@@ -16,6 +16,7 @@ import android.support.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import by.slutskiy.busschedule.providers.contracts.BaseContract;
 import by.slutskiy.busschedule.providers.contracts.NewsContract;
@@ -33,6 +34,9 @@ import by.slutskiy.busschedule.providers.contracts.TimeListContract;
  */
 public class BusProvider extends ContentProvider {
 //    private static final String LOG_TAG = BusProvider.class.getSimpleName();
+
+
+    private AtomicBoolean mCanUseNotify = new AtomicBoolean(false);
 
     private static final int CODE_TABLE = 1;
     private static final int CODE_ID = 2;
@@ -81,7 +85,7 @@ public class BusProvider extends ContentProvider {
         String tableName = getTableNameByUriCode(uriType, uri);
         long id = db.insert(tableName, null, values);
 
-//        getContext().getContentResolver().notifyChange(uri, null);
+        notifyChange(uri);
         return buildResultUri(id, tableName);
     }
 
@@ -145,7 +149,7 @@ public class BusProvider extends ContentProvider {
                 buildSelection(uriType, tableName, selection),
                 buildSelectionArgs(uriType, uri, selectionArgs));
 
-//        getContext().getContentResolver().notifyChange(uri, null);
+        notifyChange(uri);
 
         return (int) id;
     }
@@ -161,7 +165,7 @@ public class BusProvider extends ContentProvider {
                 buildSelection(uriType, tableName, selection),
                 buildSelectionArgs(uriType, uri, selectionArgs));
 
-//        getContext().getContentResolver().notifyChange(uri, null);
+        notifyChange(uri);
 
         return (int) id;
     }
@@ -183,7 +187,7 @@ public class BusProvider extends ContentProvider {
         } finally {
             DBHelper.endTransaction(db);
         }
-//        getContext().getContentResolver().notifyChange(uri, null);
+        notifyChange(uri);
 
         return values.length;
     }
@@ -191,25 +195,37 @@ public class BusProvider extends ContentProvider {
     @Override
     public ContentProviderResult[] applyBatch(@NonNull ArrayList<ContentProviderOperation> operations) throws OperationApplicationException {
         SQLiteDatabase db = mDBHelper.getWritableDatabase();
-
+        mCanUseNotify.set(false);          //disable notification
         DBHelper.beginTransaction(db);
         try {
             ContentProviderResult[] result = super.applyBatch(operations);
             DBHelper.setTransactionSuccessful(db);
 
-            //full DB updated - notify for tables (not for updated Id):
-            ContentResolver resolver = getContext().getContentResolver();
-            if (resolver != null) {
-                resolver.notifyChange(NewsContract.CONTENT_URI, null);
-                resolver.notifyChange(RouteContract.CONTENT_URI, null);
-                resolver.notifyChange(RouteListContract.CONTENT_URI, null);
-                resolver.notifyChange(StopContract.CONTENT_URI, null);
-                resolver.notifyChange(StopDetailContract.CONTENT_URI, null);
-                resolver.notifyChange(TimeListContract.CONTENT_URI, null);
-            }
             return result;
         } finally {
             DBHelper.endTransaction(db);
+            mCanUseNotify.set(true);       //enable notification
+
+            notifyDBUpdateFinished();
+        }
+    }
+
+    private void notifyChange(Uri uri) {
+        if (mCanUseNotify.get()) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+    }
+
+    private void notifyDBUpdateFinished() {
+        //full DB updated - notify for tables (not for updated Id):
+        ContentResolver resolver = getContext().getContentResolver();
+        if (resolver != null) {
+            resolver.notifyChange(NewsContract.CONTENT_URI, null);
+            resolver.notifyChange(RouteContract.CONTENT_URI, null);
+            resolver.notifyChange(RouteListContract.CONTENT_URI, null);
+            resolver.notifyChange(StopContract.CONTENT_URI, null);
+            resolver.notifyChange(StopDetailContract.CONTENT_URI, null);
+            resolver.notifyChange(TimeListContract.CONTENT_URI, null);
         }
     }
 
