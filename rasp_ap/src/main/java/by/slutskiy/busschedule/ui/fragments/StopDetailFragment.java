@@ -7,12 +7,12 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.CursorAdapter;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -21,10 +21,9 @@ import java.util.Calendar;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.StopDetailLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
-import by.slutskiy.busschedule.ui.adapters.StopDetailAdapter;
+import by.slutskiy.busschedule.ui.adapters.StopDetailLAdapter;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
-import static android.widget.AdapterView.OnItemClickListener;
 
 
 /*
@@ -34,7 +33,7 @@ import static android.widget.AdapterView.OnItemClickListener;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class StopDetailFragment extends BaseFragment implements OnItemClickListener {
+public class StopDetailFragment extends BaseFragment implements StopDetailLAdapter.onItemClickListener {
 
     public static final String TAG = StopDetailFragment.class.getSimpleName();
     public static final String STOP_ID = "mStopId";
@@ -46,8 +45,8 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
     private String mStopName;
     private int mCurrentHour;
 
-    private ListView mDetailList;
     private TextView mStopDetail;
+    private RecyclerView mRecyclerView;
     private ProgressBar mProgress;
 
     public StopDetailFragment() {
@@ -95,23 +94,19 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
         Calendar rightNow = Calendar.getInstance();
         mCurrentHour = rightNow.get(Calendar.HOUR_OF_DAY);
 
-        mDetailList = (ListView) view.findViewById(R.id.list_view_stop_detail);
-        mDetailList.setOnItemClickListener(this);
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
+        mRecyclerView.setItemAnimator(itemAnimator);
 
         mProgress = (ProgressBar) view.findViewById(android.R.id.progress);
 
         updateData(null);
 
         return view;
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mListener != null &&
-                mListener instanceof OnStopDetailListener) {
-            ((OnStopDetailListener) mListener).onStopDetailSelected((int) id, mStopName,
-                    ((TextView) view.findViewById(R.id.text_view_route_name)).getText().toString());
-        }
     }
 
     @Override
@@ -152,13 +147,9 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
      */
     private void updateData(Cursor data) {
         if (data != null) {
-            CursorAdapter adapter = (CursorAdapter) mDetailList.getAdapter();
-            if (adapter == null) {
-                adapter = new StopDetailAdapter(getActivity(), data);
-                mDetailList.setAdapter(adapter);
-            } else {
-                adapter.changeCursor(data);
-            }
+
+            StopDetailLAdapter adapter = new StopDetailLAdapter(data, getActivity(), this);
+            mRecyclerView.setAdapter(adapter);
 
             mStopDetail.setText(mStopName);
 
@@ -174,8 +165,16 @@ public class StopDetailFragment extends BaseFragment implements OnItemClickListe
      * @param state loading progress state
      */
     private void setLoadingProgressState(boolean state) {
-        mDetailList.setVisibility(state ? View.GONE : View.VISIBLE);
+        mRecyclerView.setVisibility(state ? View.GONE : View.VISIBLE);
         mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void onClick(String routeName, long id) {
+        if (mListener != null &&
+                mListener instanceof OnStopDetailListener) {
+            ((OnStopDetailListener) mListener).onStopDetailSelected((int) id, mStopName, routeName);
+        }
     }
 
     /**

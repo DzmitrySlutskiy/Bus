@@ -15,11 +15,15 @@
         android:padding="@dimen/text_view_padding"
         android:singleLine="false"/>
 
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:layout_below="@id/text_view_stop_detail"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/list_view_stop_detail"/>
+        android:padding="@dimen/text_view_padding"
+        android:headerDividersEnabled="true"
+        android:id="@+id/recycler_view"
+        android:scrollbars="vertical"
+        android:visibility="gone"/>
 
     <ProgressBar
         android:id="@android:id/progress"

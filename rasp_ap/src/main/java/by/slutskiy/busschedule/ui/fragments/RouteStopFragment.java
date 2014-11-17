@@ -7,26 +7,23 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.CursorAdapter;
-import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.RouteDetailLoader;
 import by.slutskiy.busschedule.loaders.StopLoader;
-import by.slutskiy.busschedule.providers.contracts.BaseContract;
 import by.slutskiy.busschedule.providers.contracts.RouteContract;
-import by.slutskiy.busschedule.providers.contracts.StopContract;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
+import by.slutskiy.busschedule.ui.adapters.StopAdapter;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
-import static android.widget.AdapterView.OnItemClickListener;
 
 /*
  * RouteStopFragment
@@ -36,7 +33,7 @@ import static android.widget.AdapterView.OnItemClickListener;
  * e-mail: dsslutskiy@gmail.com
  */
 
-public class RouteStopFragment extends BaseFragment implements OnItemClickListener {
+public class RouteStopFragment extends BaseFragment implements StopAdapter.onItemClickListener {
 
     public static final String TAG = RouteStopFragment.class.getSimpleName();
     public static final String ROUTE_ID = "mRouteId";
@@ -46,17 +43,15 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
     private int mRouteId = Integer.MIN_VALUE;
 
-    private Cursor mStopList;
     private String mStopDetail = "";
 
-    private ListView mStopListView;
     private TextView mRouteNameView;
     private ProgressBar mProgress;
+    private RecyclerView mRecyclerView;
     /*  call backs  */
     private StringCallback mStringCallBack = null;
 
     public RouteStopFragment() {
-        mStopList = null;
     }
 
     @Override
@@ -88,8 +83,14 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
         View view = inflater.inflate(R.layout.fragment_route_stop, container, false);
 
         mRouteNameView = (TextView) view.findViewById(R.id.text_view_route_detail);
-        mStopListView = (ListView) view.findViewById(R.id.list_view_stop);
         mProgress = (ProgressBar) view.findViewById(android.R.id.progress);
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
+        mRecyclerView.setItemAnimator(itemAnimator);
 
         resetUI();
 
@@ -102,24 +103,6 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
 
         outState.putInt(ROUTE_ID, mRouteId);
         outState.putString(STOP_DETAIL, mStopDetail);
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mStopList != null && mStopList.moveToPosition(position)) {
-
-            String stopName = mStopList.getString(mStopList.getColumnIndex(StopContract.COLUMN_STOP_NAME));
-            int key = mStopList.getInt(mStopList.getColumnIndex(BaseContract.COLUMN_ID));
-
-            if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
-                OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
-                if (mRouteId >= 0) {
-                    listener.OnRouteStopSelected(key, stopName, mStopDetail);
-                } else {
-                    listener.OnStopSelected(key, stopName);
-                }
-            }
-        }
     }
 
     /**
@@ -171,21 +154,8 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
      */
     private void updateData(Cursor data) {
         if (data != null) {
-            mStopList = data;
-
-            CursorAdapter cursorAdapter = (CursorAdapter) mStopListView.getAdapter();
-            if (cursorAdapter == null) {
-                cursorAdapter = new SimpleCursorAdapter(
-                        getActivity(), android.R.layout.simple_list_item_1, data,
-                        new String[]{StopContract.COLUMN_STOP_NAME},
-                        new int[]{android.R.id.text1}, 0);
-
-                mStopListView.setAdapter(cursorAdapter);
-            } else {
-                cursorAdapter.changeCursor(data);
-            }
-
-            mStopListView.setOnItemClickListener(this);
+            StopAdapter adapter = new StopAdapter(data, this);
+            mRecyclerView.setAdapter(adapter);
 
             setLoadingProgressState(false);
             updateStopDetailText();
@@ -198,7 +168,8 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
      * @param state loading progress state
      */
     private void setLoadingProgressState(boolean state) {
-        mStopListView.setVisibility(state ? View.GONE : View.VISIBLE);
+//        mStopListView.setVisibility(state ? View.GONE : View.VISIBLE);
+        mRecyclerView.setVisibility(state ? View.GONE : View.VISIBLE);
         mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
     }
 
@@ -215,6 +186,18 @@ public class RouteStopFragment extends BaseFragment implements OnItemClickListen
             mRouteNameView.setText(getString(R.string.text_view_stop_list));
         } else {
             mRouteNameView.setText(getString(R.string.text_view_route) + "\t\t" + mStopDetail);
+        }
+    }
+
+    @Override
+    public void onClick(String stopName, long id) {
+        if (mListener != null && mListener instanceof OnRouteStopSelectedListener) {
+            OnRouteStopSelectedListener listener = (OnRouteStopSelectedListener) mListener;
+            if (mRouteId >= 0) {
+                listener.OnRouteStopSelected((int) id, stopName, mStopDetail);
+            } else {
+                listener.OnStopSelected((int) id, stopName);
+            }
         }
     }
 

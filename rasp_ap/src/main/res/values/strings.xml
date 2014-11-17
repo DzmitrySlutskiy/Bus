@@ -72,5 +72,6 @@
     <string name="dialog_run_update_message">New update available. Update?</string>
     <string name="dialog_run_update_button_positive">@android:string/yes</string>
     <string name="dialog_run_update_button_negative">@android:string/no</string>
+    <string name="sample_text_stop_name">Девятовка - 5</string>
 
 </resources>

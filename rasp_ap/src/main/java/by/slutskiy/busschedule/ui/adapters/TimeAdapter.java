@@ -3,11 +3,10 @@ package by.slutskiy.busschedule.ui.adapters;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.support.v4.widget.CursorAdapter;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -21,24 +20,33 @@ import by.slutskiy.busschedule.services.UpdateService;
 import by.slutskiy.busschedule.ui.views.TimeView;
 
 /**
- * TimeAdapter
+ * RouteAdapter
  * Version 1.0
- * 18.09.2014
+ * 13.11.2014
  * Created by Dzmitry Slutskiy.
  */
-public class TimeAdapter extends CursorAdapter {
+public class TimeAdapter extends BaseAdapter<TimeAdapter.ViewHolder> {
 
-    /*  private fields  */
-    private final LayoutInflater mInflater;
     private final int COLOR_CURRENT_HOUR;
     private final int COLOR_ANY_HOUR;
 
     private int mHour;
 
-    public TimeAdapter(Context context, Cursor cursor) {
-        super(context, cursor, false);
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        public TextView mHour;
+        public TimeView mTimeView;
+        public LinearLayout mLayout;
 
-        mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        public ViewHolder(View v) {
+            super(v);
+            mHour = (TextView) v.findViewById(R.id.text_view_hour);
+            mTimeView = (TimeView) v.findViewById(R.id.time_view);
+            mLayout = (LinearLayout) v;
+        }
+    }
+
+    public TimeAdapter(Cursor cursor, Context context) {
+        super(cursor, R.layout.list_item_time);
 
         Calendar mRightNow = Calendar.getInstance();
         mHour = mRightNow.get(Calendar.HOUR_OF_DAY);
@@ -49,39 +57,25 @@ public class TimeAdapter extends CursorAdapter {
     }
 
     @Override
-    public View newView(Context context, Cursor cursor, ViewGroup viewGroup) {
-        View v = mInflater.inflate(R.layout.list_item_time, viewGroup, false);
-
-        ViewHolder viewHolder = new ViewHolder();
-
-        viewHolder.mHour = (TextView) v.findViewById(R.id.text_view_hour);
-        viewHolder.mView = (TimeView) v.findViewById(R.id.time_view);
-
-        v.setTag(viewHolder);
-        return v;
+    public TimeAdapter.ViewHolder getHolder(View v) {
+        return new ViewHolder(v);
     }
 
     @Override
-    public void bindView(View view, Context context, Cursor cursor) {
-        ViewHolder holder = (ViewHolder) view.getTag();
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        super.onBindViewHolder(holder, position);
 
-        int hour = cursor.getInt(cursor.getColumnIndex(TimeListContract.COLUMN_HOUR));
+        int hour = getFieldValueAsInt(TimeListContract.COLUMN_HOUR);
+        holder.mHour.setText(String.valueOf(hour));
+
         List<String> minutes = new ArrayList<String>();
 
-        int index = cursor.getColumnIndex(TimeListContract.COLUMN_MINUTES);
-        String type = cursor.getString(index);
+        String type = getFieldValue(TimeListContract.COLUMN_MINUTES);
 
         String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);
         Collections.addAll(minutes, result);
 
-        holder.mHour.setText(Integer.toString(hour));
-        holder.mView.setMinList(minutes);
-
-        view.setBackgroundColor((hour == mHour) ? COLOR_CURRENT_HOUR : COLOR_ANY_HOUR);
-    }
-
-    private static class ViewHolder {
-        public TextView mHour;
-        public TimeView mView;
+        holder.mTimeView.setMinList(minutes);
+        holder.mLayout.setBackgroundColor((hour == mHour) ? COLOR_CURRENT_HOUR : COLOR_ANY_HOUR);
     }
 }

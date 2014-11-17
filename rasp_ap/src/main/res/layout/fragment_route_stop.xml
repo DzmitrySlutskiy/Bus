@@ -13,11 +13,13 @@
         android:gravity="center"
         android:padding="@dimen/text_view_padding"/>
 
-    <ListView
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
         android:layout_below="@id/text_view_route_detail"
+        android:scrollbars="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/list_view_stop"/>
+        android:visibility="gone"/>
 
     <ProgressBar
         android:id="@android:id/progress"

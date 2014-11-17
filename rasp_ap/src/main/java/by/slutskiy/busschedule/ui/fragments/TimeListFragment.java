@@ -7,12 +7,13 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.CursorAdapter;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -53,13 +54,12 @@ public class TimeListFragment extends BaseFragment {
     private String mStopName = "";
     private String mRouteDetail = "";
 
-    private ListView mTimeListView;
+    private RecyclerView mRecyclerView;
     private View mHeaderView;
+    private TimeView mTimeView;
     private TextView mRouteName;
     private TextView mStopDetail;
     private ProgressBar mProgress;
-
-    private List<String> mTypeList;
 
     public TimeListFragment() {
         // Required empty public constructor
@@ -102,8 +102,15 @@ public class TimeListFragment extends BaseFragment {
 
         updateTextView();
 
-        mTimeListView = (ListView) view.findViewById(R.id.list_view_time);
-        mHeaderView = inflater.inflate(R.layout.list_item_time, (ViewGroup) view.findViewById(R.id.list_view_time), false);
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
+        mRecyclerView.setItemAnimator(itemAnimator);
+
+        mHeaderView = view.findViewById(R.id.header);
+        mTimeView = (TimeView) mHeaderView.findViewById(R.id.time_view);
 
         mProgress = (ProgressBar) view.findViewById(android.R.id.progress);
 
@@ -148,46 +155,28 @@ public class TimeListFragment extends BaseFragment {
     }
 
     private void initListHeader(Cursor listHeader) {
-        //delete old header, if exists
-        if (mTimeListView.getHeaderViewsCount() > 0 && mHeaderView != null) {
-            mTimeListView.removeHeaderView(mHeaderView);        //remove header from list view
-        }
+        List<String> mTypeList = new ArrayList<String>();
+        listHeader.moveToFirst();
 
-        //need check for adapter state because exception handled
-        // java.lang.IllegalStateException: Cannot add header view to
-        // list -- setAdapter has already been called.
-        if (mTimeListView.getAdapter() != null) {
-            mTimeListView.setAdapter(null);                     //delete adapter
-        }
+        int index = listHeader.getColumnIndex(TimeListContract.COLUMN_TYPES);
+        String type = listHeader.getString(index);
 
-        if (mTimeListView.getHeaderViewsCount() == 0 && mTimeListView.getAdapter() == null) {
-            mTypeList = new ArrayList<String>();
-            listHeader.moveToFirst();
+        String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);
+        Collections.addAll(mTypeList, result);
 
-            int index = listHeader.getColumnIndex(TimeListContract.COLUMN_TYPES);
-            String type = listHeader.getString(index);
+        TimeView timeView = (TimeView) mHeaderView.findViewById(R.id.time_view);
+        timeView.setMinList(mTypeList);
 
-            String[] result = TextUtils.split(type, UpdateService.TYPE_DELIMITER);
-            Collections.addAll(mTypeList, result);
-
-            TimeView timeView = (TimeView) mHeaderView.findViewById(R.id.time_view);
-            timeView.setMinList(mTypeList);
-            mTimeListView.addHeaderView(mHeaderView);
-        }
+        mTimeView.setMinList(mTypeList);
     }
 
     private void updateData(Cursor timeList) {
-        if (mTypeList == null || timeList == null) {
+        if (timeList == null) {
             return;
         }
 
-        CursorAdapter adapter = (CursorAdapter) mTimeListView.getAdapter();
-        if (adapter == null) {
-            adapter = new TimeAdapter(getActivity(), timeList);
-            mTimeListView.setAdapter(adapter);
-        } else {
-            adapter.changeCursor(timeList);
-        }
+        TimeAdapter adapter = new TimeAdapter(timeList, getActivity());
+        mRecyclerView.setAdapter(adapter);
         setLoadingProgressState(false);
     }
 
@@ -197,8 +186,9 @@ public class TimeListFragment extends BaseFragment {
      * @param state loading progress state
      */
     private void setLoadingProgressState(boolean state) {
-        mTimeListView.setVisibility(state ? View.GONE : View.VISIBLE);
+        mRecyclerView.setVisibility(state ? View.GONE : View.VISIBLE);
         mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
+        mHeaderView.setVisibility(state ? View.GONE : View.VISIBLE);
     }
 
     /*  Async data loader callback implementation*/

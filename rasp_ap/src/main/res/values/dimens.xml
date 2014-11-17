@@ -5,8 +5,9 @@
     <dimen name="std_padding">2dp</dimen>
     <dimen name="std_min_width">30dp</dimen>
     <dimen name="std_text_size">15sp</dimen>
-
+    <dimen name="std_item_height">48dp</dimen>
     <!-- padding values-->
+    <dimen name="time_list_header_height">30dp</dimen>
     <dimen name="text_view_padding">@dimen/std_padding</dimen>
     <dimen name="list_view_padding">@dimen/std_padding</dimen>
 

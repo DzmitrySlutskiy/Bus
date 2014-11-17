@@ -24,13 +24,24 @@
         android:gravity="center"
         android:padding="@dimen/text_view_padding"/>
 
-    <ListView
+    <!--   Used for create header -->
+    <include
+        layout="@layout/list_item_time"
         android:layout_below="@id/text_view_stop_detail"
+        android:id="@+id/header"
+        android:layout_height="@dimen/time_list_header_height"
+        android:layout_width="match_parent"
+        android:visibility="gone"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_below="@id/header"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/list_view_time"
         android:padding="@dimen/text_view_padding"
-        android:headerDividersEnabled="true"/>
+        android:headerDividersEnabled="true"
+        android:id="@+id/recycler_view"
+        android:scrollbars="vertical"
+        android:visibility="gone"/>
 
     <ProgressBar
         android:id="@android:id/progress"

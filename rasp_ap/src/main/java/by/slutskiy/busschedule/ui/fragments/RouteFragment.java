@@ -7,21 +7,20 @@ package by.slutskiy.busschedule.ui.fragments;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.CursorAdapter;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.BusRouteLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
-import by.slutskiy.busschedule.ui.adapters.BusRouteAdapter;
+import by.slutskiy.busschedule.ui.adapters.RouteAdapter;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
-import static android.widget.AdapterView.OnItemClickListener;
 
 
 /*
@@ -31,12 +30,12 @@ import static android.widget.AdapterView.OnItemClickListener;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class RouteFragment extends BaseFragment implements OnItemClickListener {
+public class RouteFragment extends BaseFragment implements RouteAdapter.onItemClickListener {
     public static final String TAG = RouteFragment.class.getSimpleName();
 
     private static final int LOADER_ID = MainActivity.getNextLoaderId();
 
-    private ListView mBusList;
+    private RecyclerView mRecyclerView;
     private ProgressBar mProgress;
 
     public RouteFragment() {
@@ -58,19 +57,18 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
         // Inflate the layout for this fragment
         View fragmentView = inflater.inflate(R.layout.fragment_route, container, false);
 
-        mBusList = (ListView) fragmentView.findViewById(R.id.list_view_bus);
         mProgress = (ProgressBar) fragmentView.findViewById(android.R.id.progress);
+        mRecyclerView = (RecyclerView) fragmentView.findViewById(R.id.recycler_view);
+
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
+        mRecyclerView.setItemAnimator(itemAnimator);
 
         setLoadingProgressState(true);
 
         return fragmentView;
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if (mListener != null && mListener instanceof OnRouteSelectedListener) {
-            ((OnRouteSelectedListener) mListener).OnRouteSelected((int) id);
-        }
     }
 
     @Override
@@ -84,15 +82,11 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
      * @param routesList list with route info
      */
     private void updateData(Cursor routesList) {
-        if (mBusList != null && routesList != null) {
-            CursorAdapter adapter = (CursorAdapter) mBusList.getAdapter();
-            if (adapter == null) {
-                adapter = new BusRouteAdapter(getActivity(), routesList);
-                mBusList.setAdapter(adapter);
-            } else {
-                adapter.changeCursor(routesList);
-            }
-            mBusList.setOnItemClickListener(this);
+        if (mRecyclerView != null && routesList != null) {
+
+            RouteAdapter adapter = new RouteAdapter(routesList, this);
+            mRecyclerView.setAdapter(adapter);
+
             setLoadingProgressState(false);
         } else {
             setLoadingProgressState(true);
@@ -106,8 +100,15 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
      * @param state loading progress state
      */
     private void setLoadingProgressState(boolean state) {
-        mBusList.setVisibility(state ? View.GONE : View.VISIBLE);
+        mRecyclerView.setVisibility(state ? View.GONE : View.VISIBLE);
         mProgress.setVisibility(state ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void onClick(long id) {
+        if (mListener != null && mListener instanceof OnRouteSelectedListener) {
+            ((OnRouteSelectedListener) mListener).OnRouteSelected((int) id);
+        }
     }
 
     /**
@@ -133,10 +134,6 @@ public class RouteFragment extends BaseFragment implements OnItemClickListener {
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
-            if (mBusList != null) {
-                mBusList.setOnItemClickListener(null);
-            }
-
             setLoadingProgressState(true);
         }
     }
