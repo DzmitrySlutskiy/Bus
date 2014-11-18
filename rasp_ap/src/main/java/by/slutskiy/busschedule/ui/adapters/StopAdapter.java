@@ -16,30 +16,33 @@ import by.slutskiy.busschedule.providers.contracts.StopContract;
  */
 public class StopAdapter extends BaseAdapter<StopAdapter.ViewHolder> {
 
-    private onItemClickListener mListener;
+    private final onItemClickListener mListener;
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView mStop;
-        private onItemClickListener mListener;
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        public final TextView mStop;
+
+        private final onItemClickListener mListener;
 
         public ViewHolder(View v, onItemClickListener listener) {
             super(v);
+
             mListener = listener;
             mStop = (TextView) v.findViewById(R.id.text_view_stop);
 
-            v.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mListener != null) {
-                        mListener.onClick(mStop.getText().toString(), (Long) mStop.getTag());
-                    }
-                }
-            });
+            v.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mListener != null) {
+                mListener.onClick(mStop.getText().toString(), (Long) mStop.getTag());
+            }
         }
     }
 
     public StopAdapter(Cursor cursor, onItemClickListener listener) {
         super(cursor, R.layout.list_item_stop);
+
         mListener = listener;
     }
 

@@ -15,7 +15,7 @@ import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.providers.contracts.NewsContract;
 
 /**
- * Classname
+ * NewsAdapter
  * Version information
  * 13.11.2014
  * Created by Dzmitry Slutskiy.
@@ -26,7 +26,7 @@ public class NewsAdapter extends BaseAdapter<NewsAdapter.ViewHolder> {
     private final StyleSpan mSpan = new StyleSpan(android.graphics.Typeface.BOLD);
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView mTextView;
+        public final TextView mTextView;
 
         public ViewHolder(TextView v) {
             super(v);
@@ -45,21 +45,20 @@ public class NewsAdapter extends BaseAdapter<NewsAdapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        if (mCursor != null) {
-            mCursor.moveToPosition(position);
-            String news = mCursor.getString(mCursor.getColumnIndex(NewsContract.COLUMN_NEWS));
+        super.onBindViewHolder(holder, position);
 
-            //set BOLD typeface for date
-            final Matcher matcher = mPattern.matcher(news);
-            final SpannableStringBuilder spannable = new SpannableStringBuilder(news);
+        String news = getFieldValue(NewsContract.COLUMN_NEWS);
 
-            while (matcher.find()) {
-                spannable.setSpan(
-                        mSpan, matcher.start(), matcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                );
-            }
+        //set BOLD typeface for date
+        final Matcher matcher = mPattern.matcher(news);
+        final SpannableStringBuilder spannable = new SpannableStringBuilder(news);
 
-            holder.mTextView.setText(spannable);
+        while (matcher.find()) {
+            spannable.setSpan(
+                    mSpan, matcher.start(), matcher.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
         }
+
+        holder.mTextView.setText(spannable);
     }
 }

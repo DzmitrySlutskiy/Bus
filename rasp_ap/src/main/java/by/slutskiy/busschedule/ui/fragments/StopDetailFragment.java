@@ -21,7 +21,7 @@ import java.util.Calendar;
 import by.slutskiy.busschedule.R;
 import by.slutskiy.busschedule.loaders.StopDetailLoader;
 import by.slutskiy.busschedule.ui.activity.MainActivity;
-import by.slutskiy.busschedule.ui.adapters.StopDetailLAdapter;
+import by.slutskiy.busschedule.ui.adapters.StopDetailAdapter;
 
 import static android.support.v4.app.LoaderManager.LoaderCallbacks;
 
@@ -33,7 +33,7 @@ import static android.support.v4.app.LoaderManager.LoaderCallbacks;
  * Created by Dzmitry Slutskiy
  * e-mail: dsslutskiy@gmail.com
  */
-public class StopDetailFragment extends BaseFragment implements StopDetailLAdapter.onItemClickListener {
+public class StopDetailFragment extends BaseFragment implements StopDetailAdapter.onItemClickListener {
 
     public static final String TAG = StopDetailFragment.class.getSimpleName();
     public static final String STOP_ID = "mStopId";
@@ -148,7 +148,7 @@ public class StopDetailFragment extends BaseFragment implements StopDetailLAdapt
     private void updateData(Cursor data) {
         if (data != null) {
 
-            StopDetailLAdapter adapter = new StopDetailLAdapter(data, getActivity(), this);
+            StopDetailAdapter adapter = new StopDetailAdapter(data, getActivity(), this);
             mRecyclerView.setAdapter(adapter);
 
             mStopDetail.setText(mStopName);

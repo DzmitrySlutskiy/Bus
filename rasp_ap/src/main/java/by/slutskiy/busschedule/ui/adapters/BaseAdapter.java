@@ -14,15 +14,15 @@ import by.slutskiy.busschedule.providers.contracts.BaseContract;
  * 17.11.2014
  * Created by Dzmitry Slutskiy.
  */
-public abstract class BaseAdapter<T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<T> {
+abstract class BaseAdapter<T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<T> {
 
-    protected Cursor mCursor;
-    protected int mLayoutId;
     /*  private fields  */
+    private Cursor mCursor;
+    private int mLayoutId;
 
     /*  public constructors */
 
-    public BaseAdapter(Cursor cursor, int id) {
+    BaseAdapter(Cursor cursor, int id) {
         if (cursor == null) {
             throw new IllegalArgumentException("Cursor can't be null");
         }
@@ -35,37 +35,38 @@ public abstract class BaseAdapter<T extends RecyclerView.ViewHolder> extends Rec
     @Override
     public T onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
-        View v = LayoutInflater.from(parent.getContext())
-                .inflate(mLayoutId, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(mLayoutId, parent, false);
 
         return getHolder(v);
     }
 
-    public abstract T getHolder(View v);
+    protected abstract T getHolder(View v);
 
     // Return the size of your data set (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return mCursor == null ? 0 : mCursor.getCount();
+        return mCursor.getCount();
     }
 
     @Override
     public long getItemId(int position) {
+        moveCursorToPosition(position);
+
+        return getFieldValueAsInt(BaseContract.COLUMN_ID);
+    }
+
+    private void moveCursorToPosition(int position) {
         if (mCursor.getPosition() != position) {
             mCursor.moveToPosition(position);
         }
-
-        return mCursor.getInt(mCursor.getColumnIndex(BaseContract.COLUMN_ID));
     }
 
     @Override
     public void onBindViewHolder(T holder, int position) {
-        if (mCursor != null) {
-            mCursor.moveToPosition(position);
-        }
+        moveCursorToPosition(position);
     }
 
-    protected String getFieldValue(String name) {
+    String getFieldValue(String name) {
         int fieldIndex = mCursor.getColumnIndex(name);
         if (fieldIndex >= 0) {
             return mCursor.getString(fieldIndex);
@@ -74,7 +75,7 @@ public abstract class BaseAdapter<T extends RecyclerView.ViewHolder> extends Rec
         }
     }
 
-    protected int getFieldValueAsInt(String name) {
+    int getFieldValueAsInt(String name) {
         int fieldIndex = mCursor.getColumnIndex(name);
         if (fieldIndex >= 0) {
             return mCursor.getInt(fieldIndex);

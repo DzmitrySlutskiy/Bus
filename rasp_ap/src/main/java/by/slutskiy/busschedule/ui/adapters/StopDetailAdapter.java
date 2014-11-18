@@ -2,11 +2,9 @@ package by.slutskiy.busschedule.ui.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.support.v4.widget.CursorAdapter;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.TextView;
 
 import by.slutskiy.busschedule.R;
@@ -14,44 +12,59 @@ import by.slutskiy.busschedule.providers.contracts.StopDetailContract;
 import by.slutskiy.busschedule.services.UpdateService;
 
 /**
- * StopDetailAdapter
+ * RouteAdapter
  * Version 1.0
- * 18.09.2014
+ * 13.11.2014
  * Created by Dzmitry Slutskiy.
  */
-public class StopDetailAdapter extends CursorAdapter {
+public class StopDetailAdapter extends BaseAdapter<StopDetailAdapter.ViewHolder> {
 
-    private final LayoutInflater mInflater;
     private final String NO_BUS;
+    private final onItemClickListener mListener;
 
-    public StopDetailAdapter(Context context, Cursor c) {
-        super(context, c, false);
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
+        public final TextView mRouteName;
+        public final TextView mTime;
+
+        private final onItemClickListener mHolderClickListener;
+
+        public ViewHolder(View v, onItemClickListener listener) {
+            super(v);
+
+            mHolderClickListener = listener;
+            mTime = (TextView) v.findViewById(R.id.text_view_next_time);
+            mRouteName = (TextView) v.findViewById(R.id.text_view_route_name);
+            v.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mHolderClickListener != null) {
+                mHolderClickListener.onClick(mRouteName.getText().toString(), (Long) mTime.getTag());
+            }
+        }
+    }
+
+    public StopDetailAdapter(Cursor cursor, Context context, onItemClickListener listener) {
+        super(cursor, R.layout.list_item_stop_detail);
 
         NO_BUS = context.getResources().getString(R.string.text_view_no_bus);
-        mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mListener = listener;
     }
 
     @Override
-    public View newView(Context context, Cursor cursor, ViewGroup viewGroup) {
-        View v = mInflater.inflate(R.layout.list_item_stop_detail, viewGroup, false);
-
-        ViewHolder holder = new ViewHolder();
-
-        holder.mRouteName = (TextView) v.findViewById(R.id.text_view_route_name);
-        holder.mTime = (TextView) v.findViewById(R.id.text_view_next_time);
-
-        v.setTag(holder);
-        return v;
+    public StopDetailAdapter.ViewHolder getHolder(View v) {
+        return new ViewHolder(v, mListener);
     }
 
     @Override
-    public void bindView(View view, Context context, Cursor cursor) {
-        ViewHolder holder = (ViewHolder) view.getTag();
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        super.onBindViewHolder(holder, position);
 
-        holder.mRouteName.setText(cursor.getString(cursor.getColumnIndex(StopDetailContract.COLUMN_FULL_ROUTE)));
+        holder.mRouteName.setText(getFieldValue(StopDetailContract.COLUMN_FULL_ROUTE));
 
-        String minutes = cursor.getString(cursor.getColumnIndex(StopDetailContract.COLUMN_MINUTES));
-        String types = cursor.getString(cursor.getColumnIndex(StopDetailContract.COLUMN_TYPES));
+        String minutes = getFieldValue(StopDetailContract.COLUMN_MINUTES);
+        String types = getFieldValue(StopDetailContract.COLUMN_TYPES);
 
         String[] splitMinutes = TextUtils.split(minutes, UpdateService.TYPE_DELIMITER);
         String[] splitTypes = TextUtils.split(types, UpdateService.TYPE_DELIMITER);
@@ -61,12 +74,11 @@ public class StopDetailAdapter extends CursorAdapter {
             resultMinutes += splitTypes[i] + " " +
                     (splitMinutes[i].equals("") ? NO_BUS : splitMinutes[i]) + " ";
         }
-
         holder.mTime.setText(resultMinutes);
+        holder.mTime.setTag(getItemId(position));
     }
 
-    private static class ViewHolder {
-        public TextView mRouteName;
-        public TextView mTime;
+    public interface onItemClickListener {
+        void onClick(String routeName, long id);
     }
 }

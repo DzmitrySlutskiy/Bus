@@ -16,32 +16,34 @@ import by.slutskiy.busschedule.providers.contracts.RouteContract;
  */
 public class RouteAdapter extends BaseAdapter<RouteAdapter.ViewHolder> {
 
-    private onItemClickListener mListener;
+    private final onItemClickListener mListener;
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView mBusNumber;
-        public TextView mRouteName;
-        private onItemClickListener mListener;
+    public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        public final TextView mBusNumber;
+        public final TextView mRouteName;
+        private final onItemClickListener mListener;
 
         public ViewHolder(View v, onItemClickListener listener) {
             super(v);
+
             mListener = listener;
             mBusNumber = (TextView) v.findViewById(R.id.text_view_bus_number);
             mRouteName = (TextView) v.findViewById(R.id.text_view_route_name);
 
-            v.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mListener != null) {
-                        mListener.onClick((Long) mRouteName.getTag());
-                    }
-                }
-            });
+            v.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mListener != null) {
+                mListener.onClick((Long) mRouteName.getTag());
+            }
         }
     }
 
     public RouteAdapter(Cursor cursor, onItemClickListener listener) {
         super(cursor, R.layout.list_item_route);
+
         mListener = listener;
     }
 

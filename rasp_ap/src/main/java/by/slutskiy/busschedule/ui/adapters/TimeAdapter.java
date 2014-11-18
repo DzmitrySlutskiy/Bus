@@ -30,15 +30,16 @@ public class TimeAdapter extends BaseAdapter<TimeAdapter.ViewHolder> {
     private final int COLOR_CURRENT_HOUR;
     private final int COLOR_ANY_HOUR;
 
-    private int mHour;
+    private final int mHour;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public TextView mHour;
-        public TimeView mTimeView;
-        public LinearLayout mLayout;
+        public final TextView mHour;
+        public final TimeView mTimeView;
+        public final LinearLayout mLayout;
 
         public ViewHolder(View v) {
             super(v);
+
             mHour = (TextView) v.findViewById(R.id.text_view_hour);
             mTimeView = (TimeView) v.findViewById(R.id.time_view);
             mLayout = (LinearLayout) v;
