@@ -125,7 +125,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
     @Override
     protected void onHandleIntent(Intent intent) {
         Log.d(TAG, "onHandleIntent");
-
+        long startUpdate = System.currentTimeMillis();
         mResolver = getApplicationContext().getContentResolver();
 
         initLists();
@@ -166,7 +166,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
                 int sheetCount;
                 if (BuildConfig.SHEET_COUNT > 1) {
-                    sheetCount = BuildConfig.SHEET_COUNT;
+                    sheetCount = mXlsHelper.getSheetCount();
                 } else {
                     sheetCount = mXlsHelper.getSheetCount();
                 }
@@ -188,7 +188,7 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
                 mResolver.applyBatch(BaseContract.AUTHORITY, mOperations);
                 Log.d(TAG, "Apply successful. used time(ms): " + (System.currentTimeMillis() - currentTime));
                 PreferenceUtils.setUpdateDate(getApplicationContext(), lastUpdate);
-
+                Log.d(TAG, "Full time update (ms): " + (System.currentTimeMillis() - startUpdate));
             } catch (IOException e) {
                 processError(UpdateUtils.MSG_IO_ERROR, e.getMessage());
             } catch (BiffException e) {
@@ -237,6 +237,12 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
         //this delete all data from table RouteList
         addOperation(ContentProviderOperation.newDelete(RouteListContract.CONTENT_URI).build());
+
+        //this delete all data from table News
+        addOperation(ContentProviderOperation.newDelete(NewsContract.CONTENT_URI).build());
+
+        //this delete all data from table Routes
+        addOperation(ContentProviderOperation.newDelete(RouteContract.CONTENT_URI).build());
     }
 
     /**
@@ -501,25 +507,6 @@ public class UpdateService extends IntentService implements IOUtils.LoadProgress
 
     private void initRouteList() {
         mRouteMap = new HashMap<String, Integer>();
-
-        Cursor cursor = mResolver.query(RouteContract.CONTENT_URI,
-                RouteContract.availableColumns, null, null, null);
-        if (cursor != null) {
-            try {
-                if (cursor.moveToFirst()) {
-                    do {
-                        int value = cursor.getInt(cursor.getColumnIndex(RouteContract.COLUMN_ID));
-                        String key = cursor.getString(cursor.getColumnIndex(RouteContract.COLUMN_BUS)) +
-                                ROUTE_DIVIDER + cursor.getString(cursor.getColumnIndex(RouteContract.COLUMN_ROUTE_NAME));
-                        //value - _id field's value
-                        //key like: 16Э@Вишневец - Девятовка
-                        mRouteMap.put(key, value);
-                    } while (cursor.moveToNext());
-                }
-            } finally {
-                cursor.close();
-            }
-        }
     }
 
     private int getRealIndex(int maskedIndex) {
